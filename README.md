@@ -2,7 +2,7 @@
 
 A focused, internship-ready Streamlit application for historical portfolio research. It turns a ticker-and-weight input into a reproducible view of performance, market risk, benchmark-relative results, attribution, allocation alternatives, rebalancing trades, a lagged momentum backtest, stress tests, and a downloadable HTML research report.
 
-The project is intentionally small enough to explain in an interview: market data enter through one validated boundary, financial calculations are pure functions, the UI only orchestrates those functions, and every important formula is covered by deterministic local tests.
+The project is intentionally small enough to explain in an interview: market data enter through one validated boundary, financial calculations are pure functions, the UI only orchestrates those functions, and core formulas and reconciliation rules are covered by deterministic local tests.
 
 ## Why this project matters
 
@@ -45,8 +45,9 @@ portfolio_dashboard/
   stress.py                         custom and historical stress tests
   reporting.py                      deterministic narrative and HTML export
   pipeline.py                       reusable end-to-end analytics pipeline
-  formatting.py                     UI number formats
-tests/test_analytics.py             synthetic unit and integration tests
+  formatting.py                     shared UI and report number formats
+tests/test_analytics.py             synthetic financial unit and integration tests
+tests/test_app.py                   offline Streamlit entrypoint smoke tests
 docs/METHODOLOGY.md                 formulas, assumptions and limitations
 ```
 
@@ -70,7 +71,7 @@ Open the local URL Streamlit prints. Select a preset, adjust inputs if desired, 
 .venv/bin/python -m compileall app.py portfolio_dashboard tests
 ```
 
-Tests cover validation, data layout/missingness, returns, portfolio aggregation, CAGR, volatility, Sharpe, Sortino, drawdown, VaR/CVaR, beta, tracking error, information ratio, risk-contribution reconciliation, allocation constraints, rebalancing, signal lag, costs, stress tests, and the integrated analysis pipeline.
+Tests cover validation, data layout/missingness, returns, portfolio aggregation, CAGR, volatility, Sharpe, Sortino, drawdown, VaR/CVaR, beta, tracking error, information ratio, risk-contribution reconciliation, allocation failure handling, rebalancing, signal lag, costs, stress tests, report units, the integrated analytics pipeline, and the offline Streamlit entrypoint.
 
 ## Streamlit Community Cloud deployment
 
@@ -79,7 +80,7 @@ Tests cover validation, data layout/missingness, returns, portfolio aggregation,
 3. Set the entrypoint to `app.py` and choose Python 3.11 if the runtime selector is available.
 4. Deploy. No secrets, database, paid API, system packages, or local paths are required.
 
-The app downloads data only after the user clicks **Run analysis**. `requirements.txt` uses bounded versions compatible with Community Cloud.
+The app downloads data only after the user clicks **Run analysis**. `requirements.txt` uses bounded versions compatible with Community Cloud; Streamlit 1.55 or newer is required for state-aware, lazily rendered tabs.
 
 ## Methodology and assumptions
 

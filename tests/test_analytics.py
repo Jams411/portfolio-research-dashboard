@@ -12,6 +12,8 @@ from portfolio_dashboard.rebalancing import rebalancing_plan
 from portfolio_dashboard.risk import beta, historical_cvar, historical_var, information_ratio, tracking_error, volatility_contributions
 from portfolio_dashboard.strategy import momentum_backtest
 from portfolio_dashboard.stress import custom_shock, historical_stress
+from portfolio_dashboard.formatting import metric_value
+from portfolio_dashboard.reporting import generate_html_report, research_summary
 
 @pytest.fixture
 def returns() -> pd.DataFrame:
@@ -126,6 +128,13 @@ def test_rebalancing_reconciles():
     assert plan.set_index("Ticker").loc["A", "Action"] == "Sell"
     assert plan.set_index("Ticker").loc["B", "Action"] == "Buy"
 
+
+def test_rebalancing_default_only_holds_exact_target_weights():
+    plan = rebalancing_plan(pd.Series({"A": .5001, "B": .4999}), pd.Series({"A": .5, "B": .5}), 100_000)
+    assert plan.set_index("Ticker").loc["A", "Action"] == "Sell"
+    exact = rebalancing_plan(pd.Series({"A": .5, "B": .5}), pd.Series({"A": .5, "B": .5}), 100_000)
+    assert set(exact["Action"]) == {"Hold"}
+
 def test_strategy_signal_lag_and_transaction_costs():
     prices = pd.Series([10, 11, 12, 13, 12, 11, 14, 15], index=pd.bdate_range("2024-01-01", periods=8))
     free, _ = momentum_backtest(prices, 2, 3, 0)
@@ -184,3 +193,35 @@ def test_main_pipeline_integration(returns):
     assert result.return_contributions.sum() == pytest.approx(result.performance["Total Return"])
     assert result.volatility_contributions.sum() == pytest.approx(result.performance["Annualized Volatility"])
     assert set(["Current", "Equal Weight", "Inverse Volatility"]).issubset(result.allocations.columns)
+
+
+def test_metric_formatting_preserves_ratios_and_percentages():
+    assert metric_value("Total Return", .125) == "12.50%"
+    assert metric_value("Sharpe Ratio", 1.25) == "1.25"
+    assert metric_value("Position Changes", 3.0) == "3"
+
+
+def test_report_uses_metric_units_and_selected_rebalancing_method():
+    metric_frame = pd.DataFrame({"Value": [.125, 1.25]}, index=["Total Return", "Sharpe Ratio"])
+    percentage_frame = pd.DataFrame({"Return Contribution": [.125]}, index=["A"])
+    plan = rebalancing_plan(pd.Series({"A": 1.0}), pd.Series({"A": 1.0}), 1_000)
+    html = generate_html_report(
+        title="Test", tickers=["A"], weights=pd.Series({"A": 1.0}),
+        start="2024-01-01", end="2024-12-31", summary=["Summary"],
+        performance=metric_frame, risk=metric_frame, benchmark=metric_frame,
+        attribution=percentage_frame, allocations=pd.DataFrame({"Current": [1.0]}, index=["A"]),
+        rebalancing=plan, rebalancing_method="Current", strategy=metric_frame,
+        stress=pd.DataFrame({"Portfolio Impact": [-.1]}, index=["A"]),
+    ).decode()
+    assert "12.50%" in html
+    assert ">1.25<" in html
+    assert "Rebalancing plan — Current" in html
+    assert "Holdings and weights" in html and "100.00%" in html
+
+
+def test_research_summary_does_not_emit_nan_text():
+    summary = research_summary(
+        {}, {}, pd.Series({"A": 1.0}), pd.Series({"A": 0.0}), pd.Series({"A": 0.0}), {}, {},
+    )
+    assert "nan" not in " ".join(summary).lower()
+    assert "unavailable" in " ".join(summary).lower()

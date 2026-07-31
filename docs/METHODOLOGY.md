@@ -36,7 +36,7 @@ Weight concentration is shown directly and through effective number of holdings 
 
 Equal weights allocate `1/N`. Inverse-volatility weights are proportional to `1/σ_i`. Minimum variance minimizes `w′Σw`; maximum Sharpe maximizes historical arithmetic annualized excess return divided by portfolio volatility. Both optimized methods constrain every weight to `[0,1]` and the sum to one. A failed solver result is never displayed as valid. Historical inputs are estimates, not forecasts, and “maximum Sharpe” names the mathematical objective rather than a recommendation.
 
-Rebalancing assumes the stated portfolio value, no cash flow, fractional trading, and no taxes. Estimated trade is target dollars minus current dollars. Buys and sells reconcile before costs and rounding.
+Rebalancing assumes the stated portfolio value, no cash flow, fractional trading, and no taxes. Estimated trade is target dollars minus current dollars. Buys and sells reconcile before costs and rounding. By default, only an exactly unchanged weight is labeled Hold; callers may opt into a display threshold, which changes the action label but not the disclosed target-allocation gap.
 
 ## Momentum strategy
 
@@ -47,6 +47,8 @@ Positive active-day rate is the fraction of in-market daily returns above zero. 
 ## Stress tests
 
 Custom shocks are explicit per-asset instantaneous percentage shocks; the application does not infer asset classes or silently replace a missing shock with zero. Portfolio impact is `Σw_i s_i`. Historical windows and exact configured dates live in `portfolio_dashboard/config.py`. A window is shown only when the selected common history covers both endpoints, and the displayed result includes the actual first and last trading dates used. Historical portfolio returns use the same daily constant-weight method as the main analysis.
+
+The downloadable report uses the actual common-price analysis dates, the currently edited custom shocks, and the rebalancing method currently selected in the application. Percentage, currency, count, and unitless ratio fields are formatted according to their metric definitions.
 
 ## General limitations and disclaimer
 
