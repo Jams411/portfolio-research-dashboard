@@ -49,7 +49,9 @@ portfolio_dashboard/
 tests/test_analytics.py             synthetic financial unit and integration tests
 tests/test_app.py                   offline Streamlit entrypoint smoke tests
 docs/METHODOLOGY.md                 formulas, assumptions and limitations
+docs/ARCHITECTURE.md                living system and module reference
 docs/PROJECT_HISTORY.md             evidence-backed project milestones
+docs/PROJECT_JOURNAL.md             chronological engineering narrative
 docs/DECISIONS.md                   product and methodology decisions
 docs/ROADMAP.md                     completed, planned, deferred and avoided work
 CHANGELOG.md                        user-facing milestone changes
@@ -111,7 +113,10 @@ Add an optional user-uploaded local price CSV path using the same validation bou
 ## Development and documentation rules
 
 - Every material feature or methodology change must update the relevant [project history](docs/PROJECT_HISTORY.md), [decision log](docs/DECISIONS.md), [roadmap](docs/ROADMAP.md), [changelog](CHANGELOG.md), or [methodology guide](docs/METHODOLOGY.md).
+- Material feature changes must update the [project journal](docs/PROJECT_JOURNAL.md) when they affect product direction, important tradeoffs, or engineering lessons.
+- Architectural changes must update the living [architecture reference](docs/ARCHITECTURE.md).
 - Commit messages should explain the intent of a change, not merely list changed files.
 - Every financial-formula change must include deterministic tests and a methodology update.
 - Course-derived additions must identify the relevant course source and must be independently implemented and verified; course code is not assumed correct.
-- Do not claim codebase history that cannot be verified from repository evidence. Label development-session context explicitly until it is independently confirmed.
+- Decisions must not be reconstructed from memory when repository evidence is unavailable. Label development-session context explicitly until it is independently confirmed.
+- Codex or any coding agent must inspect the documentation system and current code before making a major change.

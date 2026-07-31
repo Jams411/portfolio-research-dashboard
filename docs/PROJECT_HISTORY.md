@@ -61,3 +61,12 @@ This file records major project milestones in chronological order. Git commits a
 **Context from current development session — verify before treating as canonical.**
 
 The current session reviewed local materials titled *Algorithmic Trading in Python*, *Machine Learning & AI*, and *Portfolio Management*. The review identified candidate future work around consistent risk-adjusted-return conventions, single-index regression, periodic rebalancing, and strategy subperiod analysis. It also concluded that machine learning, Treynor–Black, bond analytics, and personalized investment-policy features would currently add disproportionate data, methodology, or scope complexity. These are planning inputs, not implemented features or approved methodology changes.
+
+## 2026-07-31 — Permanent documentation governance
+
+- **What changed:** Added commit-backed project history, decisions, roadmap, and changelog records, followed by a living architecture reference and chronological engineering journal; linked the system from the README.
+- **Why it changed:** Future maintainers and coding agents need current technical truth and recorded rationale before making material changes.
+- **Problem solved:** Git history alone does not explain module contracts, product lessons, alternatives, consequences, or safe extension procedures.
+- **Course or career connection:** Reproducibility, model-risk governance, technical communication, maintenance, and interview preparation.
+- **Tradeoffs:** Kept the system in repository Markdown rather than introducing external project-management or architecture tooling.
+- **Evidence:** Commit `2caedab` created the initial governance system. The journal and architecture additions are present in the repository after that commit.

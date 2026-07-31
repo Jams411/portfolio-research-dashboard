@@ -121,3 +121,13 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Alternatives considered:** Git messages alone, external issue trackers, and full formal ADR directories.
 - **Consequences:** Documentation review is part of the definition of done for material changes.
 - **Status:** Accepted.
+
+## D013 — Maintain a living journal and architecture reference
+
+- **Date:** 2026-07-31
+- **Decision:** Record product-direction lessons in `PROJECT_JOURNAL.md`, keep current module and flow truth in `ARCHITECTURE.md`, and require coding agents to inspect the documentation system before major changes.
+- **Context:** The initial governance files preserve milestones, decisions, planned scope, and user-facing changes but do not provide a complete maintenance reference or narrative engineering record.
+- **Rationale:** Separating narrative evolution from current architecture reduces duplication and gives future maintainers both historical context and an accurate operating model.
+- **Alternatives considered:** Expanding `PROJECT_HISTORY.md` into a long narrative, relying on source inspection alone, or keeping architecture knowledge in conversation history.
+- **Consequences:** Product-direction changes may require a journal entry; module, dependency, startup, state, testing, or deployment changes require an architecture update.
+- **Status:** Accepted.

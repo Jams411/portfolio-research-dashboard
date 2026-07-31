@@ -7,6 +7,8 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 ### Documentation
 
 - Added permanent project history, decision, roadmap, changelog, and documentation-governance records.
+- Added a chronological engineering journal and living architecture reference with verified module contracts and system diagrams.
+- Reinforced documentation rules for product-direction, architecture, methodology, course-derived work, and coding-agent changes.
 
 ## Dashboard hardening — 2026-07-31
 

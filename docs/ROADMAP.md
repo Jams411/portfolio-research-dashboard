@@ -15,7 +15,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - Explicit per-asset custom shocks and complete historical stress windows
 - Deterministic research summary, CSV exports, and HTML report
 - Streamlit application smoke tests and synthetic analytics integration tests
-- README, methodology, deployment instructions, project history, decision log, roadmap, and changelog
+- README, methodology, deployment instructions, project history, project journal, architecture reference, decision log, roadmap, and changelog
 
 ## In progress
 

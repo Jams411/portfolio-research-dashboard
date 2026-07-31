@@ -1,0 +1,398 @@
+# Architecture
+
+This is the living technical reference for maintaining, extending, testing, deploying, and explaining the Portfolio Research Dashboard. For formulas and assumptions, see [Methodology](METHODOLOGY.md). For rationale, see [Decisions](DECISIONS.md). For future work, see the [Roadmap](ROADMAP.md).
+
+## A. System overview
+
+The application is a single-process Streamlit dashboard backed by a small functional Python package. The browser sends user inputs to Streamlit; Streamlit validates them, downloads adjusted history from yfinance, invokes pure analytics functions, retains the resulting analysis in session state, and renders only the open analysis tab. There is no database, authentication layer, background worker, paid API, or live-trading connection.
+
+```mermaid
+flowchart LR
+    User["User browser"] --> App["Streamlit app.py"]
+    App --> Validation["Input and market-data validation"]
+    Validation --> YF["yfinance"]
+    Validation --> Pipeline["Analytics pipeline"]
+    Pipeline --> Analytics["Performance, risk, attribution, construction"]
+    App --> Decisions["Rebalancing, strategy, stress"]
+    Analytics --> State["Streamlit session state"]
+    Decisions --> State
+    State --> Views["Charts, tables, explanations"]
+    State --> Exports["CSV and deterministic HTML"]
+```
+
+## B. Repository structure
+
+```text
+app.py                              Streamlit entrypoint, controls, navigation and views
+portfolio_dashboard/
+  __init__.py                       package marker and package description
+  config.py                         shared constants, presets and stress windows
+  data.py                           input validation and yfinance price boundary
+  performance.py                    returns and performance scorecard
+  risk.py                           tail, benchmark and contribution analytics
+  construction.py                   allocation methods and constrained optimizers
+  pipeline.py                       main analytics orchestration and Analysis result
+  rebalancing.py                    target-allocation trade plan
+  strategy.py                       lagged moving-average backtest
+  stress.py                         custom and historical scenarios
+  reporting.py                      deterministic narrative and HTML report
+  formatting.py                     semantic presentation formatting
+tests/
+  test_analytics.py                 synthetic unit and integration tests
+  test_app.py                       offline Streamlit entrypoint smoke tests
+docs/
+  ARCHITECTURE.md                   this living technical reference
+  DECISIONS.md                      accepted decisions and consequences
+  METHODOLOGY.md                    formulas, conventions and limitations
+  PROJECT_HISTORY.md                concise evidence-backed milestones
+  PROJECT_JOURNAL.md                chronological engineering narrative
+  ROADMAP.md                        completed, planned, deferred and avoided work
+CHANGELOG.md                        user-facing milestone changes
+README.md                           product overview and operating instructions
+requirements.txt                   bounded runtime and test dependencies
+pytest.ini                          local pytest configuration
+```
+
+## C. Major modules and responsibilities
+
+### `app.py` — application orchestration and presentation
+
+- **Why it exists:** Provides the Streamlit user experience and connects package outputs to charts, tables, controls, warnings, and downloads.
+- **Owns:** Page configuration, sidebar widgets, cached download wrapper, session state, open-tab rendering, Plotly charts, and export buttons.
+- **Does not own:** Core financial formulas, yfinance response parsing, optimizer objectives, backtest mechanics, shock calculations, or HTML construction.
+- **Key inputs:** Tickers, weights, dates, benchmark, initial value, risk-free rate, transaction cost, and moving-average windows.
+- **Key outputs:** Rendered tabs, messages, CSV payloads, and an HTML report download.
+- **Important dependencies:** Streamlit, Plotly, pandas, and all public package modules used by the workflow.
+- **Financial concepts:** Presents all analytics but directly calculates only view-specific transformations such as 63-day rolling volatility and wealth curves.
+- **Common failure modes:** Invalid widget combinations, data-provider errors, insufficient strategy history, unavailable optimized allocations, or stale session choices. Actionable validation errors are displayed; allocation failures appear as warnings.
+- **How tested:** `tests/test_app.py` checks the initial state and verifies multiple benchmark tickers are rejected before download. Full financial behavior is tested below the UI boundary.
+
+### `config.py` — shared conventions and fixed configuration
+
+- **Why it exists:** Prevents unexplained constants and scenario dates from being scattered across modules.
+- **Owns:** `TRADING_DAYS`, weight tolerance, minimum observations, historical stress dates, and example presets.
+- **Does not own:** Mutable user settings or runtime state.
+- **Key inputs:** None.
+- **Key outputs:** Imported constants and dictionaries.
+- **Important dependencies:** None.
+- **Financial concepts:** Annualization convention and fixed scenario windows.
+- **Common failure modes:** A convention change can affect several formulas; a scenario label/date change can alter historical outputs.
+- **How tested:** Indirectly through performance, validation, stress, construction, and integration tests.
+
+### `data.py` — validation and external-data boundary
+
+- **Why it exists:** Keeps unreliable external responses and user input outside the calculation core.
+- **Owns:** Ticker normalization, date and weight validation, yfinance layout parsing, failed-symbol detection, strict common-date alignment, and market-data exceptions.
+- **Does not own:** Return calculation, benchmark metrics, caching, or UI messages.
+- **Key inputs:** Raw ticker/date/weight values and yfinance DataFrames.
+- **Key outputs:** Validated `pd.Series` weights and finite, complete adjusted-price DataFrames.
+- **Important dependencies:** pandas, NumPy, yfinance, and configuration tolerances.
+- **Financial concepts:** Adjusted-price selection, long-only normalized weights, and common trading-date policy.
+- **Common failure modes:** Empty inputs, duplicate symbols, mismatched weights, invalid dates, missing price fields, unavailable tickers, or too few common observations.
+- **How tested:** Ticker/weight validation, single- and MultiIndex extraction, and missing-data policy tests use local fixed data.
+
+### `performance.py` — return and performance calculations
+
+- **Why it exists:** Centralizes reusable performance formulas for portfolios and strategies.
+- **Owns:** Simple returns, constant-weight portfolio returns, total return, CAGR, volatility, Sharpe, Sortino, drawdown, Calmar, scorecards, and monthly returns.
+- **Does not own:** Benchmark regression, asset contributions, allocation optimization, or display formatting.
+- **Key inputs:** Price or return Series/DataFrames, labeled weights, annual risk-free rate, and optional periods per year.
+- **Key outputs:** Return series, scalar metrics, metric dictionaries, drawdown series, and monthly tables.
+- **Important dependencies:** pandas, NumPy, and `TRADING_DAYS`.
+- **Financial concepts:** Daily simple returns, compounding, annualization, target downside deviation, and initial-wealth drawdown.
+- **Common failure modes:** Empty returns, nonpositive compound wealth for CAGR, zero volatility, invalid weight labels, missing asset returns, or no downside observations.
+- **How tested:** Known synthetic returns cover aggregation, CAGR, volatility, Sharpe, Sortino, drawdown, and integration reconciliation.
+
+### `risk.py` — market risk, benchmark comparison and attribution
+
+- **Why it exists:** Groups portfolio-risk and benchmark-relative methods that depend on aligned returns.
+- **Owns:** Historical VaR/CVaR, beta, tracking error, information ratio, benchmark metrics, Euler volatility contribution, and cumulative total-return contribution.
+- **Does not own:** Price downloads, performance scorecards, optimized weights, or UI concentration calculations.
+- **Key inputs:** Portfolio, benchmark and asset daily returns plus labeled weights.
+- **Key outputs:** Scalar risk/benchmark metrics and contribution Series.
+- **Important dependencies:** pandas, NumPy, and `TRADING_DAYS`.
+- **Financial concepts:** Empirical lower-tail loss, covariance beta, active risk, relative drawdown, Euler decomposition, and contribution reconciliation.
+- **Common failure modes:** Invalid confidence, empty tails, zero benchmark variance, zero tracking error, nonpositive portfolio variance, or misaligned labels.
+- **How tested:** Synthetic VaR/CVaR, beta, tracking error, information ratio, relative drawdown, and risk-contribution reconciliation tests.
+
+### `construction.py` — allocation comparisons
+
+- **Why it exists:** Separates investment-weight construction from current holdings and rebalancing execution.
+- **Owns:** Equal weight, inverse volatility, minimum variance, maximum Sharpe, SLSQP constraints, convergence checks, and per-method warning isolation.
+- **Does not own:** Efficient-frontier generation, forecast models, risk-parity/ERC, trade amounts, or recommendations.
+- **Key inputs:** Complete asset-return DataFrames, current weights, and annual risk-free rate.
+- **Key outputs:** Labeled weight Series or a comparison DataFrame plus warnings.
+- **Important dependencies:** pandas, NumPy, SciPy SLSQP, and `TRADING_DAYS`.
+- **Financial concepts:** Inverse volatility, sample covariance, arithmetic annualized expected return, long-only minimum variance, and historical maximum Sharpe.
+- **Common failure modes:** Zero volatility, nonfinite estimates, insufficient observations, degenerate covariance, or solver nonconvergence.
+- **How tested:** Feasibility, sum-to-one, bounds, inverse-volatility ordering, and optional-method failure isolation.
+
+### `pipeline.py` — main analytics composition
+
+- **Why it exists:** Provides one reusable path shared by Streamlit and integration tests.
+- **Owns:** Portfolio/benchmark inner alignment, return creation, core scorecards, contribution calculations, allocation comparison, and the immutable `Analysis` result.
+- **Does not own:** External downloads, input parsing, strategy, stress, rebalancing plans, reporting, or UI state.
+- **Key inputs:** Already validated holding prices, benchmark prices, weights, and risk-free rate.
+- **Key outputs:** Frozen `Analysis` dataclass containing aligned data and all core results.
+- **Important dependencies:** `performance`, `risk`, and `construction`.
+- **Financial concepts:** The complete constant-weight portfolio analytics path.
+- **Common failure modes:** Fewer than three common portfolio/benchmark price observations or downstream validation/optimizer warnings.
+- **How tested:** The integration test verifies portfolio return, return-contribution, volatility-contribution, and allocation reconciliation end to end.
+
+### `rebalancing.py` — target trade plan
+
+- **Why it exists:** Converts allocation differences into intuitive portfolio-operation amounts.
+- **Owns:** Current/target weight gaps, dollar allocations, estimated buys/sells, and action labels.
+- **Does not own:** Tax lots, whole-share rounding, cash buffers, market impact, cost-aware optimization, or execution.
+- **Key inputs:** Current and target labeled weights, portfolio value, and optional display hold threshold.
+- **Key outputs:** One row per ticker with weights, dollars, signed trade amount, and Buy/Sell/Hold action.
+- **Important dependencies:** pandas and NumPy.
+- **Financial concepts:** Self-financing target allocation before costs and rounding.
+- **Common failure modes:** Nonpositive portfolio value or mismatched asset labels.
+- **How tested:** Buy/sell signs, total trade reconciliation, and default Hold semantics.
+
+### `strategy.py` — moving-average backtest
+
+- **Why it exists:** Implements one transparent systematic strategy without bloating the core portfolio model.
+- **Owns:** Moving averages, readiness, signal, one-day-lagged position, turnover, proportional transaction cost, post-warm-up comparison, growth series, and strategy statistics.
+- **Does not own:** Parameter search, machine learning, portfolio-level execution, taxes, slippage beyond the configured cost, or live orders.
+- **Key inputs:** One price Series, short/long windows, proportional cost, and risk-free rate.
+- **Key outputs:** A detailed backtest DataFrame and metric dictionary.
+- **Important dependencies:** pandas, NumPy, and `performance_metrics`.
+- **Financial concepts:** Trend following, long/cash exposure, look-ahead avoidance, turnover, costs, time in market, and common-period comparison.
+- **Common failure modes:** Invalid windows, insufficient history, invalid transaction cost, no active days, or no losing active returns.
+- **How tested:** Exact signal shift, cost monotonicity, warm-up, position-change count, and insufficient-history rejection.
+
+### `stress.py` — custom and historical scenarios
+
+- **Why it exists:** Provides transparent stress analysis without hidden asset classifications.
+- **Owns:** Explicit instantaneous shocks, dollar loss contribution, configured historical windows, full-window coverage checks, and constant-weight scenario returns.
+- **Does not own:** Asset-class inference, factor shocks, Monte Carlo simulation, partial-window labeling, or scenario forecasting.
+- **Key inputs:** Weights, explicit per-asset shocks, portfolio value, holding prices, and benchmark prices.
+- **Key outputs:** Shock detail and summary plus a historical-scenario table.
+- **Important dependencies:** pandas, NumPy, configuration windows, and performance return functions.
+- **Financial concepts:** Linear instantaneous shock aggregation and historical constant-weight scenario replay.
+- **Common failure modes:** Missing or nonfinite shocks, invalid weights/value, uncovered scenario dates, or insufficient aligned scenario observations.
+- **How tested:** Impact/value reconciliation, explicit-input validation, no-loss labeling, scenario coverage, actual dates, and constant-weight return calculation.
+
+### `reporting.py` — deterministic research output
+
+- **Why it exists:** Produces a concise, deployment-safe artifact without an LLM or fragile PDF stack.
+- **Owns:** Rules-based observations, safe HTML escaping, semantic table formatting, report sections, generation timestamp, and HTML bytes.
+- **Does not own:** Financial calculation, chart rendering, file persistence, PDF creation, or personalized advice.
+- **Key inputs:** Precomputed holdings, metrics, contributions, allocations, rebalancing plan, strategy results, stress results, dates, and title.
+- **Key outputs:** Narrative list and self-contained HTML byte payload.
+- **Important dependencies:** pandas, Python HTML/date utilities, and `formatting.metric_value`.
+- **Financial concepts:** Communicates rather than recomputes portfolio, benchmark, concentration, strategy, and stress findings.
+- **Common failure modes:** Missing metric values, empty contribution series, inconsistent input column names, or unsafe free text. Missing numeric values are rendered as unavailable; supplied text is escaped.
+- **How tested:** Unit tests verify metric units, selected rebalancing heading, percentage formatting, and absence of `nan` language.
+
+### `formatting.py` — semantic display units
+
+- **Why it exists:** Prevents unitless ratios from being displayed as percentages and keeps UI/report formatting consistent.
+- **Owns:** Percentage, ratio, currency, count, and named-metric formatting rules.
+- **Does not own:** Calculation or localization.
+- **Key inputs:** Metric name and numeric value.
+- **Key outputs:** Display strings.
+- **Important dependencies:** Python `math` only.
+- **Financial concepts:** Unit semantics, not financial estimation.
+- **Common failure modes:** A newly added metric can fall back to ratio formatting unless its unit is registered.
+- **How tested:** Explicit percentage, ratio, and count examples plus report tests.
+
+## D. Application startup flow
+
+1. Streamlit executes `app.py` from top to bottom.
+2. `st.set_page_config` initializes the wide dashboard.
+3. The cached `cached_prices` wrapper is declared with a one-hour TTL and 32-entry limit.
+4. Sidebar widgets render with a default custom portfolio and optional presets.
+5. Before a run, the app displays a helpful message and stops; no market data are downloaded.
+6. When **Run analysis** is selected, inputs are parsed and validated before network access.
+7. Holding and benchmark histories are downloaded separately and cached.
+8. `run_analysis` creates core analytics; strategy, historical stress, and rebalancing plans are calculated beside it.
+9. Results are stored in Streamlit session state.
+10. State-aware tabs render only the open analysis section.
+
+## E. End-to-end data flow
+
+```mermaid
+flowchart TD
+    Inputs["Tickers, weights, dates, benchmark and assumptions"] --> Parse["Normalize and validate inputs"]
+    Parse --> Holdings["Download holding prices"]
+    Parse --> Benchmark["Download benchmark separately"]
+    Holdings --> Align["Strict complete-date alignment"]
+    Benchmark --> Core["Inner-align with portfolio history"]
+    Align --> Core
+    Core --> Returns["Simple daily asset, portfolio and benchmark returns"]
+    Returns --> Performance["Performance scorecard"]
+    Returns --> Risk["Risk, benchmark and attribution"]
+    Returns --> Construction["Allocation methods"]
+    Core --> Strategy["First-ticker momentum backtest"]
+    Core --> Stress["Historical and custom stress"]
+    Construction --> Rebalance["Target rebalancing plans"]
+    Performance --> State["Session result"]
+    Risk --> State
+    Construction --> State
+    Strategy --> State
+    Stress --> State
+    Rebalance --> State
+    State --> UI["Open Streamlit tab"]
+    State --> Report["Rules-based summary, CSV and HTML"]
+```
+
+## F. Financial analytics flow
+
+```mermaid
+flowchart LR
+    Prices["Aligned adjusted prices"] --> AssetReturns["Simple daily asset returns"]
+    AssetReturns --> PortfolioReturns["Constant-weight portfolio returns"]
+    PortfolioReturns --> Perf["Total return, CAGR, volatility, ratios and drawdown"]
+    PortfolioReturns --> Tail["Historical VaR and CVaR"]
+    PortfolioReturns --> Relative["Beta, tracking error, information ratio and relative drawdown"]
+    AssetReturns --> ReturnContrib["Cumulative return contribution"]
+    AssetReturns --> RiskContrib["Euler volatility contribution"]
+    AssetReturns --> Allocations["Equal, inverse-volatility, min-variance and max-Sharpe weights"]
+    Allocations --> Plans["Dollar rebalancing plans"]
+```
+
+The main model assumes constant weights every day. Economically, this is a daily rebalanced analytical portfolio. It is not a buy-and-hold account with weight drift. This assumption enables exact holdings return contribution and consistent stress calculations and is documented in [Methodology](METHODOLOGY.md).
+
+## G. Dependency relationships
+
+```mermaid
+flowchart TD
+    App["app.py"] --> Data["data"]
+    App --> Pipeline["pipeline"]
+    App --> Rebalancing["rebalancing"]
+    App --> Strategy["strategy"]
+    App --> Stress["stress"]
+    App --> Reporting["reporting"]
+    App --> Formatting["formatting"]
+    App --> Performance["performance"]
+    App --> Risk["risk"]
+    Pipeline --> Performance
+    Pipeline --> Risk
+    Pipeline --> Construction["construction"]
+    Construction --> Config["config"]
+    Data --> Config
+    Performance --> Config
+    Risk --> Config
+    Strategy --> Performance
+    Stress --> Performance
+    Stress --> Config
+    Reporting --> Formatting
+    Data --> YFinance["yfinance"]
+    Construction --> SciPy["SciPy SLSQP"]
+```
+
+Dependencies flow from orchestration toward smaller calculation modules. Core calculation modules do not import Streamlit or Plotly.
+
+## H. State-management approach
+
+There is no hidden global mutable application model. Streamlit session state stores:
+
+- `result`: validated inputs, the immutable `Analysis` object, strategy output, historical stress, and precomputed rebalancing plans
+- `current_shocks`: the currently edited per-asset shock Series
+- `selected_target_method`: the active rebalancing allocation
+- `normalized`: whether approximate weights were normalized
+- `analysis_tab`: the open tab
+
+Market data are cached by the tuple of tickers and requested dates. Reset clears session state and reruns the app. Reports recompute custom stress from `current_shocks` and select the active rebalancing plan, preventing stale defaults from entering downloads.
+
+## I. Testing architecture
+
+The test suite is intentionally offline:
+
+- **Unit tests:** Fixed Series/DataFrames test formulas, validation, optimizers, strategy mechanics, stress calculations, formatting, and reporting.
+- **Reconciliation tests:** Return contributions sum to total return; Euler contributions sum to portfolio volatility; buys and sells self-finance before costs.
+- **Failure tests:** Missing data, incomplete shocks, insufficient strategy history, invalid confidence, and degenerate optional allocation methods.
+- **Integration test:** Synthetic prices pass through `run_analysis` and reconcile the main outputs.
+- **Streamlit smoke tests:** `AppTest` verifies startup and pre-download validation.
+
+Network access is deliberately excluded from tests. yfinance availability is an operational concern, not a deterministic unit-test dependency.
+
+## J. Reporting and export flow
+
+1. The Research Report tab reads current session results and edited shocks.
+2. `research_summary` creates deterministic observations from precomputed metrics.
+3. Tables are assembled for performance, risk, benchmark, attribution, allocations, the selected rebalancing plan, strategy, and stress.
+4. `generate_html_report` escapes text, applies semantic units, and returns self-contained UTF-8 HTML bytes.
+5. Streamlit exposes the HTML and CSV payloads as downloads; the application does not write generated reports to disk.
+
+Exports currently include performance metrics, asset metrics, daily asset/portfolio returns, rebalancing, strategy results, stress details, and the combined HTML report.
+
+## K. Error-handling strategy
+
+- Validate user input before network access.
+- Raise `InputError` for invalid input and `MarketDataError` for unavailable/incomplete external history.
+- Catch these expected failures at the Streamlit boundary and show actionable errors.
+- Treat optional optimized allocations independently and return warnings instead of aborting deterministic methods.
+- Reject nonconverged optimizers rather than displaying their weights.
+- Reject insufficient strategy history rather than returning a silent all-cash result.
+- Require complete explicit shocks; never assume omitted holdings receive zero shock.
+- Allow unexpected programming errors to surface during development rather than hiding them with broad exception handling.
+
+Known limitation: some domain functions still use `ValueError` or `RuntimeError`; more specific exception types are a planned engineering improvement.
+
+## L. Extension points
+
+Preferred extension seams are:
+
+- Add a new pure metric to `performance.py` or `risk.py`, then expose it through `pipeline.Analysis` if it belongs to the core workflow.
+- Add an allocation method through `construction.allocation_methods`, preserving independent failure handling.
+- Add a configured historical scenario in `config.HISTORICAL_STRESS_PERIODS` with full-window tests.
+- Add a validated data source by producing the same complete adjusted-price DataFrame contract as `download_prices`.
+- Add a report section by passing precomputed data into `generate_html_report`; do not recompute finance inside reporting.
+- Split view rendering from `app.py` only as a behavior-preserving refactor with AppTest coverage.
+
+Before using an extension point, confirm that the feature remains within the focused scope recorded in [Decisions](DECISIONS.md) and [Roadmap](ROADMAP.md).
+
+## M. Deployment architecture
+
+```mermaid
+flowchart LR
+    GitHub["GitHub repository"] --> Cloud["Streamlit Community Cloud"]
+    Cloud --> Install["Install bounded requirements"]
+    Install --> Process["Single Streamlit Python process"]
+    Browser["User browser"] --> Process
+    Process --> Yahoo["Yahoo Finance through yfinance"]
+    Process --> Download["In-memory CSV and HTML downloads"]
+```
+
+Deployment uses `app.py`, Python 3.11 where selectable, and `requirements.txt`. No secrets, local filesystem paths, database, system packages, or startup downloads are required. Market history is fetched only after the user runs an analysis.
+
+## N. Known architectural limitations
+
+- `app.py` owns all page rendering and will become harder to maintain if many pages are added.
+- Session state is not persistent across sessions or users.
+- yfinance can be delayed, revised, incomplete, rate-limited, or unavailable.
+- Strict common-date alignment can materially shorten the sample.
+- The portfolio model assumes daily rebalancing at constant weights and does not model weight drift.
+- The risk-free-rate convention used by displayed Sharpe/Sortino differs from the arithmetic convention used by maximum-Sharpe construction; alignment is planned and must be treated as a methodology change.
+- Optimized weights are based on historical sample moments and can be unstable.
+- Strategy research covers one instrument and one rule; it has no automatic parameter fitting or formal validation split.
+- Historical VaR/CVaR and stress windows do not describe unseen events.
+- Rebalancing excludes taxes, lots, whole shares, cash buffers, and trading costs.
+- Reporting is deterministic HTML and CSV only.
+
+## O. Safe feature-development workflow
+
+1. Read `README.md`, this architecture reference, `METHODOLOGY.md`, `DECISIONS.md`, `ROADMAP.md`, `PROJECT_HISTORY.md`, and `PROJECT_JOURNAL.md` before proposing a major change.
+2. Inspect the current code and tests; do not infer behavior from documentation alone.
+3. Confirm scope and record a new decision when the change affects product direction, methodology, architecture, or external dependencies.
+4. Implement financial logic as a small pure function with labeled pandas inputs and outputs where practical.
+5. Add deterministic synthetic tests, failure tests, and reconciliation checks before wiring the UI.
+6. Update methodology for formula or assumption changes and architecture for dependency, state, startup, or module-boundary changes.
+7. Update the journal when product direction or a material engineering lesson changes; update the changelog for user-visible behavior.
+8. Identify the relevant course and inspected source when a course-derived idea is used. Independently verify the implementation.
+9. Run the full test suite, compilation/static checks, Streamlit smoke/startup checks, Markdown-link checks, and `git diff --check` as appropriate.
+10. Review Git status and commit one logical unit with an intent-focused message. Do not reconstruct unavailable history from memory.
+
+## Interview Explanation
+
+“This is a single-process Streamlit application with a modular financial-calculation package underneath it. The UI validates tickers, weights, dates, benchmark, and assumptions before downloading adjusted yfinance history. Holdings are aligned on complete common dates, while the benchmark is kept separate and then inner-aligned in the analytics pipeline.
+
+The pipeline converts prices to simple daily returns, calculates a constant-weight portfolio, and produces performance, benchmark, contribution, and allocation results in an immutable analysis object. Separate pure modules handle rebalancing, a one-day-lagged moving-average strategy with costs, explicit stress scenarios, and deterministic HTML reporting. Streamlit session state holds the current analysis and editable choices; core modules do not depend on Streamlit.
+
+The main calculations include compounded return and CAGR, annualized volatility, Sharpe and Sortino as currently documented, initial-wealth drawdown, historical VaR/CVaR, covariance beta, tracking error, information ratio, exact cumulative return contribution, and Euler volatility contribution. Construction compares current, equal, inverse-volatility, long-only minimum-variance, and long-only maximum-Sharpe weights.
+
+The key tradeoffs are strict complete-date alignment, a daily constant-weight portfolio model, historical sample optimization, one explicit strategy, and no database or live execution. Correctness is validated with offline synthetic tests, known formulas, failure cases, contribution reconciliation, optimizer constraints, lag and cost checks, an end-to-end pipeline test, and Streamlit smoke tests. Methodology and architecture changes are required to update tests and permanent documentation.”
