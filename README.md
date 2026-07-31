@@ -49,6 +49,10 @@ portfolio_dashboard/
 tests/test_analytics.py             synthetic financial unit and integration tests
 tests/test_app.py                   offline Streamlit entrypoint smoke tests
 docs/METHODOLOGY.md                 formulas, assumptions and limitations
+docs/PROJECT_HISTORY.md             evidence-backed project milestones
+docs/DECISIONS.md                   product and methodology decisions
+docs/ROADMAP.md                     completed, planned, deferred and avoided work
+CHANGELOG.md                        user-facing milestone changes
 ```
 
 ## Installation and local execution
@@ -103,3 +107,11 @@ After deployment, add desktop screenshots of Overview, Risk, Construction, and R
 ## Suggested next improvement
 
 Add an optional user-uploaded local price CSV path using the same validation boundary. That would improve reproducibility and demos during yfinance outages without adding a database or changing the analytical model.
+
+## Development and documentation rules
+
+- Every material feature or methodology change must update the relevant [project history](docs/PROJECT_HISTORY.md), [decision log](docs/DECISIONS.md), [roadmap](docs/ROADMAP.md), [changelog](CHANGELOG.md), or [methodology guide](docs/METHODOLOGY.md).
+- Commit messages should explain the intent of a change, not merely list changed files.
+- Every financial-formula change must include deterministic tests and a methodology update.
+- Course-derived additions must identify the relevant course source and must be independently implemented and verified; course code is not assumed correct.
+- Do not claim codebase history that cannot be verified from repository evidence. Label development-session context explicitly until it is independently confirmed.
