@@ -1,5 +1,7 @@
 .venv/
 .venv-python314-backup/
+.agents/
+.claude/
 venv/
 __pycache__/
 *.pyc
