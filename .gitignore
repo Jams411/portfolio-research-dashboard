@@ -1,0 +1,15 @@
+.venv/
+.venv-python314-backup/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+*.egg-info/
+.streamlit/secrets.toml
+.ruff_cache/
+.coverage
+htmlcov/
+*.csv
+*.html
+!docs/*.html

@@ -1,0 +1,104 @@
+# Portfolio Research Dashboard
+
+A focused, internship-ready Streamlit application for historical portfolio research. It turns a ticker-and-weight input into a reproducible view of performance, market risk, benchmark-relative results, attribution, allocation alternatives, rebalancing trades, a lagged momentum backtest, stress tests, and a downloadable HTML research report.
+
+The project is intentionally small enough to explain in an interview: market data enter through one validated boundary, financial calculations are pure functions, the UI only orchestrates those functions, and every important formula is covered by deterministic local tests.
+
+## Why this project matters
+
+This application demonstrates:
+
+- portfolio analytics
+- market-risk measurement
+- benchmark-relative evaluation
+- portfolio construction
+- rebalancing decisions
+- systematic strategy research
+- financial-data engineering
+- investment-research communication
+
+## Features
+
+- Comma-separated ticker validation, equal/custom weights, presets, date range, benchmark, capital, risk-free rate and transaction-cost controls
+- Adjusted yfinance history with caching, safe single/MultiIndex handling, strict failed-ticker reporting and complete-common-date alignment
+- Total return, CAGR, volatility, Sharpe, Sortino, drawdown, Calmar, tail risk, monthly returns and wealth charts
+- Beta, correlation, covariance, VaR/CVaR, concentration, effective holdings, and reconciled return/volatility attribution
+- Benchmark excess return, tracking error, information ratio, relative drawdown and relative wealth
+- Current, equal-weight, inverse-volatility, minimum-variance and maximum-Sharpe long-only allocations
+- Dollar rebalancing plan with intuitive buy/sell signs and CSV export
+- Dual-moving-average long/cash strategy on the first requested holding, with one-day signal lag and transaction costs
+- Editable per-asset custom shocks and complete historical stress windows
+- Rules-based summary, six CSV exports and a self-contained HTML research report
+
+## Architecture
+
+```text
+app.py                              Streamlit controls, navigation and charts
+portfolio_dashboard/
+  config.py                         conventions, presets, historical windows
+  data.py                           inputs, yfinance parsing, missing-data policy
+  performance.py                    returns and performance metrics
+  risk.py                           benchmark metrics and attribution
+  construction.py                   allocation methods and SLSQP optimizers
+  rebalancing.py                    target trade plan
+  strategy.py                       lagged momentum backtest
+  stress.py                         custom and historical stress tests
+  reporting.py                      deterministic narrative and HTML export
+  pipeline.py                       reusable end-to-end analytics pipeline
+  formatting.py                     UI number formats
+tests/test_analytics.py             synthetic unit and integration tests
+docs/METHODOLOGY.md                 formulas, assumptions and limitations
+```
+
+## Installation and local execution
+
+Python 3.11 or 3.12 is recommended.
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+streamlit run app.py
+```
+
+Open the local URL Streamlit prints. Select a preset, adjust inputs if desired, and click **Run analysis**. Internet access is needed only when the app downloads market history; tests are offline.
+
+## Testing
+
+```bash
+.venv/bin/pytest -q
+.venv/bin/python -m compileall app.py portfolio_dashboard tests
+```
+
+Tests cover validation, data layout/missingness, returns, portfolio aggregation, CAGR, volatility, Sharpe, Sortino, drawdown, VaR/CVaR, beta, tracking error, information ratio, risk-contribution reconciliation, allocation constraints, rebalancing, signal lag, costs, stress tests, and the integrated analysis pipeline.
+
+## Streamlit Community Cloud deployment
+
+1. Push this repository to GitHub.
+2. In Streamlit Community Cloud, create an app from the repository.
+3. Set the entrypoint to `app.py` and choose Python 3.11 if the runtime selector is available.
+4. Deploy. No secrets, database, paid API, system packages, or local paths are required.
+
+The app downloads data only after the user clicks **Run analysis**. `requirements.txt` uses bounded versions compatible with Community Cloud.
+
+## Methodology and assumptions
+
+Daily simple returns and 252 trading days are used consistently. Holdings use constant weights for historical portfolio returns. The benchmark is downloaded separately and aligned on common dates. Historical VaR/CVaR use the empirical lower tail. Risk contribution uses Euler decomposition. Optimization is long-only and uses historical sample means/covariances. The momentum signal uses short and long simple moving averages, is shifted by one full period, and pays proportional costs whenever position changes. See [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
+
+## Limitations and disclaimer
+
+yfinance data can be delayed, revised, incomplete, or temporarily unavailable. Common-date alignment can shorten history. Historical estimates and optimized weights are not forecasts. Results exclude taxes, liquidity constraints, market impact, and slippage beyond the configured cost, and do not model live execution. Historical stress windows are shown only when fully covered.
+
+For research and educational use only. This application does not provide personalized financial advice.
+
+## Screenshots
+
+After deployment, add desktop screenshots of Overview, Risk, Construction, and Research Report here. Keep real market-data timestamps visible and avoid presenting example outcomes as expected returns.
+
+## Interview-ready explanation
+
+“I built a modular Streamlit research dashboard that validates and aligns adjusted market data, computes portfolio and benchmark-relative analytics, decomposes risk using Euler contributions, compares explainable long-only allocations, produces a self-financing rebalance plan, and backtests a one-day-lagged momentum rule with costs. I separated calculations from presentation and tested the main pipeline entirely with synthetic data, so the financial logic is reproducible without network access.”
+
+## Suggested next improvement
+
+Add an optional user-uploaded local price CSV path using the same validation boundary. That would improve reproducibility and demos during yfinance outages without adding a database or changing the analytical model.
