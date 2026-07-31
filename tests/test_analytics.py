@@ -110,6 +110,16 @@ def test_allocation_methods_and_constraints(returns):
         assert weights.sum() == pytest.approx(1, abs=1e-6)
         assert ((weights >= 0) & (weights <= 1)).all()
 
+
+def test_optional_allocation_failure_does_not_abort_pipeline():
+    constant = pd.DataFrame({"A": [.01, .01, .01], "B": [.02, .02, .02]})
+    from portfolio_dashboard.construction import allocation_methods
+    methods, warnings = allocation_methods(constant, pd.Series({"A": .5, "B": .5}), 0.0)
+    assert {"Current", "Equal Weight", "Minimum Variance"}.issubset(methods.columns)
+    assert "Inverse Volatility" not in methods
+    assert "Maximum Sharpe" not in methods
+    assert len(warnings) == 2
+
 def test_rebalancing_reconciles():
     plan = rebalancing_plan(pd.Series({"A": .7, "B": .3}), pd.Series({"A": .5, "B": .5}), 100_000)
     assert plan["Estimated Buy / Sell"].sum() == pytest.approx(0)
@@ -123,7 +133,16 @@ def test_strategy_signal_lag_and_transaction_costs():
     expected = free["Signal"].shift(1).fillna(0)
     pd.testing.assert_series_equal(free["Position"], expected, check_names=False)
     assert (costly["Strategy Return"] <= free["Strategy Return"] + 1e-15).all()
-    assert metrics["Number of Trades"] == int((costly["Turnover"] > 0).sum())
+    evaluation = costly.iloc[3:]
+    assert metrics["Position Changes"] == int((evaluation["Turnover"] > 0).sum())
+    assert metrics["Warm-up Observations"] == 3
+    assert costly["Strategy Growth"].iloc[:3].isna().all()
+
+
+def test_strategy_rejects_insufficient_history():
+    prices = pd.Series([10, 11, 12], index=pd.bdate_range("2024-01-01", periods=3))
+    with pytest.raises(ValueError, match="requires more than 3"):
+        momentum_backtest(prices, 2, 3)
 
 def test_custom_and_historical_stress():
     weights = pd.Series({"A": .6, "B": .4}); shocks = pd.Series({"A": -.2, "B": -.1})
@@ -135,6 +154,25 @@ def test_custom_and_historical_stress():
     result = historical_stress(prices, weights, prices["A"])
     assert set(result["Scenario"]) == {"COVID-19 market decline", "2022 equity and rate shock"}
     assert result["Complete"].all()
+    assert {"Configured Start", "Configured End", "Actual Start", "Actual End"}.issubset(result.columns)
+
+
+def test_custom_shock_requires_explicit_complete_inputs():
+    weights = pd.Series({"A": .6, "B": .4})
+    with pytest.raises(ValueError, match="explicit shock"):
+        custom_shock(weights, pd.Series({"A": -.1}), 1000)
+    _, summary = custom_shock(weights, pd.Series({"A": .1, "B": .2}), 1000)
+    assert summary["Largest Loss Contributor"] == "No loss contributors"
+
+
+def test_historical_stress_uses_constant_weight_daily_returns(monkeypatch):
+    monkeypatch.setattr("portfolio_dashboard.stress.HISTORICAL_STRESS_PERIODS", {"Test": ("2024-01-01", "2024-01-04")})
+    dates = pd.bdate_range("2024-01-01", periods=4)
+    prices = pd.DataFrame({"A": [100, 200, 100, 200], "B": [100, 100, 200, 200]}, index=dates)
+    weights = pd.Series({"A": .5, "B": .5})
+    result = historical_stress(prices, weights, prices["A"])
+    expected = (1 + portfolio_returns(simple_returns(prices), weights)).prod() - 1
+    assert result.loc[0, "Portfolio Return"] == pytest.approx(expected)
 
 def test_main_pipeline_integration(returns):
     prices = 100 * (1 + returns).cumprod()

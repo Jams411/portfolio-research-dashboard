@@ -22,11 +22,19 @@ def inverse_volatility_weights(returns: pd.DataFrame) -> pd.Series:
 
 
 def _optimize(returns: pd.DataFrame, objective: str, risk_free_rate: float = 0.0) -> pd.Series:
+    if returns.empty or len(returns) < 2 or returns.shape[1] == 0:
+        raise RuntimeError("Optimization requires at least two return observations.")
+    if not np.isfinite(returns.to_numpy()).all():
+        raise RuntimeError("Optimization inputs must be finite and complete.")
     cov = returns.cov().to_numpy() * TRADING_DAYS
     expected = returns.mean().to_numpy() * TRADING_DAYS
+    if not np.isfinite(cov).all() or not np.isfinite(expected).all():
+        raise RuntimeError("Optimization estimates are not finite.")
     n = len(returns.columns)
     if n == 1:
         return pd.Series([1.0], index=returns.columns)
+    if objective == "max_sharpe" and np.max(np.diag(cov)) <= np.finfo(float).eps:
+        raise RuntimeError("Maximum-Sharpe optimization requires positive volatility.")
     def portfolio_vol(w: np.ndarray) -> float:
         return float(np.sqrt(max(w @ cov @ w, 0)))
     def target(w: np.ndarray) -> float:
@@ -52,13 +60,13 @@ def maximum_sharpe_weights(returns: pd.DataFrame, risk_free_rate: float = 0.0) -
 
 
 def allocation_methods(returns: pd.DataFrame, current: pd.Series, risk_free_rate: float) -> tuple[pd.DataFrame, list[str]]:
-    methods = {"Current": current, "Equal Weight": equal_weights(returns.columns),
-               "Inverse Volatility": inverse_volatility_weights(returns)}
+    methods = {"Current": current, "Equal Weight": equal_weights(returns.columns)}
     warnings: list[str] = []
-    for label, function in (("Minimum Variance", minimum_variance_weights),
+    for label, function in (("Inverse Volatility", inverse_volatility_weights),
+                            ("Minimum Variance", minimum_variance_weights),
                             ("Maximum Sharpe", lambda r: maximum_sharpe_weights(r, risk_free_rate))):
         try:
             methods[label] = function(returns)
-        except RuntimeError as exc:
+        except (ValueError, RuntimeError) as exc:
             warnings.append(f"{label} unavailable: {exc}")
     return pd.DataFrame(methods), warnings

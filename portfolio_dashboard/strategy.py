@@ -20,6 +20,10 @@ def momentum_backtest(prices: pd.Series, short_window: int = 50, long_window: in
         raise ValueError("Require 2 <= short window < long window.")
     if not 0 <= transaction_cost < 1:
         raise ValueError("Transaction cost must be between 0 and 100%.")
+    if len(clean) <= long_window:
+        raise ValueError(
+            f"Momentum analysis requires more than {long_window} price observations; received {len(clean)}."
+        )
     frame = pd.DataFrame({"Price": clean})
     frame["Short MA"] = clean.rolling(short_window, min_periods=short_window).mean()
     frame["Long MA"] = clean.rolling(long_window, min_periods=long_window).mean()
@@ -30,15 +34,17 @@ def momentum_backtest(prices: pd.Series, short_window: int = 50, long_window: in
     frame["Turnover"] = frame["Position"].diff().abs().fillna(frame["Position"].abs())
     frame["Transaction Cost"] = frame["Turnover"] * transaction_cost
     frame["Strategy Return"] = frame["Position"] * frame["Buy & Hold Return"] - frame["Transaction Cost"]
-    frame["Strategy Growth"] = (1 + frame["Strategy Return"]).cumprod()
-    frame["Buy & Hold Growth"] = (1 + frame["Buy & Hold Return"]).cumprod()
-    metrics = performance_metrics(frame["Strategy Return"], risk_free_rate)
-    trades = frame["Turnover"] > 0
-    active = frame.loc[frame["Position"] > 0, "Strategy Return"]
+    evaluation = frame.iloc[long_window:]
+    frame["Strategy Growth"] = (1 + evaluation["Strategy Return"]).cumprod()
+    frame["Buy & Hold Growth"] = (1 + evaluation["Buy & Hold Return"]).cumprod()
+    metrics = performance_metrics(evaluation["Strategy Return"], risk_free_rate)
+    metrics["Buy & Hold Total Return"] = float((1 + evaluation["Buy & Hold Return"]).prod() - 1)
+    changes = evaluation["Turnover"] > 0
+    active = evaluation.loc[evaluation["Position"] > 0, "Strategy Return"]
     gains, losses = active[active > 0].sum(), -active[active < 0].sum()
-    metrics.update({"Number of Trades": int(trades.sum()), "Turnover": float(frame["Turnover"].sum()),
-                    "Win Rate": float((active > 0).mean()) if not active.empty else float("nan"),
-                    "Profit Factor": float(gains / losses) if losses > 0 else float("nan"),
-                    "Time in Market": float(frame["Position"].mean()),
-                    "Warm-up Observations": int(ready.idxmax() != ready.index[0] and np.argmax(ready.to_numpy())) if ready.any() else len(frame)})
+    metrics.update({"Position Changes": int(changes.sum()), "Turnover": float(evaluation["Turnover"].sum()),
+                    "Positive Active-Day Rate": float((active > 0).mean()) if not active.empty else float("nan"),
+                    "Daily-Return Profit Factor": float(gains / losses) if losses > 0 else float("nan"),
+                    "Time in Market": float(evaluation["Position"].mean()),
+                    "Warm-up Observations": int(long_window)})
     return frame, metrics

@@ -40,13 +40,13 @@ Rebalancing assumes the stated portfolio value, no cash flow, fractional trading
 
 ## Momentum strategy
 
-The strategy operates on the first requested holding so the traded instrument is explicit. It is long when the short simple moving average is above the long simple moving average and otherwise in cash. A signal observed at close on day `t` becomes the position for day `t+1`; the signal is shifted one full period to avoid look-ahead bias. Before both averages exist, the strategy remains in cash. Proportional transaction cost is deducted on each absolute position change. The MVP does not search or optimize parameters.
+The strategy operates on the first requested holding so the traded instrument is explicit. It is long when the short simple moving average is above the long simple moving average and otherwise in cash. A signal observed at close on day `t` becomes the position for day `t+1`; the signal is shifted one full period to avoid look-ahead bias. Before both averages exist, the strategy remains in cash. Performance comparison begins only after the long-window warm-up, so strategy and buy-and-hold use the same evaluation period. Proportional transaction cost is deducted on each absolute position change. The MVP does not search or optimize parameters.
 
-Win rate is the fraction of in-market daily returns above zero. Profit factor is the sum of positive in-market daily returns divided by the absolute sum of negative in-market daily returns. Turnover is the sum of absolute position changes. These definitions are intentionally simple and are not trade-level round-trip analytics.
+Positive active-day rate is the fraction of in-market daily returns above zero. Daily-return profit factor is the sum of positive in-market daily returns divided by the absolute sum of negative in-market daily returns. Turnover is the sum of absolute position changes, and position changes count entries and exits separately. These definitions are intentionally simple and are not trade-level round-trip analytics.
 
 ## Stress tests
 
-Custom shocks are explicit per-asset instantaneous percentage shocks; the application does not infer asset classes. Portfolio impact is `Σw_i s_i`. Historical windows and exact dates live in `portfolio_dashboard/config.py`. A window is shown only when the selected common history covers both endpoints; results depend on actual available trading observations around those dates.
+Custom shocks are explicit per-asset instantaneous percentage shocks; the application does not infer asset classes or silently replace a missing shock with zero. Portfolio impact is `Σw_i s_i`. Historical windows and exact configured dates live in `portfolio_dashboard/config.py`. A window is shown only when the selected common history covers both endpoints, and the displayed result includes the actual first and last trading dates used. Historical portfolio returns use the same daily constant-weight method as the main analysis.
 
 ## General limitations and disclaimer
 
