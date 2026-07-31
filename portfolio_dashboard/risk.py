@@ -10,14 +10,23 @@ from .config import TRADING_DAYS
 
 def historical_var(returns: pd.Series, confidence: float = 0.95) -> float:
     """Positive loss threshold from the empirical lower-tail quantile."""
-    return float(-returns.dropna().quantile(1 - confidence))
+    if not 0 < confidence < 1:
+        raise ValueError("Confidence must be between 0 and 1.")
+    clean = returns.dropna()
+    if clean.empty:
+        return float("nan")
+    return max(0.0, float(-clean.quantile(1 - confidence)))
 
 
 def historical_cvar(returns: pd.Series, confidence: float = 0.95) -> float:
+    if not 0 < confidence < 1:
+        raise ValueError("Confidence must be between 0 and 1.")
     clean = returns.dropna()
+    if clean.empty:
+        return float("nan")
     cutoff = clean.quantile(1 - confidence)
     tail = clean[clean <= cutoff]
-    return float(-tail.mean()) if not tail.empty else float("nan")
+    return max(0.0, float(-tail.mean())) if not tail.empty else float("nan")
 
 
 def beta(portfolio: pd.Series, benchmark: pd.Series) -> float:
@@ -65,10 +74,11 @@ def benchmark_metrics(portfolio: pd.Series, benchmark: pd.Series) -> dict[str, f
     p, b = joined.iloc[:, 0], joined.iloc[:, 1]
     p_total, b_total = (1 + p).prod() - 1, (1 + b).prod() - 1
     relative = (1 + p).cumprod() / (1 + b).cumprod()
+    relative_peak = relative.cummax().clip(lower=1.0)
     return {
         "Portfolio Return": float(p_total), "Benchmark Return": float(b_total),
         "Excess Return": float(p_total - b_total), "Tracking Error": tracking_error(p, b),
         "Information Ratio": information_ratio(p, b), "Beta": beta(p, b),
         "Correlation": float(p.corr(b)),
-        "Relative Drawdown": float((relative / relative.cummax() - 1).min()),
+        "Relative Drawdown": float((relative / relative_peak - 1).min()),
     }

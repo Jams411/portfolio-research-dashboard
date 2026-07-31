@@ -44,14 +44,26 @@ def sharpe_ratio(returns: pd.Series, risk_free_rate: float = 0.0) -> float:
 
 
 def sortino_ratio(returns: pd.Series, risk_free_rate: float = 0.0) -> float:
+    """Annualized excess CAGR divided by target downside deviation.
+
+    The annual risk-free rate is converted to an equivalent daily minimum
+    acceptable return. Downside deviation includes every observation, with
+    returns above the target contributing zero downside risk.
+    """
     clean = returns.dropna()
-    downside = clean[clean < 0].std(ddof=1) * np.sqrt(TRADING_DAYS)
+    if clean.empty or risk_free_rate <= -1:
+        return float("nan")
+    daily_target = (1.0 + risk_free_rate) ** (1.0 / TRADING_DAYS) - 1.0
+    shortfall = np.minimum(clean.to_numpy() - daily_target, 0.0)
+    downside = float(np.sqrt(np.mean(shortfall ** 2)) * np.sqrt(TRADING_DAYS))
     return float((cagr(clean) - risk_free_rate) / downside) if downside > 0 else float("nan")
 
 
 def drawdown_series(returns: pd.Series) -> pd.Series:
+    """Drawdown from the running peak, including initial wealth of 1.0."""
     wealth = (1 + returns.fillna(0)).cumprod()
-    return wealth / wealth.cummax() - 1
+    running_peak = wealth.cummax().clip(lower=1.0)
+    return wealth / running_peak - 1
 
 
 def max_drawdown(returns: pd.Series) -> float:

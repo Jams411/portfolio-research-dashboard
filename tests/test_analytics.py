@@ -58,6 +58,19 @@ def test_performance_formulas():
     dd = drawdown_series(pd.Series([.1, -.2, .1]))
     assert max_drawdown(pd.Series([.1, -.2, .1])) == pytest.approx(dd.min())
 
+
+def test_drawdown_includes_initial_wealth_baseline():
+    returns = pd.Series([-.10, .05], index=pd.bdate_range("2024-01-01", periods=2))
+    assert drawdown_series(returns).iloc[0] == pytest.approx(-.10)
+    assert max_drawdown(returns) == pytest.approx(-.10)
+
+
+def test_sortino_uses_all_periods_for_target_downside_deviation():
+    values = pd.Series([.01, -.02, .03, -.01])
+    downside = np.sqrt(np.mean(np.minimum(values.to_numpy(), 0.0) ** 2)) * np.sqrt(252)
+    expected = cagr(values) / downside
+    assert sortino_ratio(values) == pytest.approx(expected)
+
 def test_var_cvar_beta_and_relative_metrics():
     benchmark = pd.Series([-.03, -.02, -.01, 0, .01, .02])
     portfolio = benchmark * 1.5
@@ -66,6 +79,22 @@ def test_var_cvar_beta_and_relative_metrics():
     assert beta(portfolio, benchmark) == pytest.approx(1.5)
     assert tracking_error(portfolio, benchmark) > 0
     assert np.isfinite(information_ratio(portfolio + .001, benchmark))
+
+
+def test_var_and_cvar_are_nonnegative_loss_measures():
+    positive = pd.Series([.01, .02, .03])
+    assert historical_var(positive) == 0.0
+    assert historical_cvar(positive) == 0.0
+    with pytest.raises(ValueError):
+        historical_var(positive, 1.0)
+
+
+def test_relative_drawdown_includes_initial_relative_wealth():
+    portfolio = pd.Series([-.10, .05])
+    benchmark = pd.Series([-.05, .01])
+    metrics = __import__("portfolio_dashboard.risk", fromlist=["benchmark_metrics"]).benchmark_metrics(portfolio, benchmark)
+    first_relative = (1 - .10) / (1 - .05) - 1
+    assert metrics["Relative Drawdown"] == pytest.approx(first_relative)
 
 def test_risk_contributions_reconcile(returns):
     weights = pd.Series({"A": .6, "B": .4})

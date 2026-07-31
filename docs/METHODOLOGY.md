@@ -12,15 +12,15 @@ Daily return is the simple return `r_t = P_t / P_(t-1) - 1`. Portfolio return as
 - CAGR: `(Π(1+r_t))^(252/n)-1`
 - Annualized volatility: sample standard deviation of daily returns times `sqrt(252)`
 - Sharpe: `(CAGR - annual risk-free rate) / annualized volatility`
-- Sortino: `(CAGR - annual risk-free rate) / annualized downside deviation`
-- Drawdown: wealth divided by its running peak minus one
+- Sortino: `(CAGR - annual risk-free rate) / annualized target downside deviation`; the annual risk-free rate is converted to an equivalent daily minimum acceptable return, and every observation contributes either its squared shortfall or zero
+- Drawdown: wealth divided by its running peak minus one, with the initial portfolio value included as the first peak
 - Calmar: CAGR divided by the absolute maximum drawdown
 
 The risk-free input is annual and is not converted into a daily cash return. It is used in annualized ratios only. A 252-trading-day convention is used throughout.
 
 ## Risk and benchmark comparison
 
-Historical 95% VaR is reported as a positive loss magnitude at the empirical fifth percentile. Historical 95% CVaR is the positive magnitude of mean returns at or below that percentile. These are backward-looking one-day statistics and can understate unseen tail events.
+Historical 95% VaR is reported as a nonnegative loss magnitude at the empirical fifth percentile. Historical 95% CVaR is the nonnegative magnitude of mean returns at or below that percentile. If the observed lower tail contains gains rather than losses, the reported loss measure is zero. These are backward-looking one-day statistics and can understate unseen tail events.
 
 Beta is sample covariance of portfolio and benchmark daily returns divided by benchmark daily variance. Tracking error is the annualized sample standard deviation of active daily returns. Information ratio is annualized mean active return divided by tracking error. Relative drawdown is computed from portfolio wealth divided by benchmark wealth.
 
