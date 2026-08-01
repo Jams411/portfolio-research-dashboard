@@ -79,6 +79,18 @@ def test_research_workspace_is_initialized_from_computed_analysis(offline_app):
     assert any(button.label == "Run what-if analysis" for button in offline_app.button)
 
 
+def test_construction_and_rebalancing_view_runs_offline(offline_app):
+    widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, QQQ, TLT, GLD")
+    widget(offline_app.text_input, "Weights (%)").set_value("40,30,20,10")
+    run_analysis(offline_app)
+    offline_app.session_state["analysis_tab"] = "Construction & Rebalancing"
+    offline_app.run(timeout=30)
+    assert not offline_app.exception
+    assert any(item.value == "Portfolio construction and rebalancing" for item in offline_app.subheader)
+    assert any(item.label == "Policy detail" for item in offline_app.selectbox)
+    assert any(item.label == "Construct target-return portfolio" for item in offline_app.button)
+
+
 def test_failed_run_clears_prior_results_and_successful_rerun_recovers(offline_app):
     widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, AGG, GLD")
     widget(offline_app.text_input, "Weights (%)").set_value("50,35,15")

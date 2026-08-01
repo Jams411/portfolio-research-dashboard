@@ -25,7 +25,7 @@ from portfolio_dashboard.risk import historical_cvar, historical_var
 from portfolio_dashboard.strategy import momentum_backtest
 from portfolio_dashboard.stress import custom_shock, historical_stress
 
-st.set_page_config(page_title="PortfolioLens", page_icon="📊", layout="wide")
+st.set_page_config(page_title="PortfolioLens", page_icon=":material/analytics:", layout="wide")
 
 @st.cache_data(ttl=3600, max_entries=32, show_spinner=False)
 def cached_prices(tickers: tuple[str, ...], start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
@@ -186,7 +186,7 @@ if run:
 if "result" not in st.session_state:
     st.info("Choose a preset or enter portfolio inputs in the sidebar, then select **Run analysis**. No market data are downloaded until then.")
     st.markdown("### What this application answers")
-    st.write("How has the portfolio performed? What risks and assets drive results? How does it compare with a benchmark? What allocation trades, momentum behavior, and stress losses merit attention?")
+    st.write("How has the portfolio performed? What drives risk? How does it compare with a benchmark? Which historical long-only portfolios satisfy explicit constraints? How do rebalancing policies, implementation costs, strategy behavior, and stress losses differ?")
     st.stop()
 
 r = st.session_state["result"]
@@ -262,9 +262,11 @@ if tabs[2].open:
         st.subheader("Risk and diversification")
         var95, cvar95 = historical_var(a.portfolio_returns), historical_cvar(a.portfolio_returns)
         effective = 1 / float((r["weights"] ** 2).sum())
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Historical VaR (95%)", pct(var95)); c2.metric("Historical CVaR (95%)", pct(cvar95))
-        c3.metric("Effective holdings", f"{effective:.2f}"); c4.metric("Largest risk contributor", a.volatility_contributions.idxmax())
+        with st.container(horizontal=True):
+            st.metric("Historical VaR (95%)", pct(var95), border=True)
+            st.metric("Historical CVaR (95%)", pct(cvar95), border=True)
+            st.metric("Effective holdings", f"{effective:.2f}", border=True)
+            st.metric("Largest risk contributor", a.volatility_contributions.idxmax(), border=True)
         corr = a.asset_returns.corr(); cov = a.asset_returns.cov() * TRADING_DAYS
         fig = px.imshow(corr, text_auto=".2f", zmin=-1, zmax=1, color_continuous_scale="RdBu_r", title="Daily return correlations")
         st.plotly_chart(fig, width="stretch", theme="streamlit")
@@ -480,6 +482,7 @@ if tabs[4].open:
                             "Pass": st.column_config.CheckboxColumn(),
                             "Breach": st.column_config.NumberColumn(format="percent"),
                         })
+        st.markdown("**Allocation weights and target trade plan**")
         st.dataframe(a.allocations, width="stretch", column_config={
             column: st.column_config.NumberColumn(format="percent") for column in a.allocations.columns
         })
@@ -531,15 +534,18 @@ if tabs[4].open:
                 "Transaction Costs": st.column_config.NumberColumn(format="dollar"),
             })
         selected_trades = r["policy_trades"][selected_policy]
-        st.dataframe(selected_trades, width="stretch", hide_index=True, column_config={
-            "Date": st.column_config.DateColumn(format="MMM DD, YYYY"),
-            "Before Weight": st.column_config.NumberColumn(format="percent"),
-            "Target Weight": st.column_config.NumberColumn(format="percent"),
-            "After Weight": st.column_config.NumberColumn(format="percent"),
-            "Trade Before Cost": st.column_config.NumberColumn(format="dollar"),
-            "Estimated Transaction Cost": st.column_config.NumberColumn(format="dollar"),
-            "Drift Before Trade": st.column_config.NumberColumn(format="percent"),
-        })
+        if selected_trades.empty:
+            st.info("No trades were generated for this policy and sample.")
+        else:
+            st.dataframe(selected_trades, width="stretch", hide_index=True, column_config={
+                "Date": st.column_config.DateColumn(format="MMM DD, YYYY"),
+                "Before Weight": st.column_config.NumberColumn(format="percent"),
+                "Target Weight": st.column_config.NumberColumn(format="percent"),
+                "After Weight": st.column_config.NumberColumn(format="percent"),
+                "Trade Before Cost": st.column_config.NumberColumn(format="dollar"),
+                "Estimated Transaction Cost": st.column_config.NumberColumn(format="dollar"),
+                "Drift Before Trade": st.column_config.NumberColumn(format="percent"),
+            })
         with st.container(horizontal=True):
             st.download_button(
                 "Download policy history", policy_history.to_csv(),
@@ -559,9 +565,11 @@ if tabs[5].open:
             f"The shared strategy/buy-and-hold evaluation begins {first_evaluation.date()}."
         )
         stats = r["strategy_stats"]
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Strategy return", pct(stats["Total Return"])); c2.metric("Buy & hold", pct(stats["Buy & Hold Total Return"]))
-        c3.metric("Position changes", str(stats["Position Changes"])); c4.metric("Time in market", pct(stats["Time in Market"]))
+        with st.container(horizontal=True):
+            st.metric("Strategy return", pct(stats["Total Return"]), border=True)
+            st.metric("Buy & hold", pct(stats["Buy & Hold Total Return"]), border=True)
+            st.metric("Position changes", str(stats["Position Changes"]), border=True)
+            st.metric("Time in market", pct(stats["Time in Market"]), border=True)
         line_chart(r["strategy_data"][["Price", "Short MA", "Long MA"]], "Price and moving averages", "Price")
         line_chart(r["strategy_data"][["Strategy Growth", "Buy & Hold Growth"]], "Strategy versus buy-and-hold", "Growth of $1")
         dd_compare = pd.concat([
@@ -585,9 +593,10 @@ if tabs[6].open:
         shock_values = pd.Series(edited["Shock (%)"].to_numpy(dtype=float) / 100, index=edited["Ticker"])
         st.session_state["current_shocks"] = shock_values
         shock_table, shock_summary = custom_shock(r["weights"], shock_values, r["initial_value"])
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Estimated impact", pct(shock_summary["Estimated Portfolio Impact"])); c2.metric("After-shock value", money(shock_summary["After Value"]))
-        c3.metric("Largest loss contributor", shock_summary["Largest Loss Contributor"])
+        with st.container(horizontal=True):
+            st.metric("Estimated impact", pct(shock_summary["Estimated Portfolio Impact"]), border=True)
+            st.metric("After-shock value", money(shock_summary["After Value"]), border=True)
+            st.metric("Largest loss contributor", shock_summary["Largest Loss Contributor"], border=True)
         st.dataframe(shock_table, width="stretch", column_config={
             "Weight": st.column_config.NumberColumn(format="percent"),
             "Shock": st.column_config.NumberColumn(format="percent"),
@@ -751,6 +760,11 @@ if tabs[8].open:
             "Performance metrics": metric_frame(a.performance).to_csv(),
             "Asset metrics": attribution.to_csv(),
             "Daily returns": a.asset_returns.assign(Portfolio=a.portfolio_returns).to_csv(),
+            "Portfolio comparison": allocation_comparison.to_csv(),
+            "Efficient frontier": r["frontier"].to_csv(),
+            "Frontier weights": r["frontier_weights"].to_csv(),
+            "Rebalancing policies": r["policy_summary"].to_csv(),
+            "Deterministic insights": insights.to_csv(index=False),
         }
         with st.container(horizontal=True):
             st.download_button("Download HTML report", report, "portfoliolens_research_report.html", "text/html")
