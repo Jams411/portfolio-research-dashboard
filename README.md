@@ -69,7 +69,7 @@ docs/images/                        reproducible application screenshot gallery
 CHANGELOG.md                        user-facing milestone changes
 ```
 
-For module ownership, dependencies, state, and end-to-end diagrams, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+For module ownership, dependencies, state, and end-to-end diagrams, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Course-supported derivations and advanced-model boundaries are in the [Portfolio Management educational companion](docs/education/PORTFOLIO_MANAGEMENT_COMPANION.md).
 
 ## Screenshot gallery
 

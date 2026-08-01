@@ -25,6 +25,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - Phase 2C rebalancing realism: buy-and-hold drift, monthly/quarterly/annual and threshold policies, one-way turnover, proportional transaction costs, rebalance dates, before/after weights, and exportable histories
 - Phase 2D benchmark evaluation completion: standardized cumulative excess versus annualized active return labels; tracking error, information ratio, CAPM, Jensen, Treynor, regression, and risk decomposition verified without duplication
 - Phase 2E constrained construction: explicit asset bands, exclusions, user-defined groups/caps, target-return integration, linear feasibility checks, and constraint validation summaries
+- Phase 4 educational companion: two-asset variance derivation, frontier/CAL intuition, CAPM/single-index interpretation, and educational-only Treynor–Black/APT/multifactor boundaries
 
 ## In progress
 
