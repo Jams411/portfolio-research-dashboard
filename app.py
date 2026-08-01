@@ -8,7 +8,7 @@ import plotly.express as px
 import streamlit as st
 
 from portfolio_dashboard.config import PRESETS, TRADING_DAYS
-from portfolio_dashboard.data import MarketDataError, download_prices, parse_tickers, validate_dates, validate_weights
+from portfolio_dashboard.data import MarketDataError, download_prices, parse_tickers, parse_weight_input, validate_dates
 from portfolio_dashboard.formatting import metric_value, money, pct, ratio
 from portfolio_dashboard.performance import drawdown_series, monthly_returns
 from portfolio_dashboard.pipeline import run_analysis
@@ -46,36 +46,61 @@ def line_chart(frame: pd.DataFrame, title: str, y_title: str) -> None:
     st.plotly_chart(fig, width="stretch")
 
 
+ANALYSIS_STATE_KEYS = (
+    "result", "current_shocks", "selected_target_method", "normalized", "analysis_tab", "shock_editor"
+)
+
+
+def clear_analysis_state() -> None:
+    """Remove outputs whose inputs no longer match the current widget values."""
+    for key in ANALYSIS_STATE_KEYS:
+        st.session_state.pop(key, None)
+
+
 st.title("Portfolio Research Dashboard")
 st.caption("Historical portfolio analytics, benchmark-relative research, allocation decisions, momentum testing and stress analysis.")
 
 with st.sidebar:
     st.header("Analysis inputs")
-    preset = st.selectbox("Example portfolio", ["Custom"] + list(PRESETS))
+    preset = st.selectbox("Example portfolio", ["Custom"] + list(PRESETS), on_change=clear_analysis_state)
     default_tickers, default_weights = PRESETS.get(preset, ("SPY, AGG, GLD", "50, 35, 15"))
-    ticker_text = st.text_input("Portfolio tickers", value=default_tickers, help="Comma-separated; duplicates are removed.")
-    equal = st.checkbox("Use equal weights", value=False)
+    ticker_text = st.text_input(
+        "Portfolio tickers", value=default_tickers, help="Comma-separated; duplicates are removed.",
+        on_change=clear_analysis_state,
+    )
+    equal = st.checkbox("Use equal weights", value=False, on_change=clear_analysis_state)
     weight_text = st.text_input(
         "Weights (%)", value=default_weights, disabled=equal,
         help="Same order as tickers. Approximate totals within 0.1% are normalized with notice.",
+        on_change=clear_analysis_state,
     )
-    start_input = st.date_input("Start date", date(2018, 1, 1))
-    end_input = st.date_input("End date", date.today())
-    benchmark_ticker = st.text_input("Benchmark", "SPY", help="Enter exactly one benchmark ticker.")
-    initial_value = st.number_input("Initial portfolio value", min_value=1.0, value=100000.0, step=5000.0)
-    risk_free = st.number_input("Annual risk-free rate (%)", min_value=-99.0, max_value=100.0, value=4.0, step=0.1) / 100
+    start_input = st.date_input("Start date", date(2018, 1, 1), on_change=clear_analysis_state)
+    end_input = st.date_input("End date", date.today(), on_change=clear_analysis_state)
+    benchmark_ticker = st.text_input(
+        "Benchmark", "SPY", help="Enter exactly one benchmark ticker.", on_change=clear_analysis_state
+    )
+    initial_value = st.number_input(
+        "Initial portfolio value", min_value=1.0, value=100000.0, step=5000.0,
+        on_change=clear_analysis_state,
+    )
+    risk_free = st.number_input(
+        "Annual risk-free rate (%)", min_value=-99.0, max_value=100.0, value=4.0, step=0.1,
+        on_change=clear_analysis_state,
+    ) / 100
     transaction_cost = st.number_input(
-        "Transaction cost per position change (%)", min_value=0.0, max_value=10.0, value=0.10, step=0.05
+        "Transaction cost per position change (%)", min_value=0.0, max_value=10.0, value=0.10, step=0.05,
+        on_change=clear_analysis_state,
     ) / 100
     with st.expander("Momentum parameters"):
-        short_window = st.number_input("Short moving average", 2, 500, 50)
-        long_window = st.number_input("Long moving average", 3, 1000, 200)
+        short_window = st.number_input("Short moving average", 2, 500, 50, on_change=clear_analysis_state)
+        long_window = st.number_input("Long moving average", 3, 1000, 200, on_change=clear_analysis_state)
     run = st.button("Run analysis", type="primary", width="stretch")
     if st.button("Reset", width="stretch"):
         st.session_state.clear()
         st.rerun()
 
 if run:
+    clear_analysis_state()
     try:
         tickers = parse_tickers(ticker_text)
         benchmark_candidates = parse_tickers(benchmark_ticker)
@@ -83,8 +108,7 @@ if run:
             raise ValueError("Enter exactly one benchmark ticker.")
         benchmark = benchmark_candidates[0]
         start, end = validate_dates(start_input, end_input)
-        raw_weights = [1.0] * len(tickers) if equal else [float(x.strip()) for x in weight_text.split(",") if x.strip()]
-        weights, normalized = validate_weights(tickers, raw_weights)
+        weights, normalized = parse_weight_input(tickers, weight_text, equal_weight=equal)
         if short_window >= long_window:
             raise ValueError("Short moving-average window must be below the long window.")
         with st.spinner("Downloading adjusted market history and running analytics…"):

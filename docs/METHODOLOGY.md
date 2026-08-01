@@ -34,6 +34,8 @@ Weight concentration is shown directly and through effective number of holdings 
 
 ## Construction and rebalancing
 
+Manual UI weights may be entered as percentage points (for example `50,35,15`) or decimal weights (`0.50,0.35,0.15`) and are converted to decimal weights exactly once. Equal-weight mode ignores the disabled manual field and constructs `1/N` directly from the validated ticker count.
+
 Equal weights allocate `1/N`. Inverse-volatility weights are proportional to `1/σ_i`. Minimum variance minimizes `w′Σw`; maximum Sharpe maximizes historical arithmetic annualized excess return divided by portfolio volatility. Both optimized methods constrain every weight to `[0,1]` and the sum to one. A failed solver result is never displayed as valid. Historical inputs are estimates, not forecasts, and “maximum Sharpe” names the mathematical objective rather than a recommendation.
 
 Rebalancing assumes the stated portfolio value, no cash flow, fractional trading, and no taxes. Estimated trade is target dollars minus current dollars. Buys and sells reconcile before costs and rounding. By default, only an exactly unchanged weight is labeled Hold; callers may opt into a display threshold, which changes the action label but not the disclosed target-allocation gap.

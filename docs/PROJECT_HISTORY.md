@@ -79,3 +79,12 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - **Course or career connection:** Investment-research communication, interview presentation, model-scope disclosure, and reproducible deployment practice.
 - **Tradeoffs:** Retained the existing nine-tab navigation because responsive scrolling remained functional; did not add product features or alter financial methodology.
 - **Evidence:** UI commit `2c55055`; documentation and screenshot commits follow this entry in Git history.
+
+## 2026-08-01 — Production weight and stale-state correction
+
+- **What changed:** Equal-weight mode now constructs `1/N` directly and ignores the disabled manual field; manual percentage parsing is centralized; analysis-defining input changes and failed runs clear prior outputs.
+- **Why it changed:** Production exposed a mode-boundary error that interpreted three equal-weight placeholders as a 3% portfolio and left old results visible after failure.
+- **Problem solved:** Three-asset equal weight now produces approximately 33.333% per asset, `50,35,15` converts once to `0.50,0.35,0.15`, and exports cannot remain attached to stale inputs.
+- **Course or career connection:** Financial input correctness, state integrity, operational controls, and trustworthy investment-research presentation.
+- **Tradeoffs:** Any input edit hides the prior result and requires a fresh successful run; this is intentionally stricter than retaining stale analysis with a warning.
+- **Evidence:** Regression tests and the production-fix commit created with this milestone.

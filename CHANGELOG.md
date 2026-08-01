@@ -13,6 +13,12 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 - Collapsed secondary momentum controls, added a persistent research-only scope reminder, and established a native Streamlit showcase theme without changing analytics.
 - Expanded the README with a screenshot gallery, deployment status, architecture links, demonstration guidance, and the evidence-labeled project story.
 
+### Fixed
+
+- Equal-weight mode now ignores disabled manual weights and constructs `1/N` directly.
+- Manual values such as `50,35,15` are converted once to decimal weights with accurate sum validation.
+- Input changes and failed runs now remove prior metrics, charts, reports, and exports instead of displaying stale analysis.
+
 ### Documentation
 
 - Added permanent project history, decision, roadmap, changelog, and documentation-governance records.

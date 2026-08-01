@@ -131,3 +131,13 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Alternatives considered:** Expanding `PROJECT_HISTORY.md` into a long narrative, relying on source inspection alone, or keeping architecture knowledge in conversation history.
 - **Consequences:** Product-direction changes may require a journal entry; module, dependency, startup, state, testing, or deployment changes require an architecture update.
 - **Status:** Accepted.
+
+## D014 — Invalidate results when analysis inputs change or a run fails
+
+- **Date:** 2026-08-01
+- **Decision:** Clear analysis outputs whenever an analysis-defining widget changes and before every submitted run; publish a new result only after the complete run succeeds.
+- **Context:** A failed production run could leave metrics, charts, reports, and exports from a prior input set visible beneath the new error.
+- **Rationale:** Displayed outputs must have one unambiguous relationship to the visible inputs. Hiding stale results is safer than presenting mismatched financial analysis.
+- **Alternatives considered:** Preserve prior results with a stale-data banner or retain outputs only during execution failures.
+- **Consequences:** Editing any analysis input hides the existing result until the user completes another successful run. Failed runs show an actionable error and empty-state guidance only.
+- **Status:** Accepted.

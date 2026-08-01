@@ -302,6 +302,8 @@ There is no hidden global mutable application model. Streamlit session state sto
 
 Market data are cached by the tuple of tickers and requested dates. Reset clears session state and reruns the app. Reports recompute custom stress from `current_shocks` and select the active rebalancing plan, preventing stale defaults from entering downloads.
 
+Every analysis-defining widget invalidates these output keys when its value changes. A submitted run also clears them before validation and only stores a replacement `result` after the full workflow succeeds. This ensures displayed metrics and downloads always correspond to the visible successful input set; validation or execution failures cannot reveal stale outputs.
+
 ## I. Testing architecture
 
 The test suite is intentionally offline:

@@ -4,7 +4,10 @@ import pandas as pd
 import pytest
 
 from portfolio_dashboard.construction import inverse_volatility_weights, maximum_sharpe_weights, minimum_variance_weights
-from portfolio_dashboard.data import InputError, MarketDataError, align_prices, extract_adjusted_prices, parse_tickers, validate_weights
+from portfolio_dashboard.data import (
+    InputError, MarketDataError, align_prices, extract_adjusted_prices, parse_tickers,
+    parse_weight_input, validate_weights,
+)
 from portfolio_dashboard.performance import (annualized_volatility, cagr, drawdown_series, max_drawdown,
     performance_metrics, portfolio_returns, sharpe_ratio, simple_returns, sortino_ratio)
 from portfolio_dashboard.pipeline import run_analysis
@@ -29,6 +32,22 @@ def test_ticker_and_weight_validation():
     assert normalized.sum() == pytest.approx(1); assert changed
     with pytest.raises(InputError): validate_weights(["A"], [-1])
     with pytest.raises(InputError): validate_weights(["A", "B"], [1])
+
+
+def test_weight_input_parses_percentages_exactly_once():
+    percentages, changed = parse_weight_input(["A", "B", "C"], "50,35,15")
+    decimals, decimal_changed = parse_weight_input(["A", "B", "C"], "0.50,0.35,0.15")
+    expected = pd.Series({"A": .50, "B": .35, "C": .15})
+    pd.testing.assert_series_equal(percentages, expected)
+    pd.testing.assert_series_equal(decimals, expected)
+    assert not changed and not decimal_changed
+
+
+def test_equal_weight_input_ignores_stale_manual_value():
+    weights, changed = parse_weight_input(["A", "B", "C"], "invalid, stale, weights", equal_weight=True)
+    assert weights.tolist() == pytest.approx([1 / 3, 1 / 3, 1 / 3])
+    assert weights.sum() == pytest.approx(1.0)
+    assert not changed
 
 def test_simple_and_portfolio_returns():
     prices = pd.DataFrame({"A": [100, 110, 99], "B": [100, 100, 110]})

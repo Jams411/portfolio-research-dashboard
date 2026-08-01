@@ -75,6 +75,27 @@ def validate_weights(
     raise InputError(f"Weights sum to {total:.2%}; they must sum to approximately 100%.")
 
 
+def parse_weight_input(
+    tickers: Sequence[str], value: str, *, equal_weight: bool = False
+) -> tuple[pd.Series, bool]:
+    """Return validated portfolio weights from a UI percentage string or equal mode.
+
+    Equal-weight mode deliberately ignores ``value`` and constructs decimal weights
+    directly. Manual values may be percentage points (``50,35,15``) or decimals
+    (``0.50,0.35,0.15``); conversion to decimals occurs exactly once in
+    :func:`validate_weights`.
+    """
+    if not tickers:
+        raise InputError("Enter at least one ticker symbol.")
+    if equal_weight:
+        return pd.Series(1.0 / len(tickers), index=list(tickers), dtype=float), False
+    try:
+        raw_weights = [float(item.strip()) for item in value.split(",") if item.strip()]
+    except (AttributeError, ValueError) as exc:
+        raise InputError("Weights must be comma-separated numeric values.") from exc
+    return validate_weights(tickers, raw_weights)
+
+
 def extract_adjusted_prices(raw: pd.DataFrame, tickers: Sequence[str]) -> pd.DataFrame:
     """Extract adjusted prices safely from either yfinance column layout."""
     if raw is None or raw.empty:
