@@ -191,3 +191,13 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Alternatives considered:** Monte Carlo portfolio clouds, unconstrained analytical frontiers, borrowing beyond the tangency portfolio, and using CAGR as expected return.
 - **Consequences:** Frontier positions can be unstable because historical means and covariances are estimates. Solver and feasibility failures are displayed, and no optimized allocation is described as a forecast or recommendation.
 - **Status:** Accepted.
+
+## D019 — Model rebalancing with holdings-level path accounting
+
+- **Date:** 2026-08-01
+- **Decision:** Simulate buy-and-hold, monthly, quarterly, annual, and threshold policies by drifting dollar holdings with observed asset returns and trading only at explicit triggers. Calculate one-way turnover as half gross traded notional and charge proportional costs on gross traded notional.
+- **Context:** The main portfolio series assumes constant weights each day and cannot answer questions about natural weight drift, rebalancing frequency, or implementation cost.
+- **Rationale:** Holdings-level accounting makes trade dates, before/after weights, turnover, costs, and value continuity auditable while preserving the existing analytical series for portfolio mathematics.
+- **Alternatives considered:** Silently reinterpret the main series, rebalance daily, apply costs every period regardless of trades, or approximate drift from portfolio-level returns.
+- **Consequences:** Simulation results differ from the main constant-weight scorecard by design. They assume fractional trading, close-of-period execution, and no taxes, cash flows, liquidity limits, or market impact.
+- **Status:** Accepted.

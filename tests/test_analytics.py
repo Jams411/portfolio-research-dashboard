@@ -19,7 +19,9 @@ from portfolio_dashboard.performance import (
     simple_returns, sortino_ratio,
 )
 from portfolio_dashboard.pipeline import run_analysis
-from portfolio_dashboard.rebalancing import rebalancing_plan
+from portfolio_dashboard.rebalancing import (
+    compare_rebalancing_policies, rebalancing_plan, simulate_rebalancing,
+)
 from portfolio_dashboard.risk import (
     benchmark_metrics, beta, historical_cvar, historical_var, information_ratio,
     single_index_regression, tracking_error, volatility_contributions,
@@ -294,6 +296,81 @@ def test_rebalancing_default_only_holds_exact_target_weights():
     exact = rebalancing_plan(pd.Series({"A": .5, "B": .5}), pd.Series({"A": .5, "B": .5}), 100_000)
     assert set(exact["Action"]) == {"Hold"}
 
+
+def test_buy_and_hold_drifts_without_trades_and_preserves_value_continuity():
+    index = pd.bdate_range("2024-01-01", periods=6)
+    returns = pd.DataFrame({"A": [.10, 0, 0, 0, 0, 0], "B": [0, 0, 0, 0, 0, 0]}, index=index)
+    daily, trades = simulate_rebalancing(returns, pd.Series({"A": .5, "B": .5}), 1_000, "Buy and Hold", .01)
+    assert trades.empty and not daily["Rebalanced"].any()
+    assert daily.iloc[-1]["Portfolio Value"] == pytest.approx(1_050)
+    assert daily.iloc[-1]["Maximum Drift"] > 0
+    reconstructed = 1_000 * (1 + daily["Daily Return"]).cumprod()
+    assert reconstructed.tolist() == pytest.approx(daily["Portfolio Value"].tolist())
+
+
+def test_monthly_schedule_trades_only_at_completed_month_end():
+    index = pd.to_datetime(["2024-01-30", "2024-01-31", "2024-02-01", "2024-02-29", "2024-03-01"])
+    returns = pd.DataFrame({"A": [.02] * 5, "B": [0] * 5}, index=index)
+    daily, trades = simulate_rebalancing(returns, pd.Series({"A": .5, "B": .5}), 1_000, "Monthly")
+    dates = list(daily.index[daily["Rebalanced"]])
+    assert dates == [pd.Timestamp("2024-01-31"), pd.Timestamp("2024-02-29")]
+    assert set(trades["Date"]) == set(dates)
+
+
+@pytest.mark.parametrize(
+    ("policy", "expected"),
+    [("Quarterly", ["2024-03-29", "2024-06-28", "2024-09-30"]),
+     ("Annual", [])],
+)
+def test_quarterly_and_annual_schedules_use_completed_periods(policy, expected):
+    index = pd.bdate_range("2024-01-02", "2024-12-31")
+    returns = pd.DataFrame({"A": .001, "B": 0.0}, index=index)
+    daily, _ = simulate_rebalancing(returns, pd.Series({"A": .5, "B": .5}), 1_000, policy)
+    dates = [date.date().isoformat() for date in daily.index[daily["Rebalanced"]]]
+    assert dates == expected
+
+
+def test_threshold_rebalancing_triggers_only_after_band_breach():
+    index = pd.bdate_range("2024-01-01", periods=4)
+    returns = pd.DataFrame({"A": [.01, .01, .50, 0], "B": [0, 0, 0, 0]}, index=index)
+    daily, _ = simulate_rebalancing(
+        returns, pd.Series({"A": .5, "B": .5}), 1_000, "Threshold", threshold=.05,
+    )
+    assert daily["Rebalanced"].sum() == 1
+    trigger_date = daily.index[daily["Rebalanced"]][0]
+    assert trigger_date == index[2]
+    assert daily.loc[trigger_date, "Maximum Drift"] == pytest.approx(0)
+
+
+def test_rebalancing_turnover_cost_and_trade_reconciliation():
+    index = pd.to_datetime(["2024-01-31", "2024-02-01"])
+    returns = pd.DataFrame({"A": [.20, 0], "B": [0, 0]}, index=index)
+    daily, trades = simulate_rebalancing(
+        returns, pd.Series({"A": .5, "B": .5}), 1_000, "Monthly", transaction_cost_rate=.01,
+    )
+    first = daily.iloc[0]
+    assert first["Turnover"] == pytest.approx(50 / 1_100)
+    assert first["Transaction Costs"] == pytest.approx(1.0)
+    dated = trades[trades["Date"] == index[0]]
+    assert dated["Trade Before Cost"].sum() == pytest.approx(0, abs=1e-10)
+    assert dated["Estimated Transaction Cost"].sum() == pytest.approx(first["Transaction Costs"])
+    assert first["Portfolio Value"] == pytest.approx(first["Gross Value Before Trade"] - first["Transaction Costs"])
+
+
+def test_rebalancing_policy_comparison_uses_common_history():
+    index = pd.bdate_range("2023-01-02", "2024-12-31")
+    returns = pd.DataFrame({
+        "A": np.sin(np.arange(len(index)) / 13) * .01,
+        "B": np.cos(np.arange(len(index)) / 17) * .006,
+    }, index=index)
+    summary, histories, trades = compare_rebalancing_policies(
+        returns, pd.Series({"A": .6, "B": .4}), 10_000, .001, .04, .02,
+    )
+    assert set(summary.index) == {"Buy and Hold", "Monthly", "Quarterly", "Annual", "Threshold"}
+    assert summary.loc["Buy and Hold", "Total Turnover"] == 0
+    assert len({len(history) for history in histories.values()}) == 1
+    assert set(trades) == set(summary.index)
+
 def test_strategy_signal_lag_and_transaction_costs():
     prices = pd.Series([10, 11, 12, 13, 12, 11, 14, 15], index=pd.bdate_range("2024-01-01", periods=8))
     free, _ = momentum_backtest(prices, 2, 3, 0)
@@ -395,6 +472,8 @@ def test_report_uses_metric_units_and_selected_rebalancing_method():
             "Optimizer Sharpe": [.33],
         }, index=["Frontier 1"]),
         optimized_allocations=pd.DataFrame({"Frontier 1": [1.0]}, index=["A"]),
+        rebalancing_policies=pd.DataFrame({"Total Turnover": [.10]}, index=["Quarterly"]),
+        rebalancing_history=pd.DataFrame({"Portfolio Value": [1_100], "Transaction Costs": [1.0]}),
     ).decode()
     assert "12.50%" in html
     assert ">1.25<" in html
@@ -403,6 +482,7 @@ def test_report_uses_metric_units_and_selected_rebalancing_method():
     assert "75/100" in html and "100% metric coverage" in html
     assert "Portfolio comparison" in html and "Deterministic research insights" in html
     assert "Efficient frontier" in html and "Optimized allocations" in html
+    assert "Rebalancing policy comparison" in html and "Selected rebalancing history" in html
     assert "Benchmark: SPY" in html and "Annual risk-free assumption: 4.00%" in html
 
 

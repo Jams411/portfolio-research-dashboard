@@ -22,6 +22,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - Phase 2A benchmark research: excess-return single-index OLS, alpha, beta, R², residual volatility, systematic/idiosyncratic variance, CAPM required return, Jensen’s alpha, and Treynor ratio
 - Phase 3 professional investment research: structured HTML report, like-for-like portfolio comparison, transparent Portfolio Health Score, interactive long-only what-if scenarios, and deterministic metric-traceable insights
 - Phase 2B construction: long-only efficient frontier, global minimum variance, constrained historical tangency, feasible target-return portfolios, and a non-leveraged CAL
+- Phase 2C rebalancing realism: buy-and-hold drift, monthly/quarterly/annual and threshold policies, one-way turnover, proportional transaction costs, rebalance dates, before/after weights, and exportable histories
 
 ## In progress
 
@@ -32,14 +33,6 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 **Context from current development session — verify before treating as canonical.**
 
 These are prioritized candidates from the code audit and course-material review, not yet approved methodology changes.
-
-### Phase 2 — Rebalancing realism
-
-- Add buy-and-hold weight drift and monthly, quarterly, and annual rebalance simulations.
-- Track turnover, costs, and portfolio value.
-- Compare these models with the existing daily constant-weight analytical portfolio.
-
-Why: rebalancing frequency materially affects realized weights, costs, and results, and makes the current daily-rebalancing assumption easier to explain.
 
 ### Later — Strategy robustness
 

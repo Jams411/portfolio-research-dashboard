@@ -15,7 +15,7 @@ from portfolio_dashboard.data import MarketDataError, download_prices, parse_tic
 from portfolio_dashboard.formatting import metric_value, money, pct, ratio
 from portfolio_dashboard.performance import drawdown_series, monthly_returns
 from portfolio_dashboard.pipeline import run_analysis
-from portfolio_dashboard.rebalancing import rebalancing_plan
+from portfolio_dashboard.rebalancing import compare_rebalancing_policies, rebalancing_plan
 from portfolio_dashboard.reporting import generate_html_report, research_summary
 from portfolio_dashboard.research import (
     deterministic_insights, portfolio_comparison, portfolio_health_score, what_if_analysis,
@@ -56,6 +56,7 @@ ANALYSIS_STATE_KEYS = (
     "result", "current_shocks", "selected_target_method", "normalized", "analysis_tab", "shock_editor",
     "what_if_weights", "what_if_shocks", "what_if_result", "what_if_weight_editor", "what_if_shock_editor",
     "target_return_result",
+    "selected_rebalancing_policy",
 )
 
 
@@ -96,7 +97,13 @@ with st.sidebar:
         on_change=clear_analysis_state,
     ) / 100
     transaction_cost = st.number_input(
-        "Transaction cost per position change (%)", min_value=0.0, max_value=10.0, value=0.10, step=0.05,
+        "Transaction cost rate (%)", min_value=0.0, max_value=10.0, value=0.10, step=0.05,
+        help="Applied proportionally to strategy position changes and rebalancing gross trade notional.",
+        on_change=clear_analysis_state,
+    ) / 100
+    rebalancing_threshold = st.number_input(
+        "Rebalancing drift threshold (%)", min_value=0.0, max_value=100.0, value=5.0, step=0.5,
+        help="Threshold policy trades when any holding's absolute weight drift reaches this level.",
         on_change=clear_analysis_state,
     ) / 100
     with st.expander("Momentum parameters"):
@@ -133,6 +140,10 @@ if run:
                 name: rebalancing_plan(weights, analysis.allocations[name], initial_value)
                 for name in analysis.allocations.columns
             }
+            policy_summary, policy_histories, policy_trades = compare_rebalancing_policies(
+                analysis.asset_returns, weights, initial_value, transaction_cost,
+                rebalancing_threshold, risk_free,
+            )
             try:
                 frontier, frontier_weights = efficient_frontier(analysis.asset_returns, risk_free, points=25)
                 construction_stats = pd.DataFrame({
@@ -156,6 +167,9 @@ if run:
             "frontier": frontier, "frontier_weights": frontier_weights,
             "construction_stats": construction_stats, "cal": cal,
             "construction_error": construction_error,
+            "rebalancing_threshold": rebalancing_threshold,
+            "policy_summary": policy_summary, "policy_histories": policy_histories,
+            "policy_trades": policy_trades,
         }
         st.session_state["current_shocks"] = default_shocks
         st.session_state["what_if_weights"] = weights.copy()
@@ -388,6 +402,57 @@ if tabs[4].open:
         })
         st.caption("Positive estimated amounts are buys; negative amounts are sells. Totals reconcile before transaction costs and rounding.")
         st.download_button("Download rebalancing CSV", plan.to_csv(index=False), "rebalancing_plan.csv", "text/csv")
+        st.markdown("**Rebalancing policy simulation**")
+        st.caption(
+            "Unlike the constant-weight analytical portfolio, these holdings drift with asset returns. Monthly, quarterly, and annual policies trade at completed period ends; "
+            f"the threshold policy trades at {r['rebalancing_threshold']:.2%} maximum absolute drift. Costs apply only when trades occur."
+        )
+        st.dataframe(r["policy_summary"], width="stretch", column_config={
+            column: st.column_config.NumberColumn(format="percent")
+            for column in ["Total Return", "CAGR", "Annualized Volatility", "Maximum Drawdown", "Total Turnover", "Ending Maximum Drift"]
+        } | {
+            "Sharpe Ratio": st.column_config.NumberColumn(format="%.2f"),
+            "Transaction Costs": st.column_config.NumberColumn(format="dollar"),
+            "Rebalancing Dates": st.column_config.NumberColumn(format="%d"),
+        })
+        policies = list(r["policy_summary"].index)
+        if st.session_state.get("selected_rebalancing_policy") not in policies:
+            st.session_state["selected_rebalancing_policy"] = "Quarterly"
+        selected_policy = st.selectbox(
+            "Policy detail", policies, key="selected_rebalancing_policy",
+            help="Select a policy to inspect value, drift, rebalance dates, and trades.",
+        )
+        policy_history = r["policy_histories"][selected_policy]
+        line_chart(policy_history[["Portfolio Value"]], f"{selected_policy} portfolio value", "Value ($)")
+        line_chart(policy_history[["Maximum Drift"]], f"{selected_policy} maximum drift", "Absolute weight drift")
+        rebalance_dates = policy_history.loc[policy_history["Rebalanced"], ["Portfolio Value", "Turnover", "Transaction Costs"]]
+        if rebalance_dates.empty:
+            st.info("This policy produced no rebalancing dates in the selected history.")
+        else:
+            st.dataframe(rebalance_dates, width="stretch", column_config={
+                "Portfolio Value": st.column_config.NumberColumn(format="dollar"),
+                "Turnover": st.column_config.NumberColumn(format="percent"),
+                "Transaction Costs": st.column_config.NumberColumn(format="dollar"),
+            })
+        selected_trades = r["policy_trades"][selected_policy]
+        st.dataframe(selected_trades, width="stretch", hide_index=True, column_config={
+            "Date": st.column_config.DateColumn(format="MMM DD, YYYY"),
+            "Before Weight": st.column_config.NumberColumn(format="percent"),
+            "Target Weight": st.column_config.NumberColumn(format="percent"),
+            "After Weight": st.column_config.NumberColumn(format="percent"),
+            "Trade Before Cost": st.column_config.NumberColumn(format="dollar"),
+            "Estimated Transaction Cost": st.column_config.NumberColumn(format="dollar"),
+            "Drift Before Trade": st.column_config.NumberColumn(format="percent"),
+        })
+        with st.container(horizontal=True):
+            st.download_button(
+                "Download policy history", policy_history.to_csv(),
+                f"{selected_policy.lower().replace(' ', '_')}_history.csv", "text/csv",
+            )
+            st.download_button(
+                "Download trade history", selected_trades.to_csv(index=False),
+                f"{selected_policy.lower().replace(' ', '_')}_trades.csv", "text/csv",
+            )
 
 if tabs[5].open:
     with tabs[5]:
@@ -556,6 +621,9 @@ if tabs[8].open:
         selected_target = st.session_state.get("selected_target_method", "Equal Weight")
         if selected_target not in r["plans"]:
             selected_target = next(iter(r["plans"]))
+        report_policy = st.session_state.get("selected_rebalancing_policy", "Quarterly")
+        if report_policy not in r["policy_histories"]:
+            report_policy = "Quarterly"
         report = generate_html_report(
             title="PortfolioLens Investment Research Report", tickers=r["tickers"], weights=r["weights"],
             start=a.prices.index.min().date(), end=a.prices.index.max().date(), summary=summary,
@@ -570,6 +638,8 @@ if tabs[8].open:
             what_if=st.session_state.get("what_if_result", (None, None, None))[0],
             efficient_frontier=r["frontier"] if not r["frontier"].empty else None,
             optimized_allocations=r["frontier_weights"] if not r["frontier_weights"].empty else None,
+            rebalancing_policies=r["policy_summary"],
+            rebalancing_history=r["policy_histories"][report_policy],
         )
         downloads = {
             "Performance metrics": metric_frame(a.performance).to_csv(),

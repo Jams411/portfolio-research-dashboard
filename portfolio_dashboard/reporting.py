@@ -67,9 +67,10 @@ def _financial_table(frame: pd.DataFrame) -> str:
 def _comparison_table(frame: pd.DataFrame) -> str:
     formatted = frame.copy().astype(object)
     percent_columns = {
-        "Arithmetic Return", "CAGR", "Annualized Volatility", "Maximum Drawdown",
+        "Total Return", "Arithmetic Return", "CAGR", "Annualized Volatility", "Maximum Drawdown",
         "Largest Weight", "Weight Distance from Current", "Target Return",
         "Optimizer Expected Return", "Optimizer Volatility",
+        "Total Turnover", "Ending Maximum Drift",
     }
     for column in formatted.columns:
         if column in percent_columns:
@@ -102,7 +103,9 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
                          health_coverage: float | None = None, health_components: pd.DataFrame | None = None,
                          comparison: pd.DataFrame | None = None, insights: pd.DataFrame | None = None,
                          what_if: pd.DataFrame | None = None, efficient_frontier: pd.DataFrame | None = None,
-                         optimized_allocations: pd.DataFrame | None = None) -> bytes:
+                         optimized_allocations: pd.DataFrame | None = None,
+                         rebalancing_policies: pd.DataFrame | None = None,
+                         rebalancing_history: pd.DataFrame | None = None) -> bytes:
     """Generate a self-contained, deterministic investment research report."""
     assumptions = [
         "Daily simple returns and a 252-trading-day annualization convention.",
@@ -136,6 +139,8 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
                 ("Optimized allocations", _percentage_table(optimized_allocations) if optimized_allocations is not None else "<p>Optimized allocations unavailable.</p>"),
                 ("Allocation comparison", _percentage_table(allocations)),
                 (f"Rebalancing plan — {rebalancing_method}", _financial_table(rebalancing)),
+                ("Rebalancing policy comparison", _comparison_table(rebalancing_policies) if rebalancing_policies is not None else "<p>Policy comparison unavailable.</p>"),
+                ("Selected rebalancing history", _financial_table(rebalancing_history) if rebalancing_history is not None else "<p>Policy history unavailable.</p>"),
                 ("Momentum-strategy results", _metric_table(strategy)), ("Stress-test results", _financial_table(stress)),
                 ("Methodology", "<p>Simple daily returns; arithmetic annualized return for Sharpe, Sortino, CAPM evaluation, and optimization; CAGR for realized compound growth; annualized sample variance and volatility; 252-day annualization; constant weights; empirical 95% VaR/CVaR; excess-return single-index OLS with annualized alpha and residual volatility; CAPM required return, Jensen's alpha, and Treynor ratio; systematic/idiosyncratic variance decomposition; Euler volatility attribution; long-only constrained optimization; one-day-lagged dual-moving-average signal; proportional transaction costs. Regression and CAPM outputs are historical sample estimates, not forecasts or evidence of skill.</p>"),
                 ("Limitations and disclaimer", "<p>Historical adjusted prices may contain provider errors and do not predict future results. Excludes taxes, liquidity constraints, market impact and slippage beyond configured cost. Optimization uses historical estimates. Research and educational use only; not personalized financial advice.</p>")]
