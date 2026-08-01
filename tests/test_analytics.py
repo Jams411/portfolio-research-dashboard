@@ -24,6 +24,9 @@ from portfolio_dashboard.strategy import momentum_backtest
 from portfolio_dashboard.stress import custom_shock, historical_stress
 from portfolio_dashboard.formatting import metric_value
 from portfolio_dashboard.reporting import generate_html_report, research_summary
+from portfolio_dashboard.research import (
+    deterministic_insights, portfolio_comparison, portfolio_health_score, what_if_analysis,
+)
 
 @pytest.fixture
 def returns() -> pd.DataFrame:
@@ -349,3 +352,68 @@ def test_research_summary_does_not_emit_nan_text():
     )
     assert "nan" not in " ".join(summary).lower()
     assert "unavailable" in " ".join(summary).lower()
+
+
+def test_portfolio_comparison_reuses_constant_weight_performance(returns):
+    current = pd.Series({"A": .6, "B": .4})
+    allocations = pd.DataFrame({"Current": current, "Equal": [.5, .5]}, index=["A", "B"])
+    comparison = portfolio_comparison(returns, allocations, current, .02)
+    expected = performance_metrics(portfolio_returns(returns, current), .02)
+    assert comparison.loc["Current", "Arithmetic Return"] == pytest.approx(
+        expected["Historical Arithmetic Annualized Return"]
+    )
+    assert comparison.loc["Current", "Sharpe Ratio"] == pytest.approx(expected["Sharpe Ratio"])
+    assert comparison.loc["Current", "Weight Distance from Current"] == 0
+    assert comparison.loc["Equal", "Weight Distance from Current"] == pytest.approx(.1)
+
+
+def test_health_score_is_transparent_bounded_and_reports_coverage():
+    performance = {"Sharpe Ratio": 1.0, "Maximum Drawdown": -.25}
+    benchmark = {"Information Ratio": 0.0}
+    score, coverage, components = portfolio_health_score(
+        performance, benchmark, pd.Series({"A": .5, "B": .5}), .05
+    )
+    assert score == pytest.approx(66.6666667)
+    assert coverage == pytest.approx(1.0)
+    assert components["Points"].sum() == pytest.approx(score)
+    assert components["Rule"].str.len().gt(0).all()
+    assert components["Normalized Result"].between(0, 1).all()
+
+
+def test_health_score_rescales_available_components_without_hiding_coverage():
+    score, coverage, components = portfolio_health_score(
+        {"Sharpe Ratio": np.nan, "Maximum Drawdown": -.25},
+        {"Information Ratio": np.nan}, pd.Series({"A": 1.0}), .05,
+    )
+    assert coverage == pytest.approx(.60)
+    assert score == pytest.approx(70.8333333)
+    assert components["Available"].sum() == 3
+
+
+def test_what_if_analysis_reconciles_weights_metrics_and_shock(returns):
+    current = pd.Series({"A": .6, "B": .4})
+    scenario = pd.Series({"A": .4, "B": .6})
+    shocks = pd.Series({"A": -.10, "B": -.20})
+    comparison, shock_table, summary = what_if_analysis(
+        returns, current, scenario, shocks, 100_000, .02
+    )
+    assert comparison.loc["What-if", "Weight Distance from Current"] == pytest.approx(.2)
+    assert comparison.loc["Change", "Sharpe Ratio"] == pytest.approx(
+        comparison.loc["What-if", "Sharpe Ratio"] - comparison.loc["Current", "Sharpe Ratio"]
+    )
+    assert shock_table["Portfolio Impact"].sum() == pytest.approx(-.16)
+    assert summary["After Value"] == pytest.approx(84_000)
+    with pytest.raises(ValueError, match="sum to 100"):
+        what_if_analysis(returns, current, pd.Series({"A": .4, "B": .5}), shocks, 100_000)
+
+
+def test_deterministic_insights_are_metric_traceable():
+    insights = deterministic_insights(
+        {"Sharpe Ratio": .5, "Maximum Drawdown": -.25, "Annualized Volatility": .20},
+        {"Excess Return": .03, "Beta": 1.2, "Idiosyncratic Risk Share": .60},
+        pd.Series({"A": .7, "B": .3}), pd.Series({"A": .12, "B": .08}), .03,
+    )
+    assert {"Observation", "Metric", "Value", "Rule"}.issubset(insights.columns)
+    assert insights["Rule"].str.len().gt(0).all()
+    assert np.isfinite(insights["Value"]).all()
+    assert not insights["Observation"].str.contains("buy|sell|recommend", case=False).any()
