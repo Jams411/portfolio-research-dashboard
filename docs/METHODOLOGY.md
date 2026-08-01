@@ -25,7 +25,7 @@ Arithmetic return and CAGR answer different questions. Arithmetic annualized ret
 
 Historical 95% VaR is reported as a nonnegative loss magnitude at the empirical fifth percentile. Historical 95% CVaR is the nonnegative magnitude of mean returns at or below that percentile. If the observed lower tail contains gains rather than losses, the reported loss measure is zero. These are backward-looking one-day statistics and can understate unseen tail events.
 
-Tracking error is the annualized sample standard deviation of active daily returns. Information ratio is annualized mean active return divided by tracking error. Relative drawdown is computed from portfolio wealth divided by benchmark wealth.
+Active daily return is `r_p,t-r_m,t`. Annualized Active Return is `252 × mean(r_p,t-r_m,t)` and Tracking Error is `std(r_p,t-r_m,t, ddof=1) × sqrt(252)`. Information Ratio is Annualized Active Return divided by Tracking Error. The separately labeled cumulative Excess Return is portfolio total return minus benchmark total return over the selected path; it is not the Information Ratio numerator. Relative drawdown is computed from portfolio wealth divided by benchmark wealth.
 
 The single-index model uses the same aligned daily observations and regresses portfolio excess return on benchmark excess return:
 

@@ -131,11 +131,14 @@ def benchmark_metrics(
     joined = pd.concat([portfolio, benchmark], axis=1).dropna()
     p, b = joined.iloc[:, 0], joined.iloc[:, 1]
     p_total, b_total = (1 + p).prod() - 1, (1 + b).prod() - 1
+    annualized_active_return = float((p - b).mean() * TRADING_DAYS)
     relative = (1 + p).cumprod() / (1 + b).cumprod()
     relative_peak = relative.cummax().clip(lower=1.0)
     metrics = {
         "Portfolio Return": float(p_total), "Benchmark Return": float(b_total),
-        "Excess Return": float(p_total - b_total), "Tracking Error": tracking_error(p, b),
+        "Excess Return": float(p_total - b_total),
+        "Annualized Active Return": annualized_active_return,
+        "Tracking Error": tracking_error(p, b),
         "Information Ratio": information_ratio(p, b), "Beta": beta(p, b),
         "Correlation": float(p.corr(b)),
         "Relative Drawdown": float((relative / relative_peak - 1).min()),

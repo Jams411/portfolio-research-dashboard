@@ -7,6 +7,7 @@ PERCENT_METRICS = {
     "Maximum Drawdown", "Best Daily Return", "Worst Daily Return",
     "Positive-Day Percentage", "Positive Active-Day Rate", "Portfolio Return",
     "Benchmark Return", "Excess Return", "Tracking Error", "Relative Drawdown",
+    "Annualized Active Return",
     "Regression Alpha", "Residual Volatility", "Systematic Risk Share",
     "Idiosyncratic Risk Share", "CAPM Required Return", "Jensen's Alpha", "Treynor Ratio",
     "Time in Market", "Turnover", "Historical VaR (95%)", "Historical CVaR (95%)",

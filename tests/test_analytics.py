@@ -205,6 +205,9 @@ def test_benchmark_metrics_include_regression_and_capm_outputs():
     assert metrics["Regression Alpha"] == pytest.approx((.0001 + .2 * (.01 / 252)) * 252)
     assert metrics["Jensen's Alpha"] == pytest.approx(metrics["Regression Alpha"])
     assert metrics["R-Squared"] == pytest.approx(1.0)
+    active = (portfolio - benchmark).mean() * 252
+    assert metrics["Annualized Active Return"] == pytest.approx(active)
+    assert metrics["Information Ratio"] == pytest.approx(active / metrics["Tracking Error"])
 
 
 def test_var_and_cvar_are_nonnegative_loss_measures():

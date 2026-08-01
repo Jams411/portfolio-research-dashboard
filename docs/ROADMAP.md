@@ -23,6 +23,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - Phase 3 professional investment research: structured HTML report, like-for-like portfolio comparison, transparent Portfolio Health Score, interactive long-only what-if scenarios, and deterministic metric-traceable insights
 - Phase 2B construction: long-only efficient frontier, global minimum variance, constrained historical tangency, feasible target-return portfolios, and a non-leveraged CAL
 - Phase 2C rebalancing realism: buy-and-hold drift, monthly/quarterly/annual and threshold policies, one-way turnover, proportional transaction costs, rebalance dates, before/after weights, and exportable histories
+- Phase 2D benchmark evaluation completion: standardized cumulative excess versus annualized active return labels; tracking error, information ratio, CAPM, Jensen, Treynor, regression, and risk decomposition verified without duplication
 
 ## In progress
 

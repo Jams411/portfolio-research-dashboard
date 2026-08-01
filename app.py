@@ -285,7 +285,7 @@ if tabs[3].open:
         st.subheader("Benchmark-relative results and attribution")
         relative_names = [
             "Portfolio Return", "Benchmark Return", "Excess Return", "Tracking Error",
-            "Information Ratio", "Correlation", "Relative Drawdown",
+            "Annualized Active Return", "Information Ratio", "Correlation", "Relative Drawdown",
         ]
         regression_names = [
             "Regression Alpha", "Beta", "R-Squared", "Residual Volatility",
@@ -295,6 +295,10 @@ if tabs[3].open:
         capm_names = ["CAPM Required Return", "Jensen's Alpha", "Treynor Ratio"]
         st.markdown("**Benchmark-relative performance**")
         st.dataframe(display_metric_frame({name: a.benchmark[name] for name in relative_names}), width="stretch")
+        st.caption(
+            "Excess Return is the difference between cumulative portfolio and benchmark returns over the selected path. "
+            "Annualized Active Return is 252 times mean daily portfolio-minus-benchmark return and is the Information Ratio numerator."
+        )
         st.markdown("**Excess-return single-index regression**")
         st.dataframe(display_metric_frame({name: a.benchmark[name] for name in regression_names}), width="stretch")
         st.caption(
