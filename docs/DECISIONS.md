@@ -161,3 +161,13 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Alternatives considered:** Change optimization to use CAGR, display two different Sharpe ratios, or retain the mismatch with additional disclosure.
 - **Consequences:** Historical Sharpe and Sortino values change. CAGR, total return, volatility, optimization constraints, and all non-return workflows remain intact. Arithmetic estimates remain historical and are not forecasts.
 - **Status:** Accepted.
+
+## D016 — Use one excess-return convention for single-index and CAPM metrics
+
+- **Date:** 2026-08-01
+- **Decision:** Regress daily portfolio excess returns on daily benchmark excess returns with an intercept, converting the annual risk-free input by simple division by 252. Annualize the fitted intercept arithmetically and derive CAPM required return, Jensen’s alpha, and Treynor from the same aligned sample.
+- **Context:** PortfolioLens had covariance beta, tracking error, and information ratio but not the course-supported excess-return regression and CAPM performance-evaluation chain.
+- **Rationale:** A shared sample and arithmetic convention makes fitted alpha reconcile exactly with Jensen’s alpha and makes every output traceable to the Phase 1 expected-return methodology.
+- **Alternatives considered:** Regress raw returns, geometrically convert the risk-free rate, use an external regression package, or report CAPM metrics from an independently annualized sample.
+- **Consequences:** Results are historical, benchmark-sensitive single-factor estimates. Residual standard error uses two fitted-parameter degrees of freedom; idiosyncratic variance uses sample variance so the displayed risk decomposition reconciles exactly.
+- **Status:** Accepted.

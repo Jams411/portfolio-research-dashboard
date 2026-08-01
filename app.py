@@ -232,7 +232,30 @@ if tabs[2].open:
 if tabs[3].open:
     with tabs[3]:
         st.subheader("Benchmark-relative results and attribution")
-        st.dataframe(display_metric_frame(a.benchmark), width="stretch")
+        relative_names = [
+            "Portfolio Return", "Benchmark Return", "Excess Return", "Tracking Error",
+            "Information Ratio", "Correlation", "Relative Drawdown",
+        ]
+        regression_names = [
+            "Regression Alpha", "Beta", "R-Squared", "Residual Volatility",
+            "Systematic Variance", "Idiosyncratic Variance", "Systematic Risk Share",
+            "Idiosyncratic Risk Share", "Regression Observations",
+        ]
+        capm_names = ["CAPM Required Return", "Jensen's Alpha", "Treynor Ratio"]
+        st.markdown("**Benchmark-relative performance**")
+        st.dataframe(display_metric_frame({name: a.benchmark[name] for name in relative_names}), width="stretch")
+        st.markdown("**Excess-return single-index regression**")
+        st.dataframe(display_metric_frame({name: a.benchmark[name] for name in regression_names}), width="stretch")
+        st.caption(
+            "Regression uses aligned daily excess returns: portfolio excess return = alpha + beta × benchmark excess return + residual. "
+            "Risk shares decompose annualized excess-return variance; residual volatility uses the regression residual standard error."
+        )
+        st.markdown("**CAPM performance evaluation**")
+        st.dataframe(display_metric_frame({name: a.benchmark[name] for name in capm_names}), width="stretch")
+        st.caption(
+            "CAPM required return is the risk-free rate plus beta times the benchmark risk premium. "
+            "Jensen’s alpha is realized arithmetic return minus that required return; Treynor is excess return per unit of beta."
+        )
         comparison = pd.concat([
             (1 + a.portfolio_returns).cumprod().rename("Portfolio"),
             (1 + a.benchmark_returns).cumprod().rename(r["benchmark_ticker"]),
@@ -368,7 +391,7 @@ if tabs[8].open:
 
 **Data and missing values.** yfinance is the sole data source. Holdings are aligned to complete common trading dates; prices are never filled or invented. Any unavailable requested ticker stops the analysis. The benchmark is downloaded separately and then inner-aligned for comparison.
 
-**Risk.** Historical 95% VaR and CVaR are nonnegative loss measures based on the empirical lower tail. Beta is covariance with the benchmark divided by benchmark variance. Euler volatility contributions use the annualized sample covariance matrix and sum to portfolio volatility. Drawdowns include the initial portfolio value as the first peak.
+**Risk and benchmark regression.** Historical 95% VaR and CVaR are nonnegative loss measures based on the empirical lower tail. The single-index model regresses aligned daily portfolio excess returns on benchmark excess returns. Its intercept and residual volatility are annualized; beta is the fitted slope; R² is the explained share of variation. Systematic and idiosyncratic variance are shown separately. CAPM required return, Jensen’s alpha, and Treynor use the same arithmetic return and annual risk-free assumptions. These are historical sample estimates, not forecasts or evidence of manager skill. Euler volatility contributions use the annualized sample covariance matrix and sum to portfolio volatility. Drawdowns include the initial portfolio value as the first peak.
 
 **Portfolio assumptions.** Analytics and historical stress periods use constant long-only weights. Equal weight and inverse volatility are deterministic. Minimum variance and maximum Sharpe use SLSQP with weights in [0,1] summing to one; failure is shown rather than replaced. Historical estimates are not forecasts.
 

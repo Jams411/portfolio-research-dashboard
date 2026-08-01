@@ -28,7 +28,7 @@ This application demonstrates:
 - Comma-separated ticker validation, equal/custom weights, presets, date range, benchmark, capital, risk-free rate and transaction-cost controls
 - Adjusted yfinance history with caching, safe single/MultiIndex handling, strict failed-ticker reporting and complete-common-date alignment
 - Total return, arithmetic annualized return, CAGR, annualized variance/volatility, consistently defined Sharpe, Sortino, drawdown, Calmar, tail risk, monthly returns and wealth charts
-- Beta, correlation, covariance, VaR/CVaR, concentration, effective holdings, and reconciled return/volatility attribution
+- Excess-return single-index alpha/beta/R², residual and systematic/idiosyncratic risk, CAPM required return, Jensen’s alpha, Treynor, correlation, covariance, VaR/CVaR, concentration, effective holdings, and reconciled return/volatility attribution
 - Benchmark excess return, tracking error, information ratio, relative drawdown and relative wealth
 - Current, equal-weight, inverse-volatility, minimum-variance and maximum-Sharpe long-only allocations
 - Dollar rebalancing plan with intuitive buy/sell signs and CSV export
@@ -103,7 +103,7 @@ Open the local URL Streamlit prints. Select a preset, adjust inputs if desired, 
 .venv/bin/python -m compileall app.py portfolio_dashboard tests
 ```
 
-Tests cover validation, data layout/missingness, arithmetic return, CAGR, annualized variance/volatility, portfolio `w′μ` and `w′Σw`, displayed/optimizer Sharpe reconciliation, Sortino, portfolio aggregation, drawdown, VaR/CVaR, beta, tracking error, information ratio, risk-contribution reconciliation, allocation failure handling, rebalancing, signal lag, costs, stress tests, report units, the integrated analytics pipeline, and the offline Streamlit entrypoint.
+Tests cover validation, data layout/missingness, arithmetic return, CAGR, annualized variance/volatility, portfolio `w′μ` and `w′Σw`, displayed/optimizer Sharpe reconciliation, Sortino, portfolio aggregation, drawdown, VaR/CVaR, excess-return regression and CAPM reconciliation, tracking error, information ratio, risk-contribution reconciliation, allocation failure handling, rebalancing, signal lag, costs, stress tests, report units, the integrated analytics pipeline, and the offline Streamlit entrypoint.
 
 ## Streamlit Community Cloud deployment
 
@@ -118,7 +118,7 @@ Follow the complete [deployment and post-deployment checklist](docs/DEPLOYMENT.m
 
 ## Methodology and assumptions
 
-Daily simple returns and 252 trading days are used consistently. Arithmetic annualized return is the historical expected-return estimate used by Sharpe, Sortino, and maximum-Sharpe optimization; CAGR remains realized compound growth. Holdings use constant weights for historical portfolio returns. The benchmark is downloaded separately and aligned on common dates. Historical VaR/CVaR use the empirical lower tail. Risk contribution uses Euler decomposition. Optimization is long-only and uses historical sample means/covariances. The momentum signal uses short and long simple moving averages, is shifted by one full period, and pays proportional costs whenever position changes. See [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
+Daily simple returns and 252 trading days are used consistently. Arithmetic annualized return is the historical expected-return estimate used by Sharpe, Sortino, CAPM evaluation, and maximum-Sharpe optimization; CAGR remains realized compound growth. Holdings use constant weights for historical portfolio returns. The benchmark is downloaded separately and aligned on common dates. The single-index model uses excess returns and decomposes historical systematic and idiosyncratic variance. Historical VaR/CVaR use the empirical lower tail. Risk contribution uses Euler decomposition. Optimization is long-only and uses historical sample means/covariances. The momentum signal uses short and long simple moving averages, is shifted by one full period, and pays proportional costs whenever position changes. See [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 
 ## Limitations and disclaimer
 

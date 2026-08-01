@@ -10,6 +10,16 @@ The project was created under the former working name `portfolio-research-dashbo
 
 Interview explainability and financial correctness were prioritized over feature count. That principle explains the use of small financial functions, one explicit strategy, deterministic reporting, strict data validation, and synthetic tests. Advanced features were deferred when they required unreliable classifications, new data sources, opaque models, personalized advice, or disproportionate methodology and deployment complexity.
 
+## 2026-08-01 — Phase 2A benchmark research
+
+- **Date:** 2026-08-01
+- **Goal:** Extend benchmark analysis from a standalone covariance beta to the course-supported excess-return single-index and CAPM evaluation workflow.
+- **What changed:** Added OLS alpha/beta/R², residual volatility, systematic and idiosyncratic variance shares, CAPM required return, Jensen’s alpha, and Treynor ratio, with distinct UI sections and non-predictive explanations.
+- **Why it changed:** The single-index and performance-evaluation workbooks connect market exposure, residual risk, and risk-adjusted evaluation; implementing only a similarly named beta did not satisfy that methodology.
+- **Tests and evidence:** A constructed return series with known slope, intercept, and orthogonal residual recovers its parameters and risk decomposition. Edge tests cover inadequate observations and constant benchmark returns.
+- **Tradeoffs:** Arithmetic risk-free conversion was selected so annualized regression alpha exactly reconciles with Jensen’s alpha. Results depend on the selected benchmark and history and are not evidence of manager skill.
+- **Next step:** Phase 2B remains the long-only efficient frontier, feasible target-return portfolios, and careful historical tangency/CAL presentation; no such construction behavior changed in Phase 2A.
+
 ## 2026-08-01 — Phase 1 course-roadmap implementation
 
 - **Date:** 2026-08-01

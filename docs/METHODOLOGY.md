@@ -25,7 +25,17 @@ Arithmetic return and CAGR answer different questions. Arithmetic annualized ret
 
 Historical 95% VaR is reported as a nonnegative loss magnitude at the empirical fifth percentile. Historical 95% CVaR is the nonnegative magnitude of mean returns at or below that percentile. If the observed lower tail contains gains rather than losses, the reported loss measure is zero. These are backward-looking one-day statistics and can understate unseen tail events.
 
-Beta is sample covariance of portfolio and benchmark daily returns divided by benchmark daily variance. Tracking error is the annualized sample standard deviation of active daily returns. Information ratio is annualized mean active return divided by tracking error. Relative drawdown is computed from portfolio wealth divided by benchmark wealth.
+Tracking error is the annualized sample standard deviation of active daily returns. Information ratio is annualized mean active return divided by tracking error. Relative drawdown is computed from portfolio wealth divided by benchmark wealth.
+
+The single-index model uses the same aligned daily observations and regresses portfolio excess return on benchmark excess return:
+
+`r_p,t - r_f,t = α_t + β(r_m,t - r_f,t) + ε_t`
+
+The annual risk-free input is divided by `252` for this arithmetic daily model. OLS beta is `Cov(r_p-r_f, r_m-r_f) / Var(r_m-r_f)`, daily intercept is the mean portfolio excess return minus beta times mean benchmark excess return, and regression alpha is `252 × α_t`. R² is `1-SSE/SST`. Residual volatility is the residual standard error `std(ε, ddof=2) × sqrt(252)` because an intercept and slope are estimated.
+
+Systematic variance is `β² Var(r_m-r_f) × 252`; idiosyncratic variance is `Var(ε, ddof=1) × 252`. Their displayed risk shares divide each component by their sum and therefore reconcile to 100%. Residual volatility and idiosyncratic variance intentionally use different degrees of freedom: the former estimates regression error volatility, while the latter is the sample variance component needed for exact historical variance decomposition.
+
+CAPM required return is `r_f + β(E[r_m]-r_f)`, using arithmetic annualized benchmark return. Jensen's alpha is `E[r_p] - CAPM required return`; under these shared arithmetic conventions it reconciles to annualized regression alpha. Treynor ratio is `(E[r_p]-r_f)/β` and is unavailable when beta is effectively zero. These historical estimates are highly sample- and benchmark-dependent; alpha is not a forecast or proof of manager skill, R² is not a measure of performance quality, and low idiosyncratic risk is not inherently preferable.
 
 ## Attribution and concentration
 

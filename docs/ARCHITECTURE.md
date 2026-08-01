@@ -110,13 +110,13 @@ pytest.ini                          local pytest configuration
 ### `risk.py` — market risk, benchmark comparison and attribution
 
 - **Why it exists:** Groups portfolio-risk and benchmark-relative methods that depend on aligned returns.
-- **Owns:** Historical VaR/CVaR, beta, tracking error, information ratio, benchmark metrics, Euler volatility contribution, and cumulative total-return contribution.
+- **Owns:** Historical VaR/CVaR, excess-return single-index OLS, CAPM evaluation metrics, tracking error, information ratio, benchmark metrics, Euler volatility contribution, and cumulative total-return contribution.
 - **Does not own:** Price downloads, performance scorecards, optimized weights, or UI concentration calculations.
 - **Key inputs:** Portfolio, benchmark and asset daily returns plus labeled weights.
-- **Key outputs:** Scalar risk/benchmark metrics and contribution Series.
+- **Key outputs:** Scalar risk/benchmark metrics, regression/risk-decomposition diagnostics, CAPM performance metrics, and contribution Series.
 - **Important dependencies:** pandas, NumPy, and `TRADING_DAYS`.
 - **Financial concepts:** Empirical lower-tail loss, covariance beta, active risk, relative drawdown, Euler decomposition, and contribution reconciliation.
-- **Common failure modes:** Invalid confidence, empty tails, zero benchmark variance, zero tracking error, nonpositive portfolio variance, or misaligned labels.
+- **Common failure modes:** Invalid confidence, empty tails, fewer than three aligned regression observations, zero benchmark variance, zero tracking error, nonpositive portfolio variance, or misaligned labels.
 - **How tested:** Synthetic VaR/CVaR, beta, tracking error, information ratio, relative drawdown, and risk-contribution reconciliation tests.
 
 ### `construction.py` — allocation comparisons
@@ -375,7 +375,7 @@ Deployment uses `app.py`, Python 3.11 where selectable, and `requirements.txt`. 
 - yfinance can be delayed, revised, incomplete, rate-limited, or unavailable.
 - Strict common-date alignment can materially shorten the sample.
 - The portfolio model assumes daily rebalancing at constant weights and does not model weight drift.
-- The risk-free-rate convention used by displayed Sharpe/Sortino differs from the arithmetic convention used by maximum-Sharpe construction; alignment is planned and must be treated as a methodology change.
+- Regression and CAPM metrics are historical single-factor estimates whose interpretation depends on the selected benchmark and sample; they must not be presented as forecasts or proof of manager skill.
 - Optimized weights are based on historical sample moments and can be unstable.
 - Strategy research covers one instrument and one rule; it has no automatic parameter fitting or formal validation split.
 - Historical VaR/CVaR and stress windows do not describe unseen events.

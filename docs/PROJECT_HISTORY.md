@@ -1,5 +1,14 @@
 # Project history
 
+## 2026-08-01 — Phase 2A benchmark regression and CAPM evaluation
+
+- **What changed:** Added an excess-return single-index OLS model with annualized alpha, beta, R², residual volatility, systematic/idiosyncratic variance and shares, observations, CAPM required return, Jensen’s alpha, and Treynor ratio. The dashboard and HTML report now explain and label the model separately from cumulative benchmark-relative results.
+- **Why it changed:** The approved course-derived roadmap identified a gap between the existing covariance beta and the full benchmark regression/performance-evaluation workflow taught in the single-index and performance-evaluation materials.
+- **Problem solved:** Benchmark analysis now connects fitted market exposure, explained and residual risk, and CAPM-based performance measures under one auditable excess-return convention.
+- **Course or career connection:** `2026S_FIN5745 PM_Workbook 4. Securities Selection & Single Index Model _Q.xlsx`, `2026S_FIN5745 PM_Class Notes 4. Single Index Portfolio Model & Security Selection.pptx`, and `2026S_FIN5745 PM_Workbook 7. Evaluation of Portfolio Performance_Q.xlsx`; portfolio analytics, asset management, performance measurement, and quantitative research.
+- **Tradeoffs:** Estimates remain benchmark- and sample-dependent. The model uses one benchmark factor, does not establish causality or skill, and does not add APT, multifactor, Treynor–Black, leverage, or short selling.
+- **Evidence:** Deterministic synthetic tests recover known regression parameters, reconcile Jensen’s alpha to regression alpha, and reconcile systematic plus idiosyncratic variance to total excess-return variance.
+
 ## 2026-08-01 — Phase 1 portfolio-methodology alignment
 
 - **What changed:** Added explicit historical arithmetic annualized return and annualized variance, exposed reusable portfolio expected-return and covariance-matrix variance formulas, and standardized performance, strategy, Sortino, and optimizer Sharpe on arithmetic annualized excess return.

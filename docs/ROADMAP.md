@@ -19,6 +19,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - Live visual/functional review, Community Cloud checklist, demo guide, and eight-screen showcase gallery
 - PortfolioLens product branding and repository identity, without scope or methodology changes
 - Phase 1 Portfolio Management methodology alignment: arithmetic annualized return, annualized variance, `w′μ`, `w′Σw`, and one shared arithmetic Sharpe convention across performance and optimization
+- Phase 2A benchmark research: excess-return single-index OLS, alpha, beta, R², residual volatility, systematic/idiosyncratic variance, CAPM required return, Jensen’s alpha, and Treynor ratio
 
 ## In progress
 
@@ -30,16 +31,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 
 These are prioritized candidates from the code audit and course-material review, not yet approved methodology changes.
 
-### Phase 2 — Benchmark research
-
-- Add a tested excess-return single-index regression.
-- Report historical alpha, beta, R², residual volatility, and observations.
-- Consider Treynor ratio and Jensen’s alpha with precise definitions.
-- Integrate results into the report with non-predictive language.
-
-Why: these extend existing benchmark analytics with high career and interview value while remaining explainable.
-
-### Phase 2 — Portfolio construction and optimization gaps
+### Phase 2B — Portfolio construction and optimization gaps
 
 - Generate a tested long-only efficient frontier.
 - Add target-return minimum-variance portfolios with feasibility checks.

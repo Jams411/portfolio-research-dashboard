@@ -6,12 +6,15 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ### Added
 
+- Added excess-return single-index regression with alpha, beta, R², residual volatility, systematic/idiosyncratic variance and risk shares, and observation count.
+- Added CAPM required return, Jensen’s alpha, and Treynor ratio to benchmark analysis and the deterministic research report.
 - Added a Community Cloud deployment checklist, timed interview demo guide, final showcase review, and eight live-application screenshots.
 - Added historical arithmetic annualized return and annualized sample variance to the performance scorecard and exports.
 - Added reusable portfolio expected-return `w′μ` and variance `w′Σw` calculations with formula and reconciliation tests.
 
 ### Changed
 
+- Split benchmark output into cumulative relative performance, regression diagnostics, and CAPM performance evaluation with explicit historical-estimate limitations.
 - Standardized displayed performance Sharpe, strategy Sharpe, Sortino, and maximum-Sharpe optimization on arithmetic annualized excess return; CAGR remains the separate realized compound-growth metric.
 - Clarified arithmetic return, CAGR, performance Sharpe, and optimizer Sharpe in the dashboard and deterministic report.
 - Renamed the product from Portfolio Research Dashboard to PortfolioLens, with the subtitle “Multi-Asset Portfolio Analytics & Investment Research”; product scope and financial methodology are unchanged.
