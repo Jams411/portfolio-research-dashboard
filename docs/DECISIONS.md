@@ -181,3 +181,13 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Alternatives considered:** LLM-written commentary, an opaque composite score, personalized recommendations, or a score presented without component coverage.
 - **Consequences:** The score is explicitly an application-specific historical heuristic rather than a course formula or suitability measure. What-if scenarios remain long-only, explicit, and non-persistent; insights describe computed evidence and never prescribe trades.
 - **Status:** Accepted.
+
+## D018 — Limit frontier and CAL construction to long-only historical estimates
+
+- **Date:** 2026-08-01
+- **Decision:** Construct the efficient frontier with arithmetic sample means and annualized sample covariance, weights in `[0,1]`, weights summing to one, and exact feasible target-return constraints. Present the maximum-Sharpe solution as a constrained historical tangency estimate and stop the CAL at 100% risky allocation.
+- **Context:** The course-supported Markowitz and capital-allocation workflow remained the principal approved construction gap.
+- **Rationale:** This matches PortfolioLens’s established expected-return and Sharpe conventions while preserving the explicit no-shorting and no-leverage product boundary.
+- **Alternatives considered:** Monte Carlo portfolio clouds, unconstrained analytical frontiers, borrowing beyond the tangency portfolio, and using CAGR as expected return.
+- **Consequences:** Frontier positions can be unstable because historical means and covariances are estimates. Solver and feasibility failures are displayed, and no optimized allocation is described as a forecast or recommendation.
+- **Status:** Accepted.

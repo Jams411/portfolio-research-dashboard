@@ -390,6 +390,11 @@ def test_report_uses_metric_units_and_selected_rebalancing_method():
         insights=pd.DataFrame({"Observation": ["Computed observation"], "Metric": ["Sharpe Ratio"],
                                "Value": [1.2], "Rule": ["Sharpe above zero"]}),
         what_if=pd.DataFrame({"CAGR": [.11]}, index=["What-if"]),
+        efficient_frontier=pd.DataFrame({
+            "Optimizer Expected Return": [.08], "Optimizer Volatility": [.12],
+            "Optimizer Sharpe": [.33],
+        }, index=["Frontier 1"]),
+        optimized_allocations=pd.DataFrame({"Frontier 1": [1.0]}, index=["A"]),
     ).decode()
     assert "12.50%" in html
     assert ">1.25<" in html
@@ -397,6 +402,7 @@ def test_report_uses_metric_units_and_selected_rebalancing_method():
     assert "Holdings and weights" in html and "100.00%" in html
     assert "75/100" in html and "100% metric coverage" in html
     assert "Portfolio comparison" in html and "Deterministic research insights" in html
+    assert "Efficient frontier" in html and "Optimized allocations" in html
     assert "Benchmark: SPY" in html and "Annual risk-free assumption: 4.00%" in html
 
 

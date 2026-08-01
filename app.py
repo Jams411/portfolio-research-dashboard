@@ -8,6 +8,9 @@ import plotly.express as px
 import streamlit as st
 
 from portfolio_dashboard.config import PRESETS, TRADING_DAYS
+from portfolio_dashboard.construction import (
+    capital_allocation_line, efficient_frontier, optimizer_statistics, target_return_weights,
+)
 from portfolio_dashboard.data import MarketDataError, download_prices, parse_tickers, parse_weight_input, validate_dates
 from portfolio_dashboard.formatting import metric_value, money, pct, ratio
 from portfolio_dashboard.performance import drawdown_series, monthly_returns
@@ -52,6 +55,7 @@ def line_chart(frame: pd.DataFrame, title: str, y_title: str) -> None:
 ANALYSIS_STATE_KEYS = (
     "result", "current_shocks", "selected_target_method", "normalized", "analysis_tab", "shock_editor",
     "what_if_weights", "what_if_shocks", "what_if_result", "what_if_weight_editor", "what_if_shock_editor",
+    "target_return_result",
 )
 
 
@@ -129,12 +133,29 @@ if run:
                 name: rebalancing_plan(weights, analysis.allocations[name], initial_value)
                 for name in analysis.allocations.columns
             }
+            try:
+                frontier, frontier_weights = efficient_frontier(analysis.asset_returns, risk_free, points=25)
+                construction_stats = pd.DataFrame({
+                    name: optimizer_statistics(analysis.asset_returns, analysis.allocations[name], risk_free)
+                    for name in analysis.allocations.columns
+                }).T
+                tangency_stats = construction_stats.loc["Maximum Sharpe"].to_dict()
+                cal = capital_allocation_line(tangency_stats, risk_free)
+                construction_error = None
+            except (ValueError, RuntimeError) as exc:
+                frontier, frontier_weights, construction_stats, cal = (
+                    pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+                )
+                construction_error = str(exc)
         st.session_state["result"] = {
             "tickers": tickers, "benchmark_ticker": benchmark, "weights": weights,
             "requested_start": start, "requested_end": end, "initial_value": initial_value,
             "risk_free": risk_free, "transaction_cost": transaction_cost, "analysis": analysis,
             "strategy_asset": strategy_asset, "strategy_data": strategy_data,
             "strategy_stats": strategy_stats, "historical": historical, "plans": plans,
+            "frontier": frontier, "frontier_weights": frontier_weights,
+            "construction_stats": construction_stats, "cal": cal,
+            "construction_error": construction_error,
         }
         st.session_state["current_shocks"] = default_shocks
         st.session_state["what_if_weights"] = weights.copy()
@@ -287,7 +308,68 @@ if tabs[3].open:
 
 if tabs[4].open:
     with tabs[4]:
-        st.subheader("Allocation comparison and rebalancing")
+        st.subheader("Portfolio construction and rebalancing")
+        if r["construction_error"]:
+            st.warning(f"Efficient frontier unavailable: {r['construction_error']}")
+        else:
+            st.markdown("**Historical mean-variance construction**")
+            st.caption(
+                "Optimizer expected return is the annualized arithmetic sample mean; optimizer volatility uses the annualized sample covariance matrix. "
+                "These differ from realized CAGR and are historical estimates, not forecasts or recommendations."
+            )
+            st.dataframe(r["construction_stats"], width="stretch", column_config={
+                "Optimizer Expected Return": st.column_config.NumberColumn(format="percent"),
+                "Optimizer Volatility": st.column_config.NumberColumn(format="percent"),
+                "Optimizer Sharpe": st.column_config.NumberColumn(format="%.2f"),
+            })
+            frontier_chart = px.line(
+                r["frontier"].reset_index(), x="Optimizer Volatility", y="Optimizer Expected Return",
+                title="Long-only efficient frontier and non-leveraged capital allocation line",
+                labels={"Optimizer Volatility": "Annualized volatility", "Optimizer Expected Return": "Arithmetic expected return"},
+            )
+            frontier_chart.add_scatter(
+                x=r["cal"]["Volatility"], y=r["cal"]["Expected Return"], mode="lines",
+                name="Capital allocation line (0–100% risky portfolio)",
+            )
+            for name in ["Current", "Minimum Variance", "Maximum Sharpe"]:
+                if name in r["construction_stats"].index:
+                    point = r["construction_stats"].loc[name]
+                    frontier_chart.add_scatter(
+                        x=[point["Optimizer Volatility"]], y=[point["Optimizer Expected Return"]],
+                        mode="markers+text", text=[name], textposition="top center", name=name,
+                    )
+            frontier_chart.update_layout(hovermode="closest", legend_title_text="", margin=dict(l=10, r=10, t=50, b=10))
+            st.plotly_chart(frontier_chart, width="stretch", theme="streamlit")
+            st.caption(
+                "The frontier begins at the global minimum-variance portfolio. The constrained tangency estimate is the long-only maximum-Sharpe portfolio. "
+                "The CAL stops at 100% risky allocation: borrowing, leverage, and short selling are not modeled."
+            )
+            expected_assets = a.asset_returns.mean() * TRADING_DAYS
+            with st.form("target_return_form", border=True):
+                target_percent = st.number_input(
+                    "Target arithmetic annual return (%)",
+                    min_value=float(expected_assets.min() * 100),
+                    max_value=float(expected_assets.max() * 100),
+                    value=float(r["construction_stats"].loc["Current", "Optimizer Expected Return"] * 100),
+                    step=0.25,
+                )
+                target_submit = st.form_submit_button("Construct target-return portfolio", icon=":material/target:")
+            if target_submit:
+                try:
+                    target_weights = target_return_weights(a.asset_returns, target_percent / 100)
+                    target_stats = optimizer_statistics(a.asset_returns, target_weights, r["risk_free"])
+                    st.session_state["target_return_result"] = (target_weights, target_stats)
+                except (ValueError, RuntimeError) as exc:
+                    st.error(f"Target-return portfolio unavailable: {exc}")
+            if "target_return_result" in st.session_state:
+                target_weights, target_stats = st.session_state["target_return_result"]
+                with st.container(horizontal=True):
+                    st.metric("Target expected return", pct(target_stats["Optimizer Expected Return"]), border=True)
+                    st.metric("Optimizer volatility", pct(target_stats["Optimizer Volatility"]), border=True)
+                    st.metric("Optimizer Sharpe", ratio(target_stats["Optimizer Sharpe"]), border=True)
+                st.dataframe(target_weights.rename("Target Weight").to_frame(), width="stretch", column_config={
+                    "Target Weight": st.column_config.NumberColumn(format="percent")
+                })
         st.dataframe(a.allocations, width="stretch", column_config={
             column: st.column_config.NumberColumn(format="percent") for column in a.allocations.columns
         })
@@ -486,6 +568,8 @@ if tabs[8].open:
             health_coverage=health_coverage, health_components=health_components,
             comparison=allocation_comparison, insights=insights,
             what_if=st.session_state.get("what_if_result", (None, None, None))[0],
+            efficient_frontier=r["frontier"] if not r["frontier"].empty else None,
+            optimized_allocations=r["frontier_weights"] if not r["frontier_weights"].empty else None,
         )
         downloads = {
             "Performance metrics": metric_frame(a.performance).to_csv(),

@@ -68,7 +68,8 @@ def _comparison_table(frame: pd.DataFrame) -> str:
     formatted = frame.copy().astype(object)
     percent_columns = {
         "Arithmetic Return", "CAGR", "Annualized Volatility", "Maximum Drawdown",
-        "Largest Weight", "Weight Distance from Current",
+        "Largest Weight", "Weight Distance from Current", "Target Return",
+        "Optimizer Expected Return", "Optimizer Volatility",
     }
     for column in formatted.columns:
         if column in percent_columns:
@@ -100,7 +101,8 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
                          initial_value: float | None = None, health_score: float | None = None,
                          health_coverage: float | None = None, health_components: pd.DataFrame | None = None,
                          comparison: pd.DataFrame | None = None, insights: pd.DataFrame | None = None,
-                         what_if: pd.DataFrame | None = None) -> bytes:
+                         what_if: pd.DataFrame | None = None, efficient_frontier: pd.DataFrame | None = None,
+                         optimized_allocations: pd.DataFrame | None = None) -> bytes:
     """Generate a self-contained, deterministic investment research report."""
     assumptions = [
         "Daily simple returns and a 252-trading-day annualization convention.",
@@ -130,6 +132,8 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
                 ("Portfolio comparison", _comparison_table(comparison) if comparison is not None else "<p>Comparison unavailable.</p>"),
                 ("Deterministic research insights", _table(insights) if insights is not None else "<p>Insights unavailable.</p>"),
                 ("What-if comparison", _comparison_table(what_if) if what_if is not None else "<p>No hypothetical scenario was included.</p>"),
+                ("Efficient frontier", _comparison_table(efficient_frontier) if efficient_frontier is not None else "<p>Efficient frontier unavailable.</p>"),
+                ("Optimized allocations", _percentage_table(optimized_allocations) if optimized_allocations is not None else "<p>Optimized allocations unavailable.</p>"),
                 ("Allocation comparison", _percentage_table(allocations)),
                 (f"Rebalancing plan — {rebalancing_method}", _financial_table(rebalancing)),
                 ("Momentum-strategy results", _metric_table(strategy)), ("Stress-test results", _financial_table(stress)),

@@ -21,6 +21,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - Phase 1 Portfolio Management methodology alignment: arithmetic annualized return, annualized variance, `w′μ`, `w′Σw`, and one shared arithmetic Sharpe convention across performance and optimization
 - Phase 2A benchmark research: excess-return single-index OLS, alpha, beta, R², residual volatility, systematic/idiosyncratic variance, CAPM required return, Jensen’s alpha, and Treynor ratio
 - Phase 3 professional investment research: structured HTML report, like-for-like portfolio comparison, transparent Portfolio Health Score, interactive long-only what-if scenarios, and deterministic metric-traceable insights
+- Phase 2B construction: long-only efficient frontier, global minimum variance, constrained historical tangency, feasible target-return portfolios, and a non-leveraged CAL
 
 ## In progress
 
@@ -31,15 +32,6 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 **Context from current development session — verify before treating as canonical.**
 
 These are prioritized candidates from the code audit and course-material review, not yet approved methodology changes.
-
-### Phase 2B — Portfolio construction and optimization gaps
-
-- Generate a tested long-only efficient frontier.
-- Add target-return minimum-variance portfolios with feasibility checks.
-- Present maximum Sharpe as a constrained historical tangency estimate.
-- Consider a non-leveraged capital-allocation-line view only after the frontier workflow is stable.
-
-Why: the course audit substantiated the frontier, target-return, tangency, and risk-free/risky allocation models; they require deliberate interface and optimizer diagnostics beyond Phase 1.
 
 ### Phase 2 — Rebalancing realism
 
