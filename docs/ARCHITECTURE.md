@@ -42,6 +42,13 @@ portfolio_dashboard/
 tests/
   test_analytics.py                 synthetic unit and integration tests
   test_app.py                       offline Streamlit entrypoint smoke tests
+  test_workflow.py                  deterministic four-ETF research workflow
+.github/workflows/
+  ci.yml                            offline code and non-socket app verification
+  deployment-health.yml             scheduled public-endpoint classification
+scripts/
+  validate_markdown_links.py        tracked local Markdown-target validation
+  check_deployment.py               credential-free deployment health diagnostics
 docs/
   ARCHITECTURE.md                   this living technical reference
   DECISIONS.md                      accepted decisions and consequences
@@ -324,6 +331,7 @@ The test suite is intentionally offline:
 - **Failure tests:** Missing data, incomplete shocks, insufficient strategy history, invalid confidence, and degenerate optional allocation methods.
 - **Integration test:** Synthetic prices pass through `run_analysis` and reconcile the main outputs.
 - **Streamlit smoke tests:** `AppTest` verifies startup and pre-download validation.
+- **Automation:** GitHub Actions repeats the full suite, compilation/import, Streamlit configuration, AppTest, Markdown-link, dependency, and whitespace checks outside managed local sandboxes.
 
 Network access is deliberately excluded from tests. yfinance availability is an operational concern, not a deterministic unit-test dependency.
 
@@ -368,6 +376,9 @@ Before using an extension point, confirm that the feature remains within the foc
 ```mermaid
 flowchart LR
     GitHub["GitHub repository"] --> Cloud["Streamlit Community Cloud"]
+    GitHub --> CI["GitHub Actions offline CI"]
+    GitHub --> Health["Scheduled deployment health check"]
+    Health --> Cloud
     Cloud --> Install["Install bounded requirements"]
     Install --> Process["Single Streamlit Python process"]
     Browser["User browser"] --> Process
@@ -376,6 +387,8 @@ flowchart LR
 ```
 
 Deployment uses `app.py`, Python 3.11 where selectable, and `requirements.txt`. No secrets, local filesystem paths, database, system packages, or startup downloads are required. Market history is fetched only after the user runs an analysis.
+
+CI never opens a listening socket or contacts Yahoo Finance. `streamlit.testing.v1.AppTest` executes the entrypoint in-process with deterministic mocked data. The hosted health checker uses only Python's standard library, follows bounded redirects, recognizes Streamlit authentication, and writes readable GitHub Actions summaries. A managed sandbox's socket-binding denial is therefore isolated from application correctness rather than handled in product code.
 
 `.streamlit/config.toml` defines the native high-contrast dark theme, including semantic, dataframe, sidebar, and chart colors, so local and hosted presentation remain consistent without custom CSS. Plotly figures use Streamlit's chart theme explicitly. The full setup, failure, and signed-out verification procedure is maintained in [DEPLOYMENT.md](DEPLOYMENT.md).
 
@@ -392,6 +405,7 @@ Deployment uses `app.py`, Python 3.11 where selectable, and `requirements.txt`. 
 - Historical VaR/CVaR and stress windows do not describe unseen events.
 - Rebalancing excludes taxes, lots, whole shares, cash buffers, and trading costs.
 - Reporting is deterministic HTML and CSV only.
+- Anonymous browser-level deployment assertions remain manual while Streamlit can redirect the endpoint to authentication; the automated health check proves reachability and classifies failures but cannot prove signed-out UI rendering after an auth redirect.
 
 ## O. Safe feature-development workflow
 

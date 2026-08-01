@@ -1,5 +1,13 @@
 # Project history
 
+## 2026-08-01 — Independent CI and deployment verification
+
+- **What changed:** Added GitHub Actions CI for the complete offline suite and non-socket Streamlit startup, a scheduled credential-free deployment-health classifier, stronger initial-page AppTest assertions, and reusable Markdown-link validation.
+- **Why it changed:** Managed Codex/Herdr execution can block socket binding or DNS independently of PortfolioLens correctness, so startup and public-endpoint evidence needed an external, reproducible runner.
+- **Problem solved:** Every `main` push and pull request now receives deterministic application verification, while the hosted endpoint is checked independently and reports successful responses, authentication redirects, DNS failures, timeouts, and server errors without conflating them.
+- **Tradeoffs:** Authentication redirects establish Streamlit reachability but not signed-out UI rendering. Playwright remains excluded until the endpoint can be tested anonymously without brittle credentials.
+- **Evidence:** `.github/workflows/ci.yml`, `.github/workflows/deployment-health.yml`, `scripts/check_deployment.py`, `scripts/validate_markdown_links.py`, and the strengthened `tests/test_app.py` initial-state contract.
+
 ## 2026-08-01 — Approved Portfolio Management roadmap completion
 
 - **What changed:** Completed long-only frontier/GMV/tangency/target-return/CAL construction, holdings-level periodic and threshold rebalancing with costs, standardized annualized active return, explicit allocation constraints with feasibility/compliance reporting, full report integration, educational companion material, UX hardening, and permanent traceability.

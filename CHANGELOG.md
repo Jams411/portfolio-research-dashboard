@@ -6,6 +6,9 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ### Added
 
+- Added GitHub Actions CI for full pytest, compilation/import, Streamlit configuration, non-socket AppTest, dependency, Markdown-link, and repository-diff verification.
+- Added a daily and manually dispatchable public-deployment health workflow with readable success, authentication-redirect, DNS, timeout, and server-error diagnostics.
+- Expanded the offline initial-page smoke test to verify PortfolioLens branding, sidebar inputs, the no-download empty state, and absence of uncaught exceptions.
 - Added a reproducible long-only efficient frontier, global minimum-variance portfolio, constrained tangency portfolio, feasible target-return construction, and non-leveraged Capital Allocation Line.
 - Added holdings-level buy-and-hold, monthly, quarterly, annual, and threshold rebalancing simulations with drift, trade dates, one-way turnover, proportional costs, and exportable histories.
 - Added explicit asset bands, exclusions, user-defined groups/caps, linear feasibility checks, and constraint-validation summaries.

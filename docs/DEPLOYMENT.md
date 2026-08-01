@@ -15,6 +15,27 @@ The preferred `portfoliolens.streamlit.app` subdomain was found to be assigned t
 
 No API keys, secrets, database, paid services, or system packages are required.
 
+## Automated independent verification
+
+Two GitHub Actions workflows separate code verification from hosted-service health:
+
+- `.github/workflows/ci.yml` runs on pushes and pull requests involving `main`, plus manual dispatch. It installs Python 3.11 dependencies, runs all pytest tests, compiles/imports the application, validates Streamlit configuration, exercises the entrypoint through non-socket `AppTest`, validates local Markdown targets, and runs `git diff --check`.
+- `.github/workflows/deployment-health.yml` runs after pushes to `main`, once daily at 07:17 UTC, and manually. It follows ordinary redirects with a 15-second request timeout and reports a successful response, recognized Streamlit authentication redirect, DNS failure, timeout, server error, or other HTTP/connection failure in the Actions job summary.
+
+An authentication redirect is a successful reachability observation, not proof that the public application rendered. DNS, timeout, and server failures fail the health workflow but must be investigated as operational evidence before being attributed to application code. Neither workflow uses credentials.
+
+Run and inspect the workflows manually with:
+
+```bash
+gh workflow run ci.yml --ref main
+gh workflow run deployment-health.yml --ref main
+gh run list --workflow ci.yml --limit 5
+gh run list --workflow deployment-health.yml --limit 5
+gh run view RUN_ID --log
+```
+
+Some managed coding environments, including Codex/Herdr, reject local socket binding with `PermissionError: [Errno 1] Operation not permitted`. This is a sandbox policy outside the application process. Do not change Streamlit server code, ports, or financial behavior to work around it; use `AppTest` and GitHub Actions instead.
+
 ## 2. GitHub repository requirements
 
 The repository must contain `app.py`, `requirements.txt`, the `portfolio_dashboard/` package, and `.streamlit/config.toml`. Do not commit `.venv`, downloaded prices, generated reports, caches, or `.streamlit/secrets.toml`.
@@ -79,3 +100,7 @@ In a signed-out browser:
 8. Confirm the methodology disclaimer is visible and no browser console or application-log error appears.
 
 Only after this check should the verified hosted URL be added to the README and GitHub repository homepage.
+
+## 11. Browser-test limitation
+
+A Playwright deployment test is intentionally not installed. The current endpoint can redirect anonymous clients through Streamlit authentication, which makes a title assertion dependent on external account and visibility state. The lightweight health workflow records that redirect without credentials; the signed-out checklist above remains the authoritative UI-level deployment test until the endpoint consistently serves the public page directly.

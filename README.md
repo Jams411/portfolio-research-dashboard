@@ -2,13 +2,15 @@
 
 **Multi-Asset Portfolio Analytics & Investment Research**
 
+[![CI](https://github.com/Jams411/portfoliolens/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Jams411/portfoliolens/actions/workflows/ci.yml)
+
 PortfolioLens is a focused, internship-ready Streamlit application for historical portfolio research. It turns a ticker-and-weight input into a reproducible investment-research workflow spanning performance, market risk, benchmark-relative results, attribution, allocation alternatives, a transparent Portfolio Health Score, interactive what-if analysis, deterministic insights, rebalancing trades, a lagged momentum backtest, stress tests, and a professional downloadable HTML report.
 
 [Launch PortfolioLens](https://portfolio-research-dashboard.streamlit.app/) · [View the GitHub repository](https://github.com/Jams411/portfoliolens)
 
 The project is intentionally small enough to explain in an interview: market data enter through one validated boundary, financial calculations are pure functions, the UI only orchestrates those functions, and core formulas and reconciliation rules are covered by deterministic local tests.
 
-> **Deployment status:** PortfolioLens is publicly deployed and verified at the current URL above. The preferred `portfoliolens.streamlit.app` subdomain is already assigned to a different Streamlit deployment, so it has not been claimed here.
+> **Deployment status:** PortfolioLens retains the current Streamlit URL above. The scheduled [deployment-health workflow](https://github.com/Jams411/portfoliolens/actions/workflows/deployment-health.yml) records whether the endpoint returns successfully, redirects to Streamlit authentication, or fails at DNS, timeout, or server level. A redirect alone does not prove that the signed-out application UI rendered.
 
 ## Why this project matters
 
@@ -106,9 +108,14 @@ Open the local URL Streamlit prints. Select a preset, adjust inputs if desired, 
 ```bash
 .venv/bin/pytest -q
 .venv/bin/python -m compileall app.py portfolio_dashboard tests
+.venv/bin/python scripts/validate_markdown_links.py
 ```
 
 Tests cover validation, data layout/missingness, arithmetic return, CAGR, annualized variance/volatility, portfolio `w′μ` and `w′Σw`, displayed/optimizer Sharpe reconciliation, Sortino, portfolio aggregation, drawdown, VaR/CVaR, excess-return regression and CAPM reconciliation, tracking error, information ratio, risk-contribution reconciliation, allocation comparison, Health Score arithmetic and coverage, what-if validation and reconciliation, deterministic insight traceability, allocation failure handling, rebalancing, signal lag, costs, stress tests, professional report units/sections, the integrated analytics pipeline, and the offline Streamlit research workspace.
+
+GitHub Actions runs the complete offline suite on every push to `main`, every pull request targeting `main`, and manual dispatch. CI also compiles and imports the application, validates Streamlit configuration, runs the non-socket AppTest smoke suite, checks repository-local Markdown links, checks dependency integrity, and rejects whitespace errors. It requires no secrets and does not contact Yahoo Finance.
+
+The Codex/Herdr sandbox can prohibit local TCP socket binding even when the application imports and executes correctly. That operating-system restriction cannot be repaired in PortfolioLens code. Non-socket AppTest covers application startup in CI, while the separate deployment-health workflow checks the hosted URL from an independent GitHub runner.
 
 ## Streamlit Community Cloud deployment
 

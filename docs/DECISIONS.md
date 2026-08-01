@@ -211,3 +211,13 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Alternatives considered:** Infer categories from tickers, silently relax infeasible limits, add unsupported maximum-volatility constraints, or allow shorting/leverage to restore feasibility.
 - **Consequences:** Users do more setup for group caps, but results remain transparent. Infeasible combinations fail clearly and no constraint is relaxed automatically.
 - **Status:** Accepted.
+
+## D021 — Separate code verification from hosted deployment health
+
+- **Date:** 2026-08-01
+- **Decision:** Run deterministic application verification in GitHub Actions without sockets or live market data, and check the public Streamlit endpoint in a separate credential-free scheduled workflow that classifies redirects and network failures.
+- **Context:** The managed Codex/Herdr environment can deny TCP socket binding or DNS access independently of application behavior. A local startup failure under that policy cannot establish that PortfolioLens is defective or that Streamlit Community Cloud is unhealthy.
+- **Rationale:** GitHub-hosted runners provide an independent, reproducible environment. Separating CI from deployment health preserves clear attribution: formula and startup failures belong to code verification, while DNS, authentication, timeout, and server responses are operational evidence.
+- **Alternatives considered:** Change Streamlit networking code to evade sandbox restrictions, require deployment credentials, treat every redirect as failure, or add a brittle Playwright dependency that cannot pass an authentication gate.
+- **Consequences:** Pull requests and `main` pushes receive complete offline verification. The daily health workflow can prove direct HTTP success or Streamlit reachability, but an authentication redirect cannot prove signed-out UI rendering; that remains a documented manual check.
+- **Status:** Accepted.
