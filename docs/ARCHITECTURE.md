@@ -49,6 +49,10 @@ docs/
   ROADMAP.md                        completed, planned, deferred and avoided work
 CHANGELOG.md                        user-facing milestone changes
 README.md                           product overview and operating instructions
+docs/DEPLOYMENT.md                  Community Cloud runbook and verification
+docs/DEMO_GUIDE.md                  reproducible interview walkthrough
+docs/SHOWCASE_REVIEW.md             visual and functional review findings
+docs/images/                        optimized live-application captures
 requirements.txt                   bounded runtime and test dependencies
 pytest.ini                          local pytest configuration
 ```
@@ -359,6 +363,8 @@ flowchart LR
 ```
 
 Deployment uses `app.py`, Python 3.11 where selectable, and `requirements.txt`. No secrets, local filesystem paths, database, system packages, or startup downloads are required. Market history is fetched only after the user runs an analysis.
+
+`.streamlit/config.toml` defines only native theme values so local and hosted presentation remain consistent without custom CSS. The full setup, failure, and signed-out verification procedure is maintained in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## N. Known architectural limitations
 

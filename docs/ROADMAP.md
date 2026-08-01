@@ -16,10 +16,11 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - Deterministic research summary, CSV exports, and HTML report
 - Streamlit application smoke tests and synthetic analytics integration tests
 - README, methodology, deployment instructions, project history, project journal, architecture reference, decision log, roadmap, and changelog
+- Live visual/functional review, Community Cloud checklist, demo guide, and eight-screen showcase gallery
 
 ## In progress
 
-None. A roadmap entry does not authorize implementation; planned work begins only after scope review.
+- Public Streamlit Community Cloud deployment and signed-out URL verification. Repository preparation is complete; account authorization remains external to the codebase.
 
 ## Planned
 

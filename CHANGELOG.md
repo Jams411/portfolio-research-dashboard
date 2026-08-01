@@ -4,6 +4,15 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+### Added
+
+- Added a Community Cloud deployment checklist, timed interview demo guide, final showcase review, and eight live-application screenshots.
+
+### Changed
+
+- Collapsed secondary momentum controls, added a persistent research-only scope reminder, and established a native Streamlit showcase theme without changing analytics.
+- Expanded the README with a screenshot gallery, deployment status, architecture links, demonstration guidance, and the evidence-labeled project story.
+
 ### Documentation
 
 - Added permanent project history, decision, roadmap, changelog, and documentation-governance records.

@@ -109,3 +109,17 @@ Interview explainability and financial correctness were prioritized over feature
 - **Open questions:** Which candidate milestone should be approved first, and what source details should be recorded if a course-derived feature proceeds?
 - **Next step:** Review and approve a small roadmap unit before changing methodology or behavior.
 - **Related commit hashes:** No implementation commit; planning context was recorded in `2caedab`.
+
+## 2026-07-31 — Final showcase and deployment readiness
+
+- **Date:** 2026-07-31
+- **Goal:** Prepare the tested application for a consistent interview demonstration and Community Cloud deployment without expanding product scope.
+- **Context:** A live browser review used SPY, QQQ, TLT, and GLD with non-equal weights and VTI as the benchmark across all nine sections.
+- **What changed:** Secondary momentum controls moved into a native expander; a visible research-only disclaimer and native light theme were added; deployment, demo, and review runbooks plus eight live screenshots were created.
+- **Why it changed:** A final showcase needs predictable rendering, concise controls, visible scope assumptions, repeatable demo settings, and deployment claims grounded in a public URL check.
+- **Relevant career or course connection:** Investment-research communication, portfolio-risk presentation, interview readiness, and reproducible Python deployment.
+- **Tradeoffs:** The tab row remains dense on narrow screens, but Streamlit’s responsive tab scrolling worked. A navigation rewrite was not justified. No financial calculation or product feature changed.
+- **Lessons learned:** Deployment readiness and deployment completion are separate states. Screenshots and a hosted URL should be generated from the verified application rather than placeholders or assumptions.
+- **Open questions:** The candidate hosted URL still requires Streamlit account authorization/public-access verification.
+- **Next step:** Push the prepared repository, authorize or create the Community Cloud app, and execute the signed-out post-deployment checklist.
+- **Related commit hashes:** `2c55055`; documentation and screenshot commits follow this entry in Git history.

@@ -70,3 +70,12 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - **Course or career connection:** Reproducibility, model-risk governance, technical communication, maintenance, and interview preparation.
 - **Tradeoffs:** Kept the system in repository Markdown rather than introducing external project-management or architecture tooling.
 - **Evidence:** Commit `2caedab` created the initial governance system. The journal and architecture additions are present in the repository after that commit.
+
+## 2026-07-31 — Showcase interface and deployment preparation
+
+- **What changed:** Performed a live nine-section review with a four-ETF sample; collapsed secondary strategy controls, added a persistent scope disclaimer, and added a native Streamlit theme. Added deployment, demo, and review documentation plus a real screenshot gallery.
+- **Why it changed:** The final demonstration needed consistent rendering, concise controls, visible assumptions, reproducible assets, and an explicit Community Cloud verification path.
+- **Problem solved:** Removed avoidable sidebar crowding and theme variability while preventing an unverified hosted URL from being presented as complete.
+- **Course or career connection:** Investment-research communication, interview presentation, model-scope disclosure, and reproducible deployment practice.
+- **Tradeoffs:** Retained the existing nine-tab navigation because responsive scrolling remained functional; did not add product features or alter financial methodology.
+- **Evidence:** UI commit `2c55055`; documentation and screenshot commits follow this entry in Git history.
