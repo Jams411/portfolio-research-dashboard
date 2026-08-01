@@ -39,7 +39,21 @@ def test_app_renders_helpful_initial_state():
     assert not app.exception
     assert app.title[0].value == "PortfolioLens"
     assert any("Multi-Asset Portfolio Analytics & Investment Research" in item.value for item in app.caption)
+    assert any(item.value == "Analysis inputs" for item in app.header)
+    expected_controls = {
+        "Portfolio tickers", "Weights (%)", "Benchmark", "Initial portfolio value",
+        "Annual risk-free rate (%)", "Transaction cost rate (%)",
+        "Rebalancing drift threshold (%)",
+    }
+    assert expected_controls <= {
+        item.label for collection in (app.text_input, app.number_input) for item in collection
+    }
+    assert any(item.label == "Example portfolio" for item in app.selectbox)
+    assert any(item.label == "Use equal weights" for item in app.checkbox)
+    assert any(item.label == "Run analysis" for item in app.button)
     assert any("No market data are downloaded" in item.value for item in app.info)
+    assert not app.tabs
+    assert not app.metric
 
 
 def test_app_rejects_multiple_benchmark_tickers_before_download():
