@@ -1,10 +1,10 @@
 # Streamlit Community Cloud deployment
 
-This checklist covers the supported deployment path for the Portfolio Research Dashboard. A hosted deployment is not considered complete until its public URL has been opened in a signed-out browser and the workflow below has passed.
+This checklist covers the supported deployment path for PortfolioLens. A hosted deployment is not considered complete until its public URL has been opened in a signed-out browser and the workflow below has passed.
 
 ## 1. Prerequisites
 
-- A GitHub account with access to `Jams411/portfolio-research-dashboard`
+- A GitHub account with access to `Jams411/portfoliolens`
 - A Streamlit Community Cloud account connected to GitHub
 - The repository pushed to a clean `main` branch
 - Python 3.11 selected where the Cloud runtime offers a version choice
@@ -34,7 +34,7 @@ Expected: a clean status, `0 0`, and a passing test suite.
 
 ## 4. Repository and branch
 
-- Repository: `Jams411/portfolio-research-dashboard`
+- Repository: `Jams411/portfoliolens`
 - Branch: `main`
 
 ## 5. Entry file

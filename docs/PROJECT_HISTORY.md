@@ -1,5 +1,14 @@
 # Project history
 
+## 2026-08-01 — PortfolioLens product rename
+
+- **What changed:** Renamed the current product and exported report branding from Portfolio Research Dashboard to PortfolioLens, adopted the subtitle “Multi-Asset Portfolio Analytics & Investment Research,” and prepared the repository and deployment references for the new identity.
+- **Why it changed:** The former name was accurate but generic; PortfolioLens is more distinctive while still describing portfolio analysis and investment-research work.
+- **Problem solved:** Established one concise identity across the application, documentation, exports, GitHub repository, screenshots, and deployment.
+- **Relevant course or career connection:** Portfolio analytics, risk communication, investment research, and interview-ready project presentation.
+- **Important tradeoffs:** This is a branding-only change. The `portfolio_dashboard` import package, product scope, architecture, formulas, methodology, and tests remain intact.
+- **Commit:** Rename commits created with this milestone; verify final hashes from Git history.
+
 ## 2026-08-01 — Native dark financial theme
 
 - **What changed:** Replaced the light showcase palette with a native Streamlit dark theme covering application surfaces, sidebar, widgets, tables, semantic colors, and chart palettes. Plotly rendering now explicitly requests Streamlit theme inheritance.

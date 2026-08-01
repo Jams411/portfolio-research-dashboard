@@ -2,6 +2,16 @@
 
 Significant product, financial-methodology, architecture, and scope decisions are recorded here. Add new entries rather than rewriting prior decisions; mark superseded entries explicitly.
 
+## D015 — Rename the product to PortfolioLens
+
+- **Date:** 2026-08-01
+- **Decision:** Rename the product from Portfolio Research Dashboard to PortfolioLens and use the subtitle “Multi-Asset Portfolio Analytics & Investment Research.”
+- **Context:** The former name described the application accurately but was generic and did not provide a distinctive identity for demonstrations, deployment, or interview discussion.
+- **Rationale:** PortfolioLens communicates a focused view into portfolio analysis, risk, benchmark comparison, allocation decisions, and investment research while remaining concise and memorable.
+- **Alternatives considered:** Retain the descriptive former name or adopt a name implying institutional intelligence, forecasting, or advisory capabilities.
+- **Consequences:** Application branding, report titles, documentation, repository identity, screenshots, and deployment presentation change. Product scope, architecture, financial calculations, methodology, and educational-use limitations do not change. The internal `portfolio_dashboard` Python package remains stable to avoid an unnecessary import migration.
+- **Status:** Accepted.
+
 ## D001 — Keep the product focused and educational
 
 - **Date:** 2026-07-31

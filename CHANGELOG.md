@@ -10,6 +10,7 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ### Changed
 
+- Renamed the product from Portfolio Research Dashboard to PortfolioLens, with the subtitle “Multi-Asset Portfolio Analytics & Investment Research”; product scope and financial methodology are unchanged.
 - Collapsed secondary momentum controls, added a persistent research-only scope reminder, and established a native Streamlit showcase theme without changing analytics.
 - Replaced the light showcase theme with a high-contrast native dark financial theme and made Streamlit theme inheritance explicit for Plotly charts.
 - Expanded the README with a screenshot gallery, deployment status, architecture links, demonstration guidance, and the evidence-labeled project story.

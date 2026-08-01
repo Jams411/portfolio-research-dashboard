@@ -1,6 +1,6 @@
 # Architecture
 
-This is the living technical reference for maintaining, extending, testing, deploying, and explaining the Portfolio Research Dashboard. For formulas and assumptions, see [Methodology](METHODOLOGY.md). For rationale, see [Decisions](DECISIONS.md). For future work, see the [Roadmap](ROADMAP.md).
+This is the living technical reference for maintaining, extending, testing, deploying, and explaining PortfolioLens. For formulas and assumptions, see [Methodology](METHODOLOGY.md). For rationale, see [Decisions](DECISIONS.md). For future work, see the [Roadmap](ROADMAP.md).
 
 ## A. System overview
 

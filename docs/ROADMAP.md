@@ -17,6 +17,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - Streamlit application smoke tests and synthetic analytics integration tests
 - README, methodology, deployment instructions, project history, project journal, architecture reference, decision log, roadmap, and changelog
 - Live visual/functional review, Community Cloud checklist, demo guide, and eight-screen showcase gallery
+- PortfolioLens product branding and repository identity, without scope or methodology changes
 
 ## In progress
 

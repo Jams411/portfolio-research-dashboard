@@ -2,6 +2,8 @@
 
 ## Standard demo portfolio
 
+Introduce the application as **PortfolioLens — Multi-Asset Portfolio Analytics & Investment Research**.
+
 Use the same settings for screenshots and interviews so results remain easy to reproduce:
 
 | Setting | Value |
@@ -30,7 +32,7 @@ Close with: “The design favors transparent financial conventions and determini
 
 ## Five-minute interview demo
 
-1. **Product goal — 30 seconds.** A focused historical research workflow for portfolio analytics, risk, investment research, and systematic strategy analysis.
+1. **Product goal — 30 seconds.** PortfolioLens is a focused historical research workflow for portfolio analytics, risk, investment research, and systematic strategy analysis.
 2. **Data boundary — 40 seconds.** Normalize tickers, validate long-only weights, download adjusted history separately for holdings and benchmark, reject missing assets, and inner-align without filling prices.
 3. **Performance and risk — 60 seconds.** Explain daily simple returns, constant weights, CAGR, annualized volatility, downside metrics, beta, and Euler risk contribution.
 4. **Benchmark and decisions — 50 seconds.** Explain tracking error/information ratio, contribution reconciliation, allocation methods, optimizer convergence checks, and the self-financing rebalance plan.

@@ -6,9 +6,23 @@ This journal explains the project’s evolution in plain language. It complement
 
 **Context from current development session — verify before treating as canonical.**
 
-The project was created as a focused, new `portfolio-research-dashboard`: an internship-ready application that can be demonstrated, tested, deployed, and explained without institutional-platform complexity. The current session states that it is separate from a frozen Portfolio Intelligence Platform and must not import from, depend on, simplify, or modify that platform. The frozen platform was not inspected to prepare this journal, so no technical comparison is claimed here.
+The project was created under the former working name `portfolio-research-dashboard` as a focused, internship-ready application that can be demonstrated, tested, deployed, and explained without institutional-platform complexity. It was renamed PortfolioLens on 2026-08-01 without changing that purpose. The current session states that it is separate from a frozen Portfolio Intelligence Platform and must not import from, depend on, simplify, or modify that platform. The frozen platform was not inspected to prepare this journal, so no technical comparison is claimed here.
 
 Interview explainability and financial correctness were prioritized over feature count. That principle explains the use of small financial functions, one explicit strategy, deterministic reporting, strict data validation, and synthetic tests. Advanced features were deferred when they required unreliable classifications, new data sources, opaque models, personalized advice, or disproportionate methodology and deployment complexity.
+
+## 2026-08-01 — PortfolioLens identity
+
+- **Date:** 2026-08-01
+- **Goal:** Give the application a concise, distinctive name without changing what it does.
+- **Context:** Portfolio Research Dashboard was descriptive but generic. The implementation had reached a stable public-deployment stage and needed consistent product, repository, export, and demo branding.
+- **What changed:** Renamed the product to PortfolioLens, added the subtitle “Multi-Asset Portfolio Analytics & Investment Research,” updated current-product documentation and report branding, and retained the stable internal Python package name.
+- **Why it changed:** PortfolioLens better communicates a focused analytical view across portfolio risk, benchmark comparison, construction, rebalancing, strategy research, and reporting.
+- **Relevant career or course connection:** Investment-research communication, portfolio analytics, and interview presentation.
+- **Tradeoffs:** Kept `portfolio_dashboard` as the internal namespace to avoid a cosmetic import migration. The name does not imply prediction, advice, or institutional-platform scope.
+- **Lessons learned:** Product identity can improve presentation without requiring product expansion; branding and methodology should remain separate decisions.
+- **Open questions:** Whether Streamlit Community Cloud permits the public app slug to be renamed in place without recreation.
+- **Next step:** Rename GitHub in place, verify redirects and synchronization, then complete the Streamlit URL transition if supported.
+- **Related commit hashes:** Rename commits created with this milestone; verify final hashes from Git history.
 
 ## 2026-08-01 — Production dark-theme standardization
 
