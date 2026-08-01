@@ -67,9 +67,9 @@ with st.sidebar:
     transaction_cost = st.number_input(
         "Transaction cost per position change (%)", min_value=0.0, max_value=10.0, value=0.10, step=0.05
     ) / 100
-    st.subheader("Momentum parameters")
-    short_window = st.number_input("Short moving average", 2, 500, 50)
-    long_window = st.number_input("Long moving average", 3, 1000, 200)
+    with st.expander("Momentum parameters"):
+        short_window = st.number_input("Short moving average", 2, 500, 50)
+        long_window = st.number_input("Long moving average", 3, 1000, 200)
     run = st.button("Run analysis", type="primary", width="stretch")
     if st.button("Reset", width="stretch"):
         st.session_state.clear()
@@ -131,6 +131,7 @@ st.caption(
     f"Common adjusted-price history: {a.prices.index.min().date()} to {a.prices.index.max().date()} · "
     f"{len(a.prices):,} observations · benchmark: {r['benchmark_ticker']}"
 )
+st.caption("Historical research only · constant portfolio weights · not personalized financial advice")
 
 tab_names = [
     "Overview", "Performance", "Risk", "Benchmark & Attribution", "Construction & Rebalancing",
