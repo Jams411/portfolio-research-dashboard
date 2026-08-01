@@ -12,7 +12,10 @@ PERCENT_METRICS = {
     "Idiosyncratic Risk Share", "CAPM Required Return", "Jensen's Alpha", "Treynor Ratio",
     "Time in Market", "Turnover", "Historical VaR (95%)", "Historical CVaR (95%)",
 }
-COUNT_METRICS = {"Position Changes", "Warm-up Observations", "Regression Observations"}
+COUNT_METRICS = {
+    "Position Changes", "Warm-up Observations", "Regression Observations",
+    "Rebalancing Dates",
+}
 
 def pct(value: float, decimals: int = 2) -> str:
     return "N/A" if value is None or not math.isfinite(float(value)) else f"{float(value):.{decimals}%}"

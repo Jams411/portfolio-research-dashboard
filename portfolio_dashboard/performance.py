@@ -88,7 +88,7 @@ def sharpe_ratio(
 
 
 def sortino_ratio(returns: pd.Series, risk_free_rate: float = 0.0) -> float:
-    """Annualized excess CAGR divided by target downside deviation.
+    """Annualized arithmetic excess return divided by target downside deviation.
 
     The annual risk-free rate is converted to an equivalent daily minimum
     acceptable return. Downside deviation includes every observation, with

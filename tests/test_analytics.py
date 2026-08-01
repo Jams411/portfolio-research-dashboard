@@ -487,6 +487,7 @@ def test_metric_formatting_preserves_ratios_and_percentages():
     assert metric_value("Systematic Variance", .025) == "0.0250"
     assert metric_value("Treynor Ratio", .08) == "8.00%"
     assert metric_value("Regression Observations", 252.0) == "252"
+    assert metric_value("Rebalancing Dates", 4.0) == "4"
     assert metric_value("Sharpe Ratio", 1.25) == "1.25"
     assert metric_value("Position Changes", 3.0) == "3"
 
