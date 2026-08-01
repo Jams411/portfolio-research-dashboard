@@ -33,14 +33,58 @@ def cagr(returns: pd.Series, periods_per_year: int = TRADING_DAYS) -> float:
     return float((1 + clean).prod() ** (periods_per_year / len(clean)) - 1)
 
 
+def annualized_arithmetic_return(
+    returns: pd.Series, periods_per_year: int = TRADING_DAYS
+) -> float:
+    """Annualize the sample arithmetic mean return.
+
+    This is the historical expected-return convention used by mean-variance
+    construction and risk-adjusted performance ratios. It is deliberately
+    distinct from CAGR, which measures realized compound growth.
+    """
+    clean = returns.dropna()
+    return float(clean.mean() * periods_per_year) if not clean.empty else float("nan")
+
+
 def annualized_volatility(returns: pd.Series, periods_per_year: int = TRADING_DAYS) -> float:
     return float(returns.dropna().std(ddof=1) * np.sqrt(periods_per_year))
 
 
-def sharpe_ratio(returns: pd.Series, risk_free_rate: float = 0.0) -> float:
+def annualized_variance(returns: pd.Series, periods_per_year: int = TRADING_DAYS) -> float:
+    """Annualized sample variance of periodic returns."""
+    return float(returns.dropna().var(ddof=1) * periods_per_year)
+
+
+def portfolio_expected_return(
+    asset_returns: pd.DataFrame, weights: pd.Series, periods_per_year: int = TRADING_DAYS
+) -> float:
+    """Historical arithmetic annualized return ``w'μ`` for labeled assets."""
+    return annualized_arithmetic_return(portfolio_returns(asset_returns, weights), periods_per_year)
+
+
+def portfolio_variance(
+    asset_returns: pd.DataFrame, weights: pd.Series, periods_per_year: int = TRADING_DAYS
+) -> float:
+    """Annualized covariance-matrix variance ``w'Σw`` for labeled assets."""
+    if set(asset_returns.columns) != set(weights.index):
+        raise ValueError("Weight labels must exactly match return columns.")
+    cov = asset_returns.loc[:, weights.index].cov() * periods_per_year
+    return float(weights @ cov @ weights)
+
+
+def sharpe_from_statistics(expected_return: float, volatility: float, risk_free_rate: float = 0.0) -> float:
+    """Return Sharpe from annualized arithmetic return and volatility inputs."""
+    return float((expected_return - risk_free_rate) / volatility) if volatility > 0 else float("nan")
+
+
+def sharpe_ratio(
+    returns: pd.Series, risk_free_rate: float = 0.0, periods_per_year: int = TRADING_DAYS
+) -> float:
+    """Arithmetic annualized excess return divided by annualized volatility."""
     clean = returns.dropna()
-    vol = annualized_volatility(clean)
-    return float((cagr(clean) - risk_free_rate) / vol) if vol > 0 else float("nan")
+    vol = annualized_volatility(clean, periods_per_year)
+    expected = annualized_arithmetic_return(clean, periods_per_year)
+    return sharpe_from_statistics(expected, vol, risk_free_rate)
 
 
 def sortino_ratio(returns: pd.Series, risk_free_rate: float = 0.0) -> float:
@@ -56,7 +100,8 @@ def sortino_ratio(returns: pd.Series, risk_free_rate: float = 0.0) -> float:
     daily_target = (1.0 + risk_free_rate) ** (1.0 / TRADING_DAYS) - 1.0
     shortfall = np.minimum(clean.to_numpy() - daily_target, 0.0)
     downside = float(np.sqrt(np.mean(shortfall ** 2)) * np.sqrt(TRADING_DAYS))
-    return float((cagr(clean) - risk_free_rate) / downside) if downside > 0 else float("nan")
+    expected = annualized_arithmetic_return(clean)
+    return float((expected - risk_free_rate) / downside) if downside > 0 else float("nan")
 
 
 def drawdown_series(returns: pd.Series) -> pd.Series:
@@ -75,7 +120,10 @@ def performance_metrics(returns: pd.Series, risk_free_rate: float = 0.0) -> dict
     clean = returns.dropna()
     ann_return, max_dd = cagr(clean), max_drawdown(clean)
     return {
-        "Total Return": total_return(clean), "CAGR": ann_return,
+        "Total Return": total_return(clean),
+        "Historical Arithmetic Annualized Return": annualized_arithmetic_return(clean),
+        "CAGR": ann_return,
+        "Annualized Variance": annualized_variance(clean),
         "Annualized Volatility": annualized_volatility(clean),
         "Sharpe Ratio": sharpe_ratio(clean, risk_free_rate),
         "Sortino Ratio": sortino_ratio(clean, risk_free_rate),

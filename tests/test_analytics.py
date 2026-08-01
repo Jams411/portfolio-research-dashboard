@@ -8,8 +8,12 @@ from portfolio_dashboard.data import (
     InputError, MarketDataError, align_prices, extract_adjusted_prices, parse_tickers,
     parse_weight_input, validate_weights,
 )
-from portfolio_dashboard.performance import (annualized_volatility, cagr, drawdown_series, max_drawdown,
-    performance_metrics, portfolio_returns, sharpe_ratio, simple_returns, sortino_ratio)
+from portfolio_dashboard.performance import (
+    annualized_arithmetic_return, annualized_variance, annualized_volatility, cagr,
+    drawdown_series, max_drawdown, performance_metrics, portfolio_expected_return,
+    portfolio_returns, portfolio_variance, sharpe_from_statistics, sharpe_ratio,
+    simple_returns, sortino_ratio,
+)
 from portfolio_dashboard.pipeline import run_analysis
 from portfolio_dashboard.rebalancing import rebalancing_plan
 from portfolio_dashboard.risk import beta, historical_cvar, historical_var, information_ratio, tracking_error, volatility_contributions
@@ -71,10 +75,15 @@ def test_extract_single_and_multiindex_prices():
 
 def test_performance_formulas():
     r = pd.Series([.01, -.02, .03, .01])
+    expected_arithmetic = r.mean() * 252
     expected_cagr = (np.prod(1 + r) ** (252 / 4)) - 1
+    expected_variance = r.var(ddof=1) * 252
+    assert annualized_arithmetic_return(r) == pytest.approx(expected_arithmetic)
     assert cagr(r) == pytest.approx(expected_cagr)
+    assert annualized_variance(r) == pytest.approx(expected_variance)
     assert annualized_volatility(r) == pytest.approx(r.std(ddof=1) * np.sqrt(252))
-    assert sharpe_ratio(r, .02) == pytest.approx((expected_cagr - .02) / annualized_volatility(r))
+    assert annualized_volatility(r) ** 2 == pytest.approx(expected_variance)
+    assert sharpe_ratio(r, .02) == pytest.approx((expected_arithmetic - .02) / annualized_volatility(r))
     assert np.isfinite(sortino_ratio(pd.Series([.01, -.01, .02, -.03, .01])))
     dd = drawdown_series(pd.Series([.1, -.2, .1]))
     assert max_drawdown(pd.Series([.1, -.2, .1])) == pytest.approx(dd.min())
@@ -89,8 +98,38 @@ def test_drawdown_includes_initial_wealth_baseline():
 def test_sortino_uses_all_periods_for_target_downside_deviation():
     values = pd.Series([.01, -.02, .03, -.01])
     downside = np.sqrt(np.mean(np.minimum(values.to_numpy(), 0.0) ** 2)) * np.sqrt(252)
-    expected = cagr(values) / downside
+    expected = annualized_arithmetic_return(values) / downside
     assert sortino_ratio(values) == pytest.approx(expected)
+
+
+def test_portfolio_expected_return_and_variance_match_matrix_formulas():
+    asset_returns = pd.DataFrame({"A": [.01, -.02, .03], "B": [.02, .01, -.01]})
+    weights = pd.Series({"A": .6, "B": .4})
+    expected_return = float(weights @ (asset_returns.mean() * 252))
+    expected_variance = float(weights @ (asset_returns.cov() * 252) @ weights)
+    assert portfolio_expected_return(asset_returns, weights) == pytest.approx(expected_return)
+    assert portfolio_variance(asset_returns, weights) == pytest.approx(expected_variance)
+    with pytest.raises(ValueError, match="labels"):
+        portfolio_variance(asset_returns, pd.Series({"A": 1.0}))
+
+
+def test_optimizer_and_displayed_sharpe_share_one_formula(returns):
+    risk_free_rate = .02
+    weights = maximum_sharpe_weights(returns, risk_free_rate)
+    optimized_returns = portfolio_returns(returns, weights)
+    displayed = performance_metrics(optimized_returns, risk_free_rate)["Sharpe Ratio"]
+    expected_return = portfolio_expected_return(returns, weights)
+    volatility = np.sqrt(portfolio_variance(returns, weights))
+    optimizer_formula = sharpe_from_statistics(expected_return, volatility, risk_free_rate)
+    assert displayed == pytest.approx(optimizer_formula)
+
+
+def test_performance_scorecard_separates_arithmetic_return_cagr_and_variance():
+    values = pd.Series([.10, -.10])
+    metrics = performance_metrics(values)
+    assert metrics["Historical Arithmetic Annualized Return"] == pytest.approx(0.0)
+    assert metrics["CAGR"] < 0
+    assert metrics["Annualized Variance"] == pytest.approx(values.var(ddof=1) * 252)
 
 def test_var_cvar_beta_and_relative_metrics():
     benchmark = pd.Series([-.03, -.02, -.01, 0, .01, .02])

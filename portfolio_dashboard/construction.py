@@ -7,6 +7,7 @@ import pandas as pd
 from scipy.optimize import minimize
 
 from .config import TRADING_DAYS
+from .performance import sharpe_from_statistics
 
 
 def equal_weights(columns: list[str] | pd.Index) -> pd.Series:
@@ -41,7 +42,7 @@ def _optimize(returns: pd.DataFrame, objective: str, risk_free_rate: float = 0.0
         vol = portfolio_vol(w)
         if objective == "min_variance":
             return vol ** 2
-        return -float((w @ expected - risk_free_rate) / vol) if vol > 0 else 1e9
+        return -sharpe_from_statistics(float(w @ expected), vol, risk_free_rate) if vol > 0 else 1e9
     result = minimize(target, np.repeat(1 / n, n), method="SLSQP", bounds=[(0, 1)] * n,
                       constraints={"type": "eq", "fun": lambda w: w.sum() - 1},
                       options={"maxiter": 1000, "ftol": 1e-12})
