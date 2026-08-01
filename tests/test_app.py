@@ -37,7 +37,8 @@ def run_analysis(app):
 def test_app_renders_helpful_initial_state():
     app = AppTest.from_file("app.py").run(timeout=20)
     assert not app.exception
-    assert app.title[0].value == "Portfolio Research Dashboard"
+    assert app.title[0].value == "PortfolioLens"
+    assert any("Multi-Asset Portfolio Analytics & Investment Research" in item.value for item in app.caption)
     assert any("No market data are downloaded" in item.value for item in app.info)
 
 

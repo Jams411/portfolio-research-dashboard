@@ -1,4 +1,4 @@
-"""Streamlit entrypoint for the Portfolio Research Dashboard."""
+"""Streamlit entrypoint for PortfolioLens."""
 from __future__ import annotations
 
 from datetime import date
@@ -18,7 +18,7 @@ from portfolio_dashboard.risk import historical_cvar, historical_var
 from portfolio_dashboard.strategy import momentum_backtest
 from portfolio_dashboard.stress import custom_shock, historical_stress
 
-st.set_page_config(page_title="Portfolio Research Dashboard", page_icon="📊", layout="wide")
+st.set_page_config(page_title="PortfolioLens", page_icon="📊", layout="wide")
 
 @st.cache_data(ttl=3600, max_entries=32, show_spinner=False)
 def cached_prices(tickers: tuple[str, ...], start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
@@ -57,8 +57,8 @@ def clear_analysis_state() -> None:
         st.session_state.pop(key, None)
 
 
-st.title("Portfolio Research Dashboard")
-st.caption("Historical portfolio analytics, benchmark-relative research, allocation decisions, momentum testing and stress analysis.")
+st.title("PortfolioLens")
+st.caption("Multi-Asset Portfolio Analytics & Investment Research")
 
 with st.sidebar:
     st.header("Analysis inputs")
@@ -337,7 +337,7 @@ if tabs[7].open:
         if selected_target not in r["plans"]:
             selected_target = next(iter(r["plans"]))
         report = generate_html_report(
-            title="Portfolio Research Report", tickers=r["tickers"], weights=r["weights"],
+            title="PortfolioLens Investment Research Report", tickers=r["tickers"], weights=r["weights"],
             start=a.prices.index.min().date(), end=a.prices.index.max().date(), summary=summary,
             performance=metric_frame(a.performance), risk=metric_frame(risk_values),
             benchmark=metric_frame(a.benchmark), attribution=attribution, allocations=a.allocations,
@@ -350,7 +350,7 @@ if tabs[7].open:
             "Daily returns": a.asset_returns.assign(Portfolio=a.portfolio_returns).to_csv(),
         }
         with st.container(horizontal=True):
-            st.download_button("Download HTML report", report, "portfolio_research_report.html", "text/html")
+            st.download_button("Download HTML report", report, "portfoliolens_research_report.html", "text/html")
             for label, payload in downloads.items():
                 st.download_button(label + " CSV", payload, label.lower().replace(" ", "_") + ".csv", "text/csv")
 

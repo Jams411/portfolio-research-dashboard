@@ -1,3 +1,3 @@
-"""Pure analytics package for the Portfolio Research Dashboard."""
+"""Pure analytics package for PortfolioLens."""
 
 __version__ = "1.0.0"
