@@ -14,6 +14,9 @@ from portfolio_dashboard.performance import drawdown_series, monthly_returns
 from portfolio_dashboard.pipeline import run_analysis
 from portfolio_dashboard.rebalancing import rebalancing_plan
 from portfolio_dashboard.reporting import generate_html_report, research_summary
+from portfolio_dashboard.research import (
+    deterministic_insights, portfolio_comparison, portfolio_health_score, what_if_analysis,
+)
 from portfolio_dashboard.risk import historical_cvar, historical_var
 from portfolio_dashboard.strategy import momentum_backtest
 from portfolio_dashboard.stress import custom_shock, historical_stress
@@ -47,7 +50,8 @@ def line_chart(frame: pd.DataFrame, title: str, y_title: str) -> None:
 
 
 ANALYSIS_STATE_KEYS = (
-    "result", "current_shocks", "selected_target_method", "normalized", "analysis_tab", "shock_editor"
+    "result", "current_shocks", "selected_target_method", "normalized", "analysis_tab", "shock_editor",
+    "what_if_weights", "what_if_shocks", "what_if_result", "what_if_weight_editor", "what_if_shock_editor",
 )
 
 
@@ -133,6 +137,8 @@ if run:
             "strategy_stats": strategy_stats, "historical": historical, "plans": plans,
         }
         st.session_state["current_shocks"] = default_shocks
+        st.session_state["what_if_weights"] = weights.copy()
+        st.session_state["what_if_shocks"] = default_shocks.copy()
         st.session_state["selected_target_method"] = "Equal Weight" if "Equal Weight" in plans else next(iter(plans))
         st.session_state["normalized"] = normalized
         st.session_state["analysis_tab"] = "Overview"
@@ -147,6 +153,14 @@ if "result" not in st.session_state:
 
 r = st.session_state["result"]
 a = r["analysis"]
+cvar95 = historical_cvar(a.portfolio_returns)
+allocation_comparison = portfolio_comparison(a.asset_returns, a.allocations, r["weights"], r["risk_free"])
+health_score, health_coverage, health_components = portfolio_health_score(
+    a.performance, a.benchmark, r["weights"], cvar95,
+)
+insights = deterministic_insights(
+    a.performance, a.benchmark, r["weights"], a.volatility_contributions, cvar95,
+)
 if st.session_state.get("normalized"):
     st.warning("Weights were within the allowed 0.1% tolerance and were normalized to exactly 100%.")
 for warning in a.allocation_warnings:
@@ -159,15 +173,15 @@ st.caption("Historical research only · constant portfolio weights · not person
 
 tab_names = [
     "Overview", "Performance", "Risk", "Benchmark & Attribution", "Construction & Rebalancing",
-    "Momentum Strategy", "Stress Testing", "Research Report", "Methodology & Limitations",
+    "Momentum Strategy", "Stress Testing", "Research Workspace", "Research Report", "Methodology & Limitations",
 ]
 tabs = st.tabs(tab_names, key="analysis_tab", on_change="rerun")
 
 if tabs[0].open:
     with tabs[0]:
         st.subheader("Portfolio at a glance")
-        cols = st.columns(6)
         cards = [
+            ("Health score", f"{health_score:.0f}/100"),
             ("Total return", pct(a.performance["Total Return"])),
             ("Arithmetic return", pct(a.performance["Historical Arithmetic Annualized Return"])),
             ("CAGR", pct(a.performance["CAGR"])),
@@ -175,8 +189,10 @@ if tabs[0].open:
             ("Performance Sharpe", ratio(a.performance["Sharpe Ratio"])),
             ("Max drawdown", pct(a.performance["Maximum Drawdown"])),
         ]
-        for col, (label, value) in zip(cols, cards):
-            col.metric(label, value)
+        with st.container(horizontal=True):
+            for label, value in cards:
+                st.metric(label, value, border=True)
+        st.caption(f"Health Score is a transparent historical diagnostic with {health_coverage:.0%} metric coverage, not an investment recommendation.")
         growth = pd.concat([
             (1 + a.portfolio_returns).cumprod().rename("Portfolio"),
             (1 + a.benchmark_returns).cumprod().rename(r["benchmark_ticker"]),
@@ -347,6 +363,99 @@ if tabs[6].open:
 
 if tabs[7].open:
     with tabs[7]:
+        st.subheader("Investment research workspace")
+        with st.container(horizontal=True):
+            st.metric("Portfolio Health Score", f"{health_score:.0f}/100", border=True)
+            st.metric("Metric coverage", pct(health_coverage), border=True)
+            st.metric("Compared portfolios", str(len(allocation_comparison)), border=True)
+            st.metric("Traceable insights", str(len(insights)), border=True)
+        st.caption(
+            "The score is a bounded historical diagnostic. Every component, threshold, and point is disclosed below; "
+            "it does not measure investor suitability or forecast performance."
+        )
+        st.markdown("**Health Score components**")
+        st.dataframe(
+            health_components, width="stretch",
+            column_config={
+                "Weight": st.column_config.NumberColumn(format="percent"),
+                "Metric Value": st.column_config.NumberColumn(format="%.4f"),
+                "Normalized Result": st.column_config.ProgressColumn(min_value=0, max_value=1, format="percent"),
+                "Points": st.column_config.NumberColumn(format="%.1f"),
+            },
+        )
+        st.markdown("**Portfolio comparison**")
+        st.dataframe(
+            allocation_comparison, width="stretch",
+            column_config={
+                column: st.column_config.NumberColumn(format="percent")
+                for column in ["Arithmetic Return", "CAGR", "Annualized Volatility", "Maximum Drawdown", "Largest Weight", "Weight Distance from Current"]
+            },
+        )
+        st.caption("Each portfolio uses the same asset history, constant-weight return model, arithmetic Sharpe convention, and risk-free assumption. Weight distance is one-half the absolute allocation difference from current weights; it is not simulated turnover.")
+        st.markdown("**Deterministic investment insights**")
+        st.dataframe(insights, width="stretch", hide_index=True, column_config={
+            "Value": st.column_config.NumberColumn(format="%.4f"),
+        })
+        st.caption("Observations are selected by the displayed rules using computed metrics only. They are not generated by an LLM and do not recommend trades.")
+
+        st.markdown("**Interactive what-if analysis**")
+        st.caption("Set hypothetical long-only weights and explicit instantaneous shocks. Submit to compare the scenario with the current constant-weight portfolio.")
+        with st.form("what_if_form"):
+            weight_editor = st.data_editor(
+                pd.DataFrame({
+                    "Ticker": r["tickers"],
+                    "Weight (%)": [st.session_state["what_if_weights"][ticker] * 100 for ticker in r["tickers"]],
+                }),
+                disabled=["Ticker"], hide_index=True, width="stretch", key="what_if_weight_editor",
+                column_config={"Weight (%)": st.column_config.NumberColumn(min_value=0.0, max_value=100.0, format="%.2f%%", required=True)},
+            )
+            shock_editor = st.data_editor(
+                pd.DataFrame({
+                    "Ticker": r["tickers"],
+                    "Shock (%)": [st.session_state["what_if_shocks"][ticker] * 100 for ticker in r["tickers"]],
+                }),
+                disabled=["Ticker"], hide_index=True, width="stretch", key="what_if_shock_editor",
+                column_config={"Shock (%)": st.column_config.NumberColumn(format="%.2f%%", required=True)},
+            )
+            submit_what_if = st.form_submit_button("Run what-if analysis", type="primary", icon=":material/science:")
+        if submit_what_if:
+            try:
+                scenario_weights = pd.Series(
+                    weight_editor["Weight (%)"].to_numpy(dtype=float) / 100,
+                    index=weight_editor["Ticker"], dtype=float,
+                )
+                scenario_shocks = pd.Series(
+                    shock_editor["Shock (%)"].to_numpy(dtype=float) / 100,
+                    index=shock_editor["Ticker"], dtype=float,
+                )
+                scenario_result = what_if_analysis(
+                    a.asset_returns, r["weights"], scenario_weights, scenario_shocks,
+                    r["initial_value"], r["risk_free"],
+                )
+                st.session_state["what_if_weights"] = scenario_weights
+                st.session_state["what_if_shocks"] = scenario_shocks
+                st.session_state["what_if_result"] = scenario_result
+            except ValueError as exc:
+                st.error(f"What-if analysis could not run: {exc}")
+        if "what_if_result" in st.session_state:
+            scenario_comparison, scenario_shock_table, scenario_summary = st.session_state["what_if_result"]
+            with st.container(horizontal=True):
+                st.metric("Scenario shock impact", pct(scenario_summary["Estimated Portfolio Impact"]), border=True)
+                st.metric("After-shock value", money(scenario_summary["After Value"]), border=True)
+                st.metric("Largest loss contributor", str(scenario_summary["Largest Loss Contributor"]), border=True)
+            st.dataframe(scenario_comparison, width="stretch", column_config={
+                column: st.column_config.NumberColumn(format="percent")
+                for column in ["Arithmetic Return", "CAGR", "Annualized Volatility", "Maximum Drawdown", "Largest Weight", "Weight Distance from Current"]
+            })
+            st.dataframe(scenario_shock_table, width="stretch", column_config={
+                "Weight": st.column_config.NumberColumn(format="percent"),
+                "Shock": st.column_config.NumberColumn(format="percent"),
+                "Portfolio Impact": st.column_config.NumberColumn(format="percent"),
+                "Dollar Impact": st.column_config.NumberColumn(format="dollar"),
+            })
+
+if tabs[8].open:
+    with tabs[8]:
         st.subheader("Deterministic investment-research report")
         current_shocks = st.session_state["current_shocks"]
         shock_table, shock_summary = custom_shock(r["weights"], current_shocks, r["initial_value"])
@@ -372,6 +481,11 @@ if tabs[7].open:
             benchmark=metric_frame(a.benchmark), attribution=attribution, allocations=a.allocations,
             rebalancing=r["plans"][selected_target], rebalancing_method=selected_target,
             strategy=metric_frame(r["strategy_stats"]), stress=shock_table,
+            benchmark_ticker=r["benchmark_ticker"], risk_free_rate=r["risk_free"],
+            initial_value=r["initial_value"], health_score=health_score,
+            health_coverage=health_coverage, health_components=health_components,
+            comparison=allocation_comparison, insights=insights,
+            what_if=st.session_state.get("what_if_result", (None, None, None))[0],
         )
         downloads = {
             "Performance metrics": metric_frame(a.performance).to_csv(),
@@ -383,8 +497,8 @@ if tabs[7].open:
             for label, payload in downloads.items():
                 st.download_button(label + " CSV", payload, label.lower().replace(" ", "_") + ".csv", "text/csv")
 
-if tabs[8].open:
-    with tabs[8]:
+if tabs[9].open:
+    with tabs[9]:
         st.subheader("Methodology and limitations")
         st.markdown("""
 **Returns and annualization.** Adjusted prices are converted to simple daily returns. Historical arithmetic annualized return is the daily sample mean × 252 and is the expected-return estimate used by Sharpe, Sortino, and maximum-Sharpe optimization. CAGR separately measures realized compound growth. Annualized variance is the daily sample variance × 252; volatility is its square root. Performance Sharpe and optimizer Sharpe both equal arithmetic annualized excess return divided by annualized volatility. Sortino uses the same arithmetic excess-return numerator and target downside deviation after converting the annual risk-free rate to an equivalent daily minimum acceptable return.
@@ -394,6 +508,8 @@ if tabs[8].open:
 **Risk and benchmark regression.** Historical 95% VaR and CVaR are nonnegative loss measures based on the empirical lower tail. The single-index model regresses aligned daily portfolio excess returns on benchmark excess returns. Its intercept and residual volatility are annualized; beta is the fitted slope; R² is the explained share of variation. Systematic and idiosyncratic variance are shown separately. CAPM required return, Jensen’s alpha, and Treynor use the same arithmetic return and annual risk-free assumptions. These are historical sample estimates, not forecasts or evidence of manager skill. Euler volatility contributions use the annualized sample covariance matrix and sum to portfolio volatility. Drawdowns include the initial portfolio value as the first peak.
 
 **Portfolio assumptions.** Analytics and historical stress periods use constant long-only weights. Equal weight and inverse volatility are deterministic. Minimum variance and maximum Sharpe use SLSQP with weights in [0,1] summing to one; failure is shown rather than replaced. Historical estimates are not forecasts.
+
+**Research diagnostics.** Portfolio comparison applies the same return history and methodology to each allocation. The Health Score is an explicitly weighted heuristic built from diversification, Sharpe, maximum drawdown, daily CVaR, and information ratio; unavailable components are excluded and metric coverage is disclosed. What-if analysis uses hypothetical long-only weights and explicit shocks without changing the saved portfolio. Deterministic insights are fixed rules tied to displayed metrics and contain no LLM-generated content or investment recommendations.
 
 **Strategy.** The first requested holding is the explicit strategy instrument. It is long when its short moving average exceeds its long moving average, otherwise cash. Positions lag signals by one full day. Strategy and buy-and-hold statistics use the same post-warm-up period. Proportional transaction costs apply to every position change; no automatic parameter search is performed.
 

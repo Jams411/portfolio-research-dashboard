@@ -63,6 +63,22 @@ def test_equal_weight_mode_ignores_invalid_manual_weights(offline_app):
     assert widget(offline_app.text_input, "Weights (%)").disabled
 
 
+def test_research_workspace_is_initialized_from_computed_analysis(offline_app):
+    widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, AGG, GLD")
+    widget(offline_app.text_input, "Weights (%)").set_value("50,35,15")
+    run_analysis(offline_app)
+    assert not offline_app.exception
+    assert "what_if_weights" in offline_app.session_state
+    assert "what_if_shocks" in offline_app.session_state
+    assert any(tab.label == "Research Workspace" for tab in offline_app.tabs)
+    assert any(metric.label == "Health score" for metric in offline_app.metric)
+    offline_app.session_state["analysis_tab"] = "Research Workspace"
+    offline_app.run(timeout=20)
+    assert not offline_app.exception
+    assert any(item.value == "Investment research workspace" for item in offline_app.subheader)
+    assert any(button.label == "Run what-if analysis" for button in offline_app.button)
+
+
 def test_failed_run_clears_prior_results_and_successful_rerun_recovers(offline_app):
     widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, AGG, GLD")
     widget(offline_app.text_input, "Weights (%)").set_value("50,35,15")
