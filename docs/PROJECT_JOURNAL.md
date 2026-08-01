@@ -10,6 +10,20 @@ The project was created as a focused, new `portfolio-research-dashboard`: an int
 
 Interview explainability and financial correctness were prioritized over feature count. That principle explains the use of small financial functions, one explicit strategy, deterministic reporting, strict data validation, and synthetic tests. Advanced features were deferred when they required unreliable classifications, new data sources, opaque models, personalized advice, or disproportionate methodology and deployment complexity.
 
+## 2026-08-01 — Production dark-theme standardization
+
+- **Date:** 2026-08-01
+- **Goal:** Give the deployed dashboard a consistent professional dark appearance without unsupported styling.
+- **Context:** The showcase milestone introduced a fixed native light theme; the production presentation was subsequently directed toward a finance-appropriate dark default.
+- **What changed:** Configured native Streamlit colors for backgrounds, text, controls, borders, semantic states, dataframes, the sidebar, and charts; made Plotly's Streamlit theme inheritance explicit.
+- **Why it changed:** Financial tables and charts need predictable contrast across local and Community Cloud environments.
+- **Relevant career or course connection:** Investment-research communication and production dashboard delivery.
+- **Tradeoffs:** Used the built-in sans-serif font to avoid an external font request, and avoided CSS and JavaScript entirely. A dark default is consistent but does not offer a user-selectable light variant.
+- **Lessons learned:** Native design tokens can cover the full dashboard surface while remaining safer across Streamlit upgrades than DOM-targeted styling.
+- **Open questions:** Revisit the palette only if future accessibility testing identifies a specific contrast or color-vision issue.
+- **Next step:** Verify every analysis section and the public deployment using the same sample workflow.
+- **Related commit hashes:** Theme commit created with this milestone; verify the final hash from Git history.
+
 ## 2026-07-31 — Core analytics foundation
 
 - **Date:** 2026-07-31

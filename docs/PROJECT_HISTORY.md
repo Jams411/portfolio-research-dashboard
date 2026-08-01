@@ -1,5 +1,14 @@
 # Project history
 
+## 2026-08-01 — Native dark financial theme
+
+- **What changed:** Replaced the light showcase palette with a native Streamlit dark theme covering application surfaces, sidebar, widgets, tables, semantic colors, and chart palettes. Plotly rendering now explicitly requests Streamlit theme inheritance.
+- **Why it changed:** The production dashboard needed a consistent professional dark appearance with readable financial data and status messaging.
+- **Problem solved:** Removed dependence on a light presentation while retaining supported Streamlit behavior and avoiding brittle CSS or JavaScript overrides.
+- **Relevant course or career connection:** Financial-dashboard communication, investment-research presentation, and deployment-ready analytics.
+- **Important tradeoffs:** The theme uses built-in sans-serif typography rather than a remotely loaded font, prioritizing reliable startup and deployment. The palette is conservative and accessibility-led rather than heavily branded.
+- **Commit:** Theme commit created with this milestone; verify the final hash from Git history.
+
 This file records major project milestones in chronological order. Git commits and repository files are the canonical evidence. Where a motivation is inferred from the current development session rather than recorded in Git, it is labeled accordingly.
 
 ## 2026-07-31 — Core analytics engine

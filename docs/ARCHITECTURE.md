@@ -366,7 +366,7 @@ flowchart LR
 
 Deployment uses `app.py`, Python 3.11 where selectable, and `requirements.txt`. No secrets, local filesystem paths, database, system packages, or startup downloads are required. Market history is fetched only after the user runs an analysis.
 
-`.streamlit/config.toml` defines only native theme values so local and hosted presentation remain consistent without custom CSS. The full setup, failure, and signed-out verification procedure is maintained in [DEPLOYMENT.md](DEPLOYMENT.md).
+`.streamlit/config.toml` defines the native high-contrast dark theme, including semantic, dataframe, sidebar, and chart colors, so local and hosted presentation remain consistent without custom CSS. Plotly figures use Streamlit's chart theme explicitly. The full setup, failure, and signed-out verification procedure is maintained in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## N. Known architectural limitations
 

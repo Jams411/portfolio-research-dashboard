@@ -43,7 +43,7 @@ def percent_table(frame: pd.DataFrame) -> pd.io.formats.style.Styler:
 def line_chart(frame: pd.DataFrame, title: str, y_title: str) -> None:
     fig = px.line(frame, title=title, labels={"value": y_title, "index": "Date", "variable": "Series"})
     fig.update_layout(legend_title_text="", hovermode="x unified", margin=dict(l=10, r=10, t=50, b=10))
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, width="stretch", theme="streamlit")
 
 
 ANALYSIS_STATE_KEYS = (
@@ -207,7 +207,7 @@ if tabs[2].open:
         c3.metric("Effective holdings", f"{effective:.2f}"); c4.metric("Largest risk contributor", a.volatility_contributions.idxmax())
         corr = a.asset_returns.corr(); cov = a.asset_returns.cov() * TRADING_DAYS
         fig = px.imshow(corr, text_auto=".2f", zmin=-1, zmax=1, color_continuous_scale="RdBu_r", title="Daily return correlations")
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", theme="streamlit")
         covariance = st.expander("Annualized covariance matrix", on_change="rerun")
         if covariance.open:
             with covariance:
