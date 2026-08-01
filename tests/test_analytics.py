@@ -339,11 +339,24 @@ def test_report_uses_metric_units_and_selected_rebalancing_method():
         attribution=percentage_frame, allocations=pd.DataFrame({"Current": [1.0]}, index=["A"]),
         rebalancing=plan, rebalancing_method="Current", strategy=metric_frame,
         stress=pd.DataFrame({"Portfolio Impact": [-.1]}, index=["A"]),
+        benchmark_ticker="SPY", risk_free_rate=.04, initial_value=1_000,
+        health_score=75.0, health_coverage=1.0,
+        health_components=pd.DataFrame({
+            "Weight": [.25], "Metric Value": [1.0], "Normalized Result": [.75],
+            "Points": [18.75], "Rule": ["synthetic rule"], "Available": [True],
+        }, index=["Diversification"]),
+        comparison=pd.DataFrame({"CAGR": [.10], "Sharpe Ratio": [1.2]}, index=["Current"]),
+        insights=pd.DataFrame({"Observation": ["Computed observation"], "Metric": ["Sharpe Ratio"],
+                               "Value": [1.2], "Rule": ["Sharpe above zero"]}),
+        what_if=pd.DataFrame({"CAGR": [.11]}, index=["What-if"]),
     ).decode()
     assert "12.50%" in html
     assert ">1.25<" in html
     assert "Rebalancing plan — Current" in html
     assert "Holdings and weights" in html and "100.00%" in html
+    assert "75/100" in html and "100% metric coverage" in html
+    assert "Portfolio comparison" in html and "Deterministic research insights" in html
+    assert "Benchmark: SPY" in html and "Annual risk-free assumption: 4.00%" in html
 
 
 def test_research_summary_does_not_emit_nan_text():
