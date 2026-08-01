@@ -2,6 +2,10 @@
 
 This checklist covers the supported deployment path for PortfolioLens. A hosted deployment is not considered complete until its public URL has been opened in a signed-out browser and the workflow below has passed.
 
+Current verified application URL: [portfolio-research-dashboard.streamlit.app](https://portfolio-research-dashboard.streamlit.app/)
+
+The preferred `portfoliolens.streamlit.app` subdomain was found to be assigned to a different Streamlit deployment on 2026-08-01. PortfolioLens must retain its current working URL until that slug is legitimately available or another unused slug is approved. Do not redirect or modify the unrelated deployment.
+
 ## 1. Prerequisites
 
 - A GitHub account with access to `Jams411/portfoliolens`

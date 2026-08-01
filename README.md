@@ -4,9 +4,11 @@
 
 PortfolioLens is a focused, internship-ready Streamlit application for historical portfolio research. It turns a ticker-and-weight input into a reproducible view of performance, market risk, benchmark-relative results, attribution, allocation alternatives, rebalancing trades, a lagged momentum backtest, stress tests, and a downloadable HTML research report.
 
+[Launch PortfolioLens](https://portfolio-research-dashboard.streamlit.app/) · [View the GitHub repository](https://github.com/Jams411/portfoliolens)
+
 The project is intentionally small enough to explain in an interview: market data enter through one validated boundary, financial calculations are pure functions, the UI only orchestrates those functions, and core formulas and reconciliation rules are covered by deterministic local tests.
 
-> **Deployment status:** the repository is Community Cloud-ready. A public hosted URL will be added only after the deployment has been opened and verified in a signed-out browser.
+> **Deployment status:** PortfolioLens is publicly deployed and verified at the current URL above. The preferred `portfoliolens.streamlit.app` subdomain is already assigned to a different Streamlit deployment, so it has not been claimed here.
 
 ## Why this project matters
 

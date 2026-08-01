@@ -21,7 +21,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 
 ## In progress
 
-- Public Streamlit Community Cloud deployment and signed-out URL verification. Repository preparation is complete; account authorization remains external to the codebase.
+- Streamlit subdomain transition. The public PortfolioLens deployment is verified at `portfolio-research-dashboard.streamlit.app`; the preferred `portfoliolens.streamlit.app` slug is currently assigned to a different deployment and must not be claimed until legitimately available.
 
 ## Planned
 
