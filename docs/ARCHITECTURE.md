@@ -129,19 +129,18 @@ pytest.ini                          local pytest configuration
 - **Does not own:** Market-data retrieval, optimization, investor suitability, recommendations, forecasts, Streamlit state, or prose generation by an LLM.
 - **How tested:** Synthetic cases reconcile comparison metrics, score points and coverage, weight distance, scenario shock impact, and the traceability/prohibited-language contract.
 - **Common failure modes:** Mismatched labels, negative/nonfinite weights, weights not summing to 100%, incomplete shocks, or unavailable score inputs.
-- **How tested:** Synthetic VaR/CVaR, beta, tracking error, information ratio, relative drawdown, and risk-contribution reconciliation tests.
 
 ### `construction.py` — allocation comparisons
 
 - **Why it exists:** Separates investment-weight construction from current holdings and rebalancing execution.
-- **Owns:** Equal weight, inverse volatility, minimum variance, maximum Sharpe, SLSQP constraints, convergence checks, and per-method warning isolation.
-- **Does not own:** Efficient-frontier generation, forecast models, risk-parity/ERC, trade amounts, or recommendations.
-- **Key inputs:** Complete asset-return DataFrames, current weights, and annual risk-free rate.
-- **Key outputs:** Labeled weight Series or a comparison DataFrame plus warnings.
-- **Important dependencies:** pandas, NumPy, SciPy SLSQP, and `TRADING_DAYS`.
-- **Financial concepts:** Inverse volatility, sample covariance, arithmetic annualized expected return, long-only minimum variance, and historical maximum Sharpe.
-- **Common failure modes:** Zero volatility, nonfinite estimates, insufficient observations, degenerate covariance, or solver nonconvergence.
-- **How tested:** Feasibility, sum-to-one, bounds, inverse-volatility ordering, and optional-method failure isolation.
+- **Owns:** Equal weight, inverse volatility, GMV, maximum Sharpe, target-return portfolios, efficient frontier, non-leveraged CAL, explicit asset/group constraints, linear feasibility checks, SLSQP optimization, convergence checks, and per-method warning isolation.
+- **Does not own:** Forecast models, risk-parity/ERC, trade execution, inferred classifications, or recommendations.
+- **Key inputs:** Complete asset-return DataFrames, risk-free rate, targets, explicit bounds, user-entered group labels, and group caps.
+- **Key outputs:** Labeled weights, optimizer statistics, frontier/CAL tables, constraint validation, allocation comparisons, and warnings.
+- **Important dependencies:** pandas, NumPy, SciPy `linprog`/SLSQP, and `TRADING_DAYS`.
+- **Financial concepts:** Inverse volatility, sample covariance, arithmetic expected return, GMV, target-return construction, constrained tangency, efficient frontier, CAL, and policy constraints.
+- **Common failure modes:** Zero volatility, nonfinite estimates, insufficient observations, degenerate covariance, infeasible constraints, or solver nonconvergence.
+- **How tested:** Feasibility, targets, sum-to-one, bounds, monotonicity, reproducibility, CAL endpoints, group caps, exclusions, validation summaries, and failure isolation.
 
 ### `pipeline.py` — main analytics composition
 
@@ -155,17 +154,17 @@ pytest.ini                          local pytest configuration
 - **Common failure modes:** Fewer than three common portfolio/benchmark price observations or downstream validation/optimizer warnings.
 - **How tested:** The integration test verifies portfolio return, return-contribution, volatility-contribution, and allocation reconciliation end to end.
 
-### `rebalancing.py` — target trade plan
+### `rebalancing.py` — target trade plans and holdings-level policy simulation
 
-- **Why it exists:** Converts allocation differences into intuitive portfolio-operation amounts.
-- **Owns:** Current/target weight gaps, dollar allocations, estimated buys/sells, and action labels.
-- **Does not own:** Tax lots, whole-share rounding, cash buffers, market impact, cost-aware optimization, or execution.
-- **Key inputs:** Current and target labeled weights, portfolio value, and optional display hold threshold.
-- **Key outputs:** One row per ticker with weights, dollars, signed trade amount, and Buy/Sell/Hold action.
-- **Important dependencies:** pandas and NumPy.
-- **Financial concepts:** Self-financing target allocation before costs and rounding.
-- **Common failure modes:** Nonpositive portfolio value or mismatched asset labels.
-- **How tested:** Buy/sell signs, total trade reconciliation, and default Hold semantics.
+- **Why it exists:** Separates target trade instructions and path-dependent implementation policies from constant-weight analytics.
+- **Owns:** Current/target gaps, dollar trades, buy/sell labels, holdings drift, periodic/threshold triggers, one-way turnover, proportional costs, and policy comparison.
+- **Does not own:** Tax lots, whole-share rounding, cash flows, liquidity, market impact, cost-aware optimization, or execution.
+- **Key inputs:** Asset returns, target weights, value, policy, drift threshold, transaction-cost rate, risk-free rate, and optional display hold threshold.
+- **Key outputs:** Target plan, daily policy histories, before/after trade histories, rebalance dates, and comparison statistics.
+- **Important dependencies:** pandas, NumPy, and `performance_metrics`.
+- **Financial concepts:** Self-financing pre-cost trades, weight drift, calendar/threshold rebalancing, turnover, costs, and path continuity.
+- **Common failure modes:** Invalid value/cost/threshold, unsorted or incomplete returns, returns at/below -100%, mismatched weights, or unknown policy.
+- **How tested:** No-trade paths, calendar schedules, threshold breaches, turnover, costs, continuity, drift, and trade/cost reconciliation.
 
 ### `strategy.py` — moving-average backtest
 
@@ -270,7 +269,7 @@ flowchart LR
     Allocations --> Plans["Dollar rebalancing plans"]
 ```
 
-The main model assumes constant weights every day. Economically, this is a daily rebalanced analytical portfolio. It is not a buy-and-hold account with weight drift. This assumption enables exact holdings return contribution and consistent stress calculations and is documented in [Methodology](METHODOLOGY.md).
+The main analytical model assumes constant weights every day. A separate holdings-level simulator models buy-and-hold drift and explicit monthly, quarterly, annual, or threshold rebalancing with transaction costs. The distinction is documented in [Methodology](METHODOLOGY.md).
 
 ## G. Dependency relationships
 
@@ -336,7 +335,7 @@ Network access is deliberately excluded from tests. yfinance availability is an 
 4. `generate_html_report` escapes text, applies semantic units, and returns self-contained UTF-8 HTML bytes.
 5. Streamlit exposes the HTML and CSV payloads as downloads; the application does not write generated reports to disk.
 
-Exports currently include performance metrics, asset metrics, daily asset/portfolio returns, rebalancing, strategy results, stress details, and the combined HTML report.
+Exports include performance, asset metrics, daily returns, portfolio comparison, frontier points/weights, rebalancing policies and trade histories, deterministic insight evidence, strategy, stress, and the combined HTML report.
 
 ## K. Error-handling strategy
 
@@ -386,7 +385,7 @@ Deployment uses `app.py`, Python 3.11 where selectable, and `requirements.txt`. 
 - Session state is not persistent across sessions or users.
 - yfinance can be delayed, revised, incomplete, rate-limited, or unavailable.
 - Strict common-date alignment can materially shorten the sample.
-- The portfolio model assumes daily rebalancing at constant weights and does not model weight drift.
+- Main contribution/performance analytics assume constant weights; the separate rebalancing simulator models drift but not taxes, cash flows, liquidity, or market impact.
 - Regression and CAPM metrics are historical single-factor estimates whose interpretation depends on the selected benchmark and sample; they must not be presented as forecasts or proof of manager skill.
 - Optimized weights are based on historical sample moments and can be unstable.
 - Strategy research covers one instrument and one rule; it has no automatic parameter fitting or formal validation split.

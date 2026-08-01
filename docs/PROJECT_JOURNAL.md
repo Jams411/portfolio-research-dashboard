@@ -10,6 +10,15 @@ The project was created under the former working name `portfolio-research-dashbo
 
 Interview explainability and financial correctness were prioritized over feature count. That principle explains the use of small financial functions, one explicit strategy, deterministic reporting, strict data validation, and synthetic tests. Advanced features were deferred when they required unreliable classifications, new data sources, opaque models, personalized advice, or disproportionate methodology and deployment complexity.
 
+## 2026-08-01 — End-to-end approved roadmap completion
+
+- **Goal:** Finish every remaining approved Portfolio Management capability while preserving the focused PortfolioLens product boundary.
+- **Delivered:** Long-only frontier/GMV/tangency/target-return/CAL construction; buy-and-hold and periodic/threshold rebalancing with drift, turnover and costs; active-return labeling; explicit allocation constraints and compliance validation; report/UX completion; and an educational companion.
+- **Methodology controls:** Arithmetic optimizer inputs remain distinct from CAGR; CAL is non-leveraged; holdings-level simulation is distinct from daily constant-weight analytics; classifications are user-entered; constraint feasibility is checked before optimization.
+- **Verification:** Deterministic unit and integration tests cover formulas, bounds, solver failure, schedules, triggers, costs, continuity, constraints, reports, and Streamlit views. Repository-wide checks and a four-ETF sample workflow close the milestone.
+- **Boundary result:** Monte Carlo, course-derived risk parity, rolling regression, maximum-volatility constraints, shorting, leverage, advanced live factor models, fixed-income workflows, tax lots, IPS authoring, and LLM advice remain excluded, deferred, or educational-only.
+- **Next step:** No approved Portfolio Management roadmap implementation remains. Future changes require a new scoped decision.
+
 ## 2026-08-01 — Phase 3 research workflow
 
 - **Date:** 2026-08-01

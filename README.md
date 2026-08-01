@@ -31,6 +31,9 @@ This application demonstrates:
 - Excess-return single-index alpha/beta/R², residual and systematic/idiosyncratic risk, CAPM required return, Jensen’s alpha, Treynor, correlation, covariance, VaR/CVaR, concentration, effective holdings, and reconciled return/volatility attribution
 - Benchmark excess return, tracking error, information ratio, relative drawdown and relative wealth
 - Current, equal-weight, inverse-volatility, minimum-variance and maximum-Sharpe long-only allocations
+- Long-only efficient frontier, GMV, constrained tangency, target-return portfolios, and a non-leveraged Capital Allocation Line
+- Explicit asset bands, exclusions, user-defined groups/caps, feasibility checks, and compliance summaries
+- Buy-and-hold, monthly, quarterly, annual, and threshold rebalancing simulations with drift, turnover, costs, dates, and trade-history exports
 - Like-for-like portfolio comparison, a fully disclosed historical Health Score, validated hypothetical weights/shocks, and metric-traceable deterministic insights
 - Dollar rebalancing plan with intuitive buy/sell signs and CSV export
 - Dual-moving-average long/cash strategy on the first requested holding, with one-day signal lag and transaction costs
@@ -120,7 +123,7 @@ Follow the complete [deployment and post-deployment checklist](docs/DEPLOYMENT.m
 
 ## Methodology and assumptions
 
-Daily simple returns and 252 trading days are used consistently. Arithmetic annualized return is the historical expected-return estimate used by Sharpe, Sortino, CAPM evaluation, and maximum-Sharpe optimization; CAGR remains realized compound growth. Holdings use constant weights for historical portfolio returns. The benchmark is downloaded separately and aligned on common dates. The single-index model uses excess returns and decomposes historical systematic and idiosyncratic variance. Historical VaR/CVaR use the empirical lower tail. Risk contribution uses Euler decomposition. Optimization is long-only and uses historical sample means/covariances. The momentum signal uses short and long simple moving averages, is shifted by one full period, and pays proportional costs whenever position changes. See [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
+Daily simple returns and 252 trading days are used consistently. Arithmetic annualized return is the historical expected-return estimate used by Sharpe, Sortino, CAPM evaluation, and optimization; CAGR remains realized compound growth. The main analytical portfolio uses constant weights, while the separate holdings-level simulator models natural drift and explicit rebalancing trades. The benchmark is separately downloaded and aligned. The single-index model uses excess returns. Historical VaR/CVaR use the empirical lower tail. Optimization is long-only, sample-based, feasibility-checked, and never presented as a forecast. The momentum signal is lagged one period and pays configured proportional costs on position changes. See [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 
 ## Limitations and disclaimer
 

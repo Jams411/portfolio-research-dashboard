@@ -14,7 +14,8 @@ Use the same settings for screenshots and interviews so results remain easy to r
 | Dates | `2020-01-01` to `2025-12-31` |
 | Initial value | `$100,000` |
 | Annual risk-free rate | `4.00%` |
-| Transaction cost | `0.10%` per position change |
+| Transaction cost | `0.10%` proportional rate |
+| Rebalancing threshold | `5.00%` absolute weight drift |
 | Momentum windows | `50` and `200` trading days |
 
 Results are historical and can change when yfinance revises adjusted data.
@@ -25,7 +26,7 @@ Results are historical and can change when yfinance revises adjusted data.
 2. **Risk — 25 seconds.** Show VaR/CVaR, effective holdings, the correlation matrix, and Euler volatility contributions that reconcile to portfolio volatility.
 3. **Benchmark & Attribution — 20 seconds.** Compare cumulative wealth, excess return, tracking error, information ratio, beta, and asset contributions.
 4. **Research Workspace — 30 seconds.** Explain the disclosed Health Score components and coverage, compare allocation methods under one methodology, show an insight’s metric/rule evidence, and submit one hypothetical weight-and-shock scenario.
-5. **Construction & Rebalancing — 20 seconds.** Compare current, equal, inverse-volatility, minimum-variance, and maximum-Sharpe weights; show the dollar buy/sell plan.
+5. **Construction & Rebalancing — 20 seconds.** Show the long-only frontier, GMV/tangency/CAL, one feasible target, explicit constraints, and policy comparison.
 6. **Momentum and Stress — 20 seconds.** Point out the one-day signal lag, warm-up, transaction costs, direct per-asset shocks, and complete historical windows.
 7. **Report — 10 seconds.** Show deterministic observations and the professional self-contained HTML/CSV exports.
 
@@ -36,7 +37,7 @@ Close with: “The design favors transparent financial conventions and determini
 1. **Product goal — 30 seconds.** PortfolioLens is a focused historical research workflow for portfolio analytics, risk, investment research, and systematic strategy analysis.
 2. **Data boundary — 40 seconds.** Normalize tickers, validate long-only weights, download adjusted history separately for holdings and benchmark, reject missing assets, and inner-align without filling prices.
 3. **Performance and risk — 60 seconds.** Explain daily simple returns, constant weights, CAGR, annualized volatility, downside metrics, beta, and Euler risk contribution.
-4. **Benchmark and decisions — 50 seconds.** Explain tracking error/information ratio, contribution reconciliation, allocation methods, optimizer convergence checks, and the self-financing rebalance plan.
+4. **Benchmark and decisions — 50 seconds.** Explain active return/tracking error/information ratio, frontier/target construction, explicit constraint validation, and holdings-level rebalancing policies.
 5. **Systematic research — 50 seconds.** Explain the first holding as the explicit strategy instrument, SMA crossover, one-day lag, warm-up, costs, and common comparison period.
 6. **Stress and reporting — 35 seconds.** Explain editable shocks without silent classification, exact configured historical windows, deterministic narrative, and export formats.
 7. **Architecture and validation — 45 seconds.** Show `app.py`, the pure-function package, the central pipeline, synthetic tests, cached data boundary, and deployment shape.
@@ -56,13 +57,13 @@ Close with: “The design favors transparent financial conventions and determini
 
 **Can optimized weights be trusted?** They are historical sample-based comparisons, not forecasts. Long-only constraints and solver convergence are checked, and failures are shown instead of replaced.
 
-**What would you improve next?** First align risk-adjusted-return conventions across scorecards and optimization, then add tested periodic-rebalancing analysis.
+**What would you improve next?** The approved Portfolio Management roadmap is complete. Further work would be engineering hardening or separately approved strategy robustness, not additional feature breadth.
 
 ## Limitations to acknowledge
 
 - yfinance data can be delayed, revised, incomplete, or temporarily unavailable.
 - Complete-case alignment can shorten the sample.
-- The analytics assume constant weights; realized buy-and-hold weights drift.
+- The main analytics assume constant weights; the separate holdings-level simulator explicitly models buy-and-hold drift and scheduled or threshold rebalancing.
 - Historical optimizers are estimation-sensitive and do not imply forecast certainty.
 - Strategy results exclude taxes, liquidity, market impact, and slippage beyond the configured proportional cost.
 - The application is educational research, not personalized financial advice.

@@ -6,6 +6,10 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ### Added
 
+- Added a reproducible long-only efficient frontier, global minimum-variance portfolio, constrained tangency portfolio, feasible target-return construction, and non-leveraged Capital Allocation Line.
+- Added holdings-level buy-and-hold, monthly, quarterly, annual, and threshold rebalancing simulations with drift, trade dates, one-way turnover, proportional costs, and exportable histories.
+- Added explicit asset bands, exclusions, user-defined groups/caps, linear feasibility checks, and constraint-validation summaries.
+- Added the self-contained Portfolio Management educational companion and expanded permanent course traceability.
 - Added a professional investment research workspace and print-safe deterministic HTML report.
 - Added like-for-like allocation comparison using the existing constant-weight return and performance methodology.
 - Added a transparent Portfolio Health Score with disclosed component weights, thresholds, points, and missing-metric coverage.
@@ -19,6 +23,8 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ### Changed
 
+- Distinguished cumulative excess return from annualized active return and reconciled the Information Ratio numerator.
+- Expanded the professional research report with full inputs, frontier/optimized allocations, constraints, and rebalancing-policy analysis.
 - Split benchmark output into cumulative relative performance, regression diagnostics, and CAPM performance evaluation with explicit historical-estimate limitations.
 - Standardized displayed performance Sharpe, strategy Sharpe, Sortino, and maximum-Sharpe optimization on arithmetic annualized excess return; CAGR remains the separate realized compound-growth metric.
 - Clarified arithmetic return, CAGR, performance Sharpe, and optimizer Sharpe in the dashboard and deterministic report.

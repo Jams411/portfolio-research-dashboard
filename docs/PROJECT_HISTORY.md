@@ -1,5 +1,14 @@
 # Project history
 
+## 2026-08-01 — Approved Portfolio Management roadmap completion
+
+- **What changed:** Completed long-only frontier/GMV/tangency/target-return/CAL construction, holdings-level periodic and threshold rebalancing with costs, standardized annualized active return, explicit allocation constraints with feasibility/compliance reporting, full report integration, educational companion material, UX hardening, and permanent traceability.
+- **Why it changed:** These were the remaining course-supported and product-approved gaps after Phases 1, 2A, and 3.
+- **Problem solved:** PortfolioLens now covers the approved portfolio construction, benchmark evaluation, implementation-policy, scenario, research, and educational workflows end to end without importing unsupported institutional features.
+- **Career relevance:** Portfolio analytics, market risk, investment research, manager evaluation, portfolio construction, rebalancing/implementation analysis, and systematic-strategy interviews.
+- **Tradeoffs:** Optimization remains sample-sensitive, long-only, and non-leveraged. Rebalancing assumes fractional close-of-period execution. Classifications are user-defined. Advanced factor, fixed-income, tax, and personalized-advice workflows remain educational, deferred, or excluded.
+- **Evidence:** Synthetic optimization/rebalancing/constraint tests, offline Streamlit tab tests, report export tests, documentation validation, repository scans, and a deterministic four-ETF end-to-end sample workflow.
+
 ## 2026-08-01 — Phase 3 professional investment research application
 
 - **What changed:** Added a dedicated investment research workspace, transparent Portfolio Health Score, like-for-like allocation comparison, interactive hypothetical weight/shock analysis, metric-and-rule-linked deterministic insights, and a print-safe professional HTML report.

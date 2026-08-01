@@ -27,17 +27,11 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - Phase 2E constrained construction: explicit asset bands, exclusions, user-defined groups/caps, target-return integration, linear feasibility checks, and constraint validation summaries
 - Phase 4 educational companion: two-asset variance derivation, frontier/CAL intuition, CAPM/single-index interpretation, and educational-only Treynor–Black/APT/multifactor boundaries
 
-## In progress
+## Deferred — separately approved future work only
 
-- Streamlit subdomain transition. The public PortfolioLens deployment is verified at `portfolio-research-dashboard.streamlit.app`; the preferred `portfoliolens.streamlit.app` slug is currently assigned to a different deployment and must not be claimed until legitimately available.
+The approved Portfolio Management implementation roadmap is complete. These items are not current commitments and require separate approval.
 
-## Planned
-
-**Context from current development session — verify before treating as canonical.**
-
-These are prioritized candidates from the code audit and course-material review, not yet approved methodology changes.
-
-### Later — Strategy robustness
+### Strategy robustness
 
 - Add calendar-year or fixed-subperiod strategy comparisons.
 - Optionally allow a fixed validation split without parameter optimization.
@@ -45,7 +39,7 @@ These are prioritized candidates from the code audit and course-material review,
 
 Why: subperiod evidence is more informative than a single full-period result and supports discussion of regime dependence and overfitting.
 
-### Later — Engineering hardening
+### Engineering hardening
 
 - Add lightweight Ruff configuration and financial invariant tests.
 - Split Streamlit views into modules without behavior changes if the entrypoint continues to grow.
@@ -59,15 +53,26 @@ Why: subperiod evidence is more informative than a single full-period result and
 - **Brinson allocation/selection attribution:** Requires trustworthy benchmark constituent weights and classifications; current holdings contribution should not be mislabeled as Brinson attribution.
 - **Bond duration and convexity:** Requires explicit coupon, maturity, yield, frequency, and instrument assumptions that yfinance price history does not reliably provide.
 - **Fundamental clustering:** A defensible machine-learning research idea only with reproducible, point-in-time fundamental data. It should begin outside the core dashboard if revisited.
-- **Multifactor or Treynor–Black models:** Strong academic value but substantially expand data, estimation, and explanation requirements.
+- **Multifactor or Treynor–Black live models:** Educational companion only unless reliable factor data and a separately approved estimation design become available.
+- **Preferred Streamlit subdomain:** The verified deployment remains `portfolio-research-dashboard.streamlit.app`; `portfoliolens.streamlit.app` belongs to another deployment and requires manual platform availability before reconsideration.
 
-## Avoided
+## Educational-only
+
+- Two-asset return/variance derivation and diversification intuition
+- Efficient-frontier, constrained tangency, and CAL intuition
+- CAPM and single-index interpretation
+- Treynor–Black, APT, and multifactor conceptual overview
+
+## Intentionally excluded
 
 - **Generative-AI research dependency:** Reduces determinism and adds cost and deployment dependencies without improving core financial calculations.
 - **Machine-learning price-direction prediction:** Adds leakage, label, tuning, and stability risks disproportionate to this focused project.
 - **Automatic strategy parameter optimization:** Encourages overfitting and weakens the MVP’s explainability.
 - **Monte Carlo optimization for visual effect:** Does not improve decision quality over the tested deterministic methods.
 - **Risk parity as a course-derived feature:** The completed Portfolio Management audit did not substantively support it; inverse volatility remains an application-specific heuristic, not course-derived risk parity.
+- **Rolling alpha and beta:** Not required by approved course traceability.
+- **Maximum-volatility construction constraint:** Not established as a required stable feature by approved traceability.
+- **Short selling, leverage, and borrowing:** Conflict with the approved long-only, non-leveraged product boundary.
 - **Silent asset-class inference:** Ticker classification is unreliable and can create hidden stress assumptions.
 - **Personalized recommendations, risk scoring, or investment-policy generation:** Outside the educational research scope and risks implying individualized advice.
 - **Live trading and brokerage integration:** Introduces execution, security, compliance, and operational responsibilities beyond the product goal.

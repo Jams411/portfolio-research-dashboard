@@ -70,10 +70,12 @@ Open **Manage app → Logs** and find the first Python exception. Reproduce it l
 In a signed-out browser:
 
 1. Open the hosted URL and confirm no login is required.
-2. Run `SPY, QQQ, TLT, GLD` with weights `35, 30, 20, 15`, benchmark `VTI`, dates `2020-01-01` to `2025-12-31`, $100,000, 4% risk-free rate, 0.10% transaction cost, and 50/200 moving averages.
-3. Open all nine analysis tabs.
+2. Run `SPY, QQQ, TLT, GLD` with weights `35, 30, 20, 15`, benchmark `VTI`, dates `2020-01-01` to `2025-12-31`, $100,000, 4% risk-free rate, 0.10% transaction cost, 5% drift threshold, and 50/200 moving averages.
+3. Open all ten analysis tabs.
 4. Verify the risk-contribution and total-return reconciliation captions.
-5. Download the rebalancing, strategy, stress, performance, asset, and returns CSVs plus the HTML report.
-6. Confirm the methodology disclaimer is visible and no browser console or application-log error appears.
+5. Verify the efficient frontier/GMV/tangency/CAL, construct a feasible target-return portfolio, run one constrained allocation, and inspect the validation summary.
+6. Compare buy-and-hold, monthly, quarterly, annual, and threshold policies; download daily policy and trade histories.
+7. Download strategy, stress, performance, asset, comparison, frontier, policy, insight, and returns CSVs plus the HTML report.
+8. Confirm the methodology disclaimer is visible and no browser console or application-log error appears.
 
 Only after this check should the verified hosted URL be added to the README and GitHub repository homepage.
