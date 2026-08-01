@@ -3,7 +3,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from portfolio_dashboard.construction import inverse_volatility_weights, maximum_sharpe_weights, minimum_variance_weights
+from portfolio_dashboard.construction import (
+    capital_allocation_line, efficient_frontier, inverse_volatility_weights,
+    maximum_sharpe_weights, minimum_variance_weights, optimizer_statistics,
+    target_return_weights,
+)
 from portfolio_dashboard.data import (
     InputError, MarketDataError, align_prices, extract_adjusted_prices, parse_tickers,
     parse_weight_input, validate_weights,
@@ -229,6 +233,43 @@ def test_allocation_methods_and_constraints(returns):
     for weights in (minimum_variance_weights(returns), maximum_sharpe_weights(returns)):
         assert weights.sum() == pytest.approx(1, abs=1e-6)
         assert ((weights >= 0) & (weights <= 1)).all()
+
+
+def test_target_return_portfolio_is_feasible_and_rejects_impossible_target(returns):
+    asset_expected = returns.mean() * 252
+    target = float(asset_expected.mean())
+    weights = target_return_weights(returns, target)
+    assert weights.sum() == pytest.approx(1, abs=1e-6)
+    assert weights.between(0, 1).all()
+    assert optimizer_statistics(returns, weights)["Optimizer Expected Return"] == pytest.approx(target, abs=1e-7)
+    with pytest.raises(ValueError, match="outside the long-only feasible range"):
+        target_return_weights(returns, float(asset_expected.max() + .01))
+
+
+def test_efficient_frontier_is_reproducible_and_monotonic(returns):
+    frontier, frontier_weights = efficient_frontier(returns, .02, points=12)
+    repeated, repeated_weights = efficient_frontier(returns, .02, points=12)
+    pd.testing.assert_frame_equal(frontier, repeated)
+    pd.testing.assert_frame_equal(frontier_weights, repeated_weights)
+    assert frontier["Optimizer Expected Return"].is_monotonic_increasing
+    assert frontier["Optimizer Volatility"].diff().iloc[1:].ge(-1e-7).all()
+    assert np.allclose(frontier_weights.sum(axis=0), 1, atol=1e-6)
+    assert ((frontier_weights >= 0) & (frontier_weights <= 1)).all().all()
+    gmv = minimum_variance_weights(returns)
+    assert frontier.iloc[0]["Optimizer Volatility"] == pytest.approx(
+        optimizer_statistics(returns, gmv, .02)["Optimizer Volatility"]
+    )
+
+
+def test_maximum_sharpe_and_nonleveraged_cal_share_tangency_statistics(returns):
+    tangency = maximum_sharpe_weights(returns, .02)
+    stats = optimizer_statistics(returns, tangency, .02)
+    line = capital_allocation_line(stats, .02, points=8)
+    assert line.iloc[0]["Risky Portfolio Weight"] == 0
+    assert line.iloc[0]["Expected Return"] == pytest.approx(.02)
+    assert line.iloc[-1]["Risky Portfolio Weight"] == 1
+    assert line.iloc[-1]["Expected Return"] == pytest.approx(stats["Optimizer Expected Return"])
+    assert line.iloc[-1]["Volatility"] == pytest.approx(stats["Optimizer Volatility"])
 
 
 def test_optional_allocation_failure_does_not_abort_pipeline():
