@@ -16,7 +16,10 @@ from portfolio_dashboard.performance import (
 )
 from portfolio_dashboard.pipeline import run_analysis
 from portfolio_dashboard.rebalancing import rebalancing_plan
-from portfolio_dashboard.risk import beta, historical_cvar, historical_var, information_ratio, tracking_error, volatility_contributions
+from portfolio_dashboard.risk import (
+    benchmark_metrics, beta, historical_cvar, historical_var, information_ratio,
+    single_index_regression, tracking_error, volatility_contributions,
+)
 from portfolio_dashboard.strategy import momentum_backtest
 from portfolio_dashboard.stress import custom_shock, historical_stress
 from portfolio_dashboard.formatting import metric_value
@@ -141,6 +144,60 @@ def test_var_cvar_beta_and_relative_metrics():
     assert np.isfinite(information_ratio(portfolio + .001, benchmark))
 
 
+def test_excess_return_single_index_regression_recovers_known_properties():
+    periods = 252
+    risk_free_rate = .0252
+    periodic_risk_free = risk_free_rate / periods
+    benchmark_excess = pd.Series(np.linspace(-.02, .025, 24))
+    raw_noise = pd.Series(np.sin(np.arange(24)))
+    orthogonal_noise = raw_noise - raw_noise.mean()
+    orthogonal_noise -= (
+        orthogonal_noise.cov(benchmark_excess) / benchmark_excess.var(ddof=1)
+    ) * (benchmark_excess - benchmark_excess.mean())
+    residual = orthogonal_noise * .001
+    periodic_alpha = .0002
+    known_beta = 1.4
+    benchmark = benchmark_excess + periodic_risk_free
+    portfolio = periodic_risk_free + periodic_alpha + known_beta * benchmark_excess + residual
+
+    metrics = single_index_regression(portfolio, benchmark, risk_free_rate)
+
+    assert metrics["Regression Alpha"] == pytest.approx(periodic_alpha * periods)
+    assert metrics["Beta"] == pytest.approx(known_beta)
+    assert metrics["R-Squared"] == pytest.approx(
+        metrics["Systematic Risk Share"]
+    )
+    assert metrics["Systematic Risk Share"] + metrics["Idiosyncratic Risk Share"] == pytest.approx(1)
+    assert metrics["Residual Volatility"] == pytest.approx(residual.std(ddof=2) * np.sqrt(periods))
+    assert metrics["Systematic Variance"] + metrics["Idiosyncratic Variance"] == pytest.approx(
+        (portfolio - periodic_risk_free).var(ddof=1) * periods
+    )
+    expected_capm = risk_free_rate + known_beta * (benchmark.mean() * periods - risk_free_rate)
+    assert metrics["CAPM Required Return"] == pytest.approx(expected_capm)
+    assert metrics["Jensen's Alpha"] == pytest.approx(periodic_alpha * periods)
+    assert metrics["Treynor Ratio"] == pytest.approx(
+        (portfolio.mean() * periods - risk_free_rate) / known_beta
+    )
+    assert metrics["Regression Observations"] == 24
+
+
+def test_single_index_regression_validates_sample_and_benchmark_variance():
+    with pytest.raises(ValueError, match="three aligned"):
+        single_index_regression(pd.Series([.01, .02]), pd.Series([.01, .02]))
+    with pytest.raises(ValueError, match="positive sample variance"):
+        single_index_regression(pd.Series([.01, .02, .03]), pd.Series([.01, .01, .01]))
+
+
+def test_benchmark_metrics_include_regression_and_capm_outputs():
+    benchmark = pd.Series([-.02, -.01, 0, .01, .02])
+    portfolio = .0001 + 1.2 * benchmark
+    metrics = benchmark_metrics(portfolio, benchmark, .01)
+    assert metrics["Beta"] == pytest.approx(1.2)
+    assert metrics["Regression Alpha"] == pytest.approx((.0001 + .2 * (.01 / 252)) * 252)
+    assert metrics["Jensen's Alpha"] == pytest.approx(metrics["Regression Alpha"])
+    assert metrics["R-Squared"] == pytest.approx(1.0)
+
+
 def test_var_and_cvar_are_nonnegative_loss_measures():
     positive = pd.Series([.01, .02, .03])
     assert historical_var(positive) == 0.0
@@ -250,6 +307,9 @@ def test_main_pipeline_integration(returns):
     assert result.performance["Total Return"] == pytest.approx((1 + result.portfolio_returns).prod() - 1)
     assert result.return_contributions.sum() == pytest.approx(result.performance["Total Return"])
     assert result.volatility_contributions.sum() == pytest.approx(result.performance["Annualized Volatility"])
+    assert result.benchmark["Regression Observations"] == len(result.portfolio_returns)
+    assert result.benchmark["Regression Alpha"] == pytest.approx(result.benchmark["Jensen's Alpha"])
+    assert result.benchmark["Systematic Risk Share"] + result.benchmark["Idiosyncratic Risk Share"] == pytest.approx(1)
     assert set(["Current", "Equal Weight", "Inverse Volatility"]).issubset(result.allocations.columns)
 
 
@@ -257,6 +317,10 @@ def test_metric_formatting_preserves_ratios_and_percentages():
     assert metric_value("Total Return", .125) == "12.50%"
     assert metric_value("Historical Arithmetic Annualized Return", .125) == "12.50%"
     assert metric_value("Annualized Variance", .025) == "0.0250"
+    assert metric_value("Regression Alpha", .0125) == "1.25%"
+    assert metric_value("Systematic Variance", .025) == "0.0250"
+    assert metric_value("Treynor Ratio", .08) == "8.00%"
+    assert metric_value("Regression Observations", 252.0) == "252"
     assert metric_value("Sharpe Ratio", 1.25) == "1.25"
     assert metric_value("Position Changes", 3.0) == "3"
 

@@ -7,9 +7,11 @@ PERCENT_METRICS = {
     "Maximum Drawdown", "Best Daily Return", "Worst Daily Return",
     "Positive-Day Percentage", "Positive Active-Day Rate", "Portfolio Return",
     "Benchmark Return", "Excess Return", "Tracking Error", "Relative Drawdown",
+    "Regression Alpha", "Residual Volatility", "Systematic Risk Share",
+    "Idiosyncratic Risk Share", "CAPM Required Return", "Jensen's Alpha", "Treynor Ratio",
     "Time in Market", "Turnover", "Historical VaR (95%)", "Historical CVaR (95%)",
 }
-COUNT_METRICS = {"Position Changes", "Warm-up Observations"}
+COUNT_METRICS = {"Position Changes", "Warm-up Observations", "Regression Observations"}
 
 def pct(value: float, decimals: int = 2) -> str:
     return "N/A" if value is None or not math.isfinite(float(value)) else f"{float(value):.{decimals}%}"
@@ -25,7 +27,7 @@ def metric_value(name: str, value: float) -> str:
     """Format a named metric with its financial unit, preserving ratios as ratios."""
     if name in PERCENT_METRICS:
         return pct(value)
-    if name == "Annualized Variance":
+    if name in {"Annualized Variance", "Systematic Variance", "Idiosyncratic Variance"}:
         return ratio(value, 4)
     if name in COUNT_METRICS:
         return "N/A" if value is None or not math.isfinite(float(value)) else f"{int(value):,}"

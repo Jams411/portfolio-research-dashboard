@@ -30,6 +30,6 @@ def run_analysis(prices: pd.DataFrame, benchmark_prices: pd.Series, weights: pd.
     portfolio = portfolio_returns(asset_returns, weights)
     allocations, warnings = allocation_methods(asset_returns, weights, risk_free_rate)
     return Analysis(clean_prices, clean_benchmark, asset_returns, portfolio, benchmark_returns,
-                    performance_metrics(portfolio, risk_free_rate), benchmark_metrics(portfolio, benchmark_returns),
+                    performance_metrics(portfolio, risk_free_rate), benchmark_metrics(portfolio, benchmark_returns, risk_free_rate),
                     return_contributions(asset_returns, weights), volatility_contributions(asset_returns, weights),
                     allocations, warnings)
