@@ -201,3 +201,13 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Alternatives considered:** Silently reinterpret the main series, rebalance daily, apply costs every period regardless of trades, or approximate drift from portfolio-level returns.
 - **Consequences:** Simulation results differ from the main constant-weight scorecard by design. They assume fractional trading, close-of-period execution, and no taxes, cash flows, liquidity limits, or market impact.
 - **Status:** Accepted.
+
+## D020 — Require explicit classifications for constrained construction
+
+- **Date:** 2026-08-01
+- **Decision:** Support user-entered long-only asset bands, exclusions, target return, and group caps only when users explicitly supply group labels. Run a linear feasibility check before nonlinear optimization and publish a constraint-by-constraint validation table.
+- **Context:** Course IPS materials support allocation limits, but market tickers do not provide a reliable universal sector or asset-class classification.
+- **Rationale:** Explicit mappings prevent hidden assumptions and make every pass, failure, and breach auditable.
+- **Alternatives considered:** Infer categories from tickers, silently relax infeasible limits, add unsupported maximum-volatility constraints, or allow shorting/leverage to restore feasibility.
+- **Consequences:** Users do more setup for group caps, but results remain transparent. Infeasible combinations fail clearly and no constraint is relaxed automatically.
+- **Status:** Accepted.

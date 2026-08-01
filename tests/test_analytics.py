@@ -6,7 +6,8 @@ import pytest
 from portfolio_dashboard.construction import (
     capital_allocation_line, efficient_frontier, inverse_volatility_weights,
     maximum_sharpe_weights, minimum_variance_weights, optimizer_statistics,
-    target_return_weights,
+    target_return_weights, constrained_portfolio_weights, constraint_validation_summary,
+    parse_group_caps,
 )
 from portfolio_dashboard.data import (
     InputError, MarketDataError, align_prices, extract_adjusted_prices, parse_tickers,
@@ -277,6 +278,47 @@ def test_maximum_sharpe_and_nonleveraged_cal_share_tangency_statistics(returns):
     assert line.iloc[-1]["Volatility"] == pytest.approx(stats["Optimizer Volatility"])
 
 
+def test_explicit_asset_bands_exclusion_and_group_cap_are_enforced(returns):
+    minimum = pd.Series({"A": .20, "B": 0.0})
+    maximum = pd.Series({"A": .60, "B": .80})
+    groups = pd.Series({"A": "Growth", "B": "Defensive"})
+    weights = constrained_portfolio_weights(
+        returns, "Minimum Variance", minimum_weights=minimum, maximum_weights=maximum,
+        groups=groups, group_caps={"Growth": .55},
+    )
+    assert weights.sum() == pytest.approx(1, abs=1e-6)
+    assert weights["A"] >= .20 - 1e-6 and weights["A"] <= .55 + 1e-6
+    summary = constraint_validation_summary(weights, minimum, maximum, groups, {"Growth": .55})
+    assert summary["Pass"].all()
+    assert summary["Breach"].max() <= 1e-6
+
+    excluded = constrained_portfolio_weights(
+        returns, "Minimum Variance", minimum_weights=pd.Series({"A": 0.0, "B": 0.0}),
+        maximum_weights=pd.Series({"A": 0.0, "B": 1.0}),
+    )
+    assert excluded["A"] == pytest.approx(0, abs=1e-8)
+    assert excluded["B"] == pytest.approx(1, abs=1e-8)
+
+
+def test_infeasible_constraints_and_invalid_group_caps_fail_clearly(returns):
+    with pytest.raises(ValueError, match="cannot satisfy"):
+        constrained_portfolio_weights(
+            returns, "Minimum Variance",
+            minimum_weights=pd.Series({"A": .6, "B": .6}),
+            maximum_weights=pd.Series({"A": 1.0, "B": 1.0}),
+        )
+    with pytest.raises(ValueError, match="infeasible"):
+        constrained_portfolio_weights(
+            returns, "Minimum Variance",
+            minimum_weights=pd.Series({"A": 0.0, "B": 0.0}),
+            maximum_weights=pd.Series({"A": 1.0, "B": 1.0}),
+            groups=pd.Series({"A": "All", "B": "All"}), group_caps={"All": .9},
+        )
+    assert parse_group_caps("Growth:60, Defensive:40") == {"Growth": .6, "Defensive": .4}
+    with pytest.raises(ValueError, match="Group:percent"):
+        parse_group_caps("invalid")
+
+
 def test_optional_allocation_failure_does_not_abort_pipeline():
     constant = pd.DataFrame({"A": [.01, .01, .01], "B": [.02, .02, .02]})
     from portfolio_dashboard.construction import allocation_methods
@@ -477,6 +519,11 @@ def test_report_uses_metric_units_and_selected_rebalancing_method():
         optimized_allocations=pd.DataFrame({"Frontier 1": [1.0]}, index=["A"]),
         rebalancing_policies=pd.DataFrame({"Total Turnover": [.10]}, index=["Quarterly"]),
         rebalancing_history=pd.DataFrame({"Portfolio Value": [1_100], "Transaction Costs": [1.0]}),
+        constrained_allocation=pd.DataFrame({"Constrained Weight": [1.0]}, index=["A"]),
+        constraint_validation=pd.DataFrame({
+            "Constraint": ["Weights sum to 100%"], "Result": [1.0], "Limit": [1.0],
+            "Pass": [True], "Breach": [0.0], "Affected Asset": ["Portfolio"],
+        }),
     ).decode()
     assert "12.50%" in html
     assert ">1.25<" in html
@@ -486,6 +533,7 @@ def test_report_uses_metric_units_and_selected_rebalancing_method():
     assert "Portfolio comparison" in html and "Deterministic research insights" in html
     assert "Efficient frontier" in html and "Optimized allocations" in html
     assert "Rebalancing policy comparison" in html and "Selected rebalancing history" in html
+    assert "Custom constrained allocation" in html and "Constraint validation" in html
     assert "Benchmark: SPY" in html and "Annual risk-free assumption: 4.00%" in html
 
 

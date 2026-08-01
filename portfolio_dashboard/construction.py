@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from scipy.optimize import minimize
+from scipy.optimize import linprog, minimize
 
 from .config import TRADING_DAYS
 from .performance import sharpe_from_statistics
@@ -42,6 +42,10 @@ def inverse_volatility_weights(returns: pd.DataFrame) -> pd.Series:
 def _optimize(
     returns: pd.DataFrame, objective: str, risk_free_rate: float = 0.0,
     target_return: float | None = None,
+    minimum_weights: pd.Series | None = None,
+    maximum_weights: pd.Series | None = None,
+    groups: pd.Series | None = None,
+    group_caps: dict[str, float] | None = None,
 ) -> pd.Series:
     if returns.empty or len(returns) < 2 or returns.shape[1] == 0:
         raise RuntimeError("Optimization requires at least two return observations.")
@@ -56,6 +60,19 @@ def _optimize(
         return pd.Series([1.0], index=returns.columns)
     if objective == "max_sharpe" and np.max(np.diag(cov)) <= np.finfo(float).eps:
         raise RuntimeError("Maximum-Sharpe optimization requires positive volatility.")
+    minimum = pd.Series(0.0, index=returns.columns) if minimum_weights is None else minimum_weights.reindex(returns.columns)
+    maximum = pd.Series(1.0, index=returns.columns) if maximum_weights is None else maximum_weights.reindex(returns.columns)
+    if minimum.isna().any() or maximum.isna().any() or (minimum < 0).any() or (maximum > 1).any():
+        raise ValueError("Asset bounds must be finite values between 0% and 100%.")
+    if (minimum > maximum).any():
+        raise ValueError("Each minimum asset weight must be at or below its maximum.")
+    if minimum.sum() > 1 + 1e-10 or maximum.sum() < 1 - 1e-10:
+        raise ValueError("Asset bounds cannot satisfy the 100% sum constraint.")
+    caps = group_caps or {}
+    group_labels = pd.Series("", index=returns.columns) if groups is None else groups.reindex(returns.columns).fillna("").astype(str)
+    unknown = set(caps) - set(group_labels[group_labels.ne("")])
+    if unknown or any(not np.isfinite(cap) or cap < 0 or cap > 1 for cap in caps.values()):
+        raise ValueError("Group caps must reference defined groups and fall between 0% and 100%.")
     def portfolio_vol(w: np.ndarray) -> float:
         return float(np.sqrt(max(w @ cov @ w, 0)))
     def target(w: np.ndarray) -> float:
@@ -64,15 +81,34 @@ def _optimize(
             return vol ** 2
         return -sharpe_from_statistics(float(w @ expected), vol, risk_free_rate) if vol > 0 else 1e9
     constraints: list[dict[str, object]] = [{"type": "eq", "fun": lambda w: w.sum() - 1}]
+    a_eq = [np.ones(n)]
+    b_eq = [1.0]
     if target_return is not None:
-        minimum, maximum = float(expected.min()), float(expected.max())
-        if target_return < minimum - 1e-10 or target_return > maximum + 1e-10:
+        feasible_minimum, feasible_maximum = float(expected.min()), float(expected.max())
+        if target_return < feasible_minimum - 1e-10 or target_return > feasible_maximum + 1e-10:
             raise ValueError(
                 f"Target return {target_return:.2%} is outside the long-only feasible range "
-                f"{minimum:.2%} to {maximum:.2%}."
+                f"{feasible_minimum:.2%} to {feasible_maximum:.2%}."
             )
         constraints.append({"type": "eq", "fun": lambda w: float(w @ expected - target_return)})
-    result = minimize(target, np.repeat(1 / n, n), method="SLSQP", bounds=[(0, 1)] * n,
+        a_eq.append(expected)
+        b_eq.append(target_return)
+    a_ub: list[np.ndarray] = []
+    b_ub: list[float] = []
+    for group, cap in caps.items():
+        mask = (group_labels == group).to_numpy(dtype=float)
+        constraints.append({"type": "ineq", "fun": lambda w, m=mask, c=cap: float(c - w @ m)})
+        a_ub.append(mask)
+        b_ub.append(cap)
+    bounds = list(zip(minimum.to_numpy(dtype=float), maximum.to_numpy(dtype=float)))
+    feasible = linprog(
+        np.zeros(n), A_ub=np.array(a_ub) if a_ub else None,
+        b_ub=np.array(b_ub) if b_ub else None, A_eq=np.array(a_eq), b_eq=np.array(b_eq),
+        bounds=bounds, method="highs",
+    )
+    if not feasible.success:
+        raise ValueError(f"Allocation constraints are infeasible: {feasible.message}")
+    result = minimize(target, feasible.x, method="SLSQP", bounds=bounds,
                       constraints=constraints,
                       options={"maxiter": 1000, "ftol": 1e-12})
     if not result.success or not np.isfinite(result.x).all() or abs(result.x.sum() - 1) > 1e-6:
@@ -92,6 +128,84 @@ def maximum_sharpe_weights(returns: pd.DataFrame, risk_free_rate: float = 0.0) -
 def target_return_weights(returns: pd.DataFrame, target_return: float) -> pd.Series:
     """Minimum-variance long-only weights for an arithmetic annual target."""
     return _optimize(returns, "min_variance", target_return=target_return).rename("Target Return")
+
+
+def constrained_portfolio_weights(
+    returns: pd.DataFrame,
+    objective: str,
+    risk_free_rate: float = 0.0,
+    target_return: float | None = None,
+    minimum_weights: pd.Series | None = None,
+    maximum_weights: pd.Series | None = None,
+    groups: pd.Series | None = None,
+    group_caps: dict[str, float] | None = None,
+) -> pd.Series:
+    """Optimize under explicit user-defined long-only allocation constraints."""
+    if objective not in {"Minimum Variance", "Maximum Sharpe", "Target Return"}:
+        raise ValueError("Unknown constrained optimization objective.")
+    if objective == "Target Return" and target_return is None:
+        raise ValueError("Target Return objective requires an arithmetic annual target.")
+    internal = "max_sharpe" if objective == "Maximum Sharpe" else "min_variance"
+    result = _optimize(
+        returns, internal, risk_free_rate,
+        target_return if objective == "Target Return" else None,
+        minimum_weights, maximum_weights, groups, group_caps,
+    )
+    return result.rename(f"Constrained {objective}")
+
+
+def constraint_validation_summary(
+    weights: pd.Series,
+    minimum_weights: pd.Series,
+    maximum_weights: pd.Series,
+    groups: pd.Series | None = None,
+    group_caps: dict[str, float] | None = None,
+) -> pd.DataFrame:
+    """Report each explicit allocation constraint, result, and breach."""
+    aligned = weights.index
+    minimum = minimum_weights.reindex(aligned)
+    maximum = maximum_weights.reindex(aligned)
+    rows: list[dict[str, object]] = []
+    total = float(weights.sum())
+    rows.append({"Constraint": "Weights sum to 100%", "Result": total, "Limit": 1.0,
+                 "Pass": bool(np.isclose(total, 1, atol=1e-6)), "Breach": abs(total - 1),
+                 "Affected Asset": "Portfolio"})
+    for ticker in aligned:
+        below = max(float(minimum[ticker] - weights[ticker]), 0.0)
+        above = max(float(weights[ticker] - maximum[ticker]), 0.0)
+        rows.extend([
+            {"Constraint": "Minimum asset weight", "Result": float(weights[ticker]),
+             "Limit": float(minimum[ticker]), "Pass": below <= 1e-6, "Breach": below,
+             "Affected Asset": ticker},
+            {"Constraint": "Maximum asset weight", "Result": float(weights[ticker]),
+             "Limit": float(maximum[ticker]), "Pass": above <= 1e-6, "Breach": above,
+             "Affected Asset": ticker},
+        ])
+    labels = pd.Series("", index=aligned) if groups is None else groups.reindex(aligned).fillna("")
+    for group, cap in (group_caps or {}).items():
+        result = float(weights[labels == group].sum())
+        breach = max(result - cap, 0.0)
+        rows.append({"Constraint": f"Group cap: {group}", "Result": result, "Limit": cap,
+                     "Pass": breach <= 1e-6, "Breach": breach,
+                     "Affected Asset": ", ".join(map(str, weights.index[labels == group]))})
+    return pd.DataFrame(rows)
+
+
+def parse_group_caps(value: str) -> dict[str, float]:
+    """Parse explicit ``Group:percentage`` pairs from the UI."""
+    if not value.strip():
+        return {}
+    caps: dict[str, float] = {}
+    try:
+        for item in value.split(","):
+            name, percent = item.split(":", maxsplit=1)
+            clean_name = name.strip()
+            if not clean_name or clean_name in caps:
+                raise ValueError
+            caps[clean_name] = float(percent.strip()) / 100
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Group caps must use unique Group:percent pairs, for example Growth:60.") from exc
+    return caps
 
 
 def efficient_frontier(

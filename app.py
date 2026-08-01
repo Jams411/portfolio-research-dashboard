@@ -9,7 +9,8 @@ import streamlit as st
 
 from portfolio_dashboard.config import PRESETS, TRADING_DAYS
 from portfolio_dashboard.construction import (
-    capital_allocation_line, efficient_frontier, optimizer_statistics, target_return_weights,
+    capital_allocation_line, constrained_portfolio_weights, constraint_validation_summary,
+    efficient_frontier, optimizer_statistics, parse_group_caps, target_return_weights,
 )
 from portfolio_dashboard.data import MarketDataError, download_prices, parse_tickers, parse_weight_input, validate_dates
 from portfolio_dashboard.formatting import metric_value, money, pct, ratio
@@ -57,6 +58,7 @@ ANALYSIS_STATE_KEYS = (
     "what_if_weights", "what_if_shocks", "what_if_result", "what_if_weight_editor", "what_if_shock_editor",
     "target_return_result",
     "selected_rebalancing_policy",
+    "constrained_result", "constraint_editor",
 )
 
 
@@ -388,6 +390,95 @@ if tabs[4].open:
                 st.dataframe(target_weights.rename("Target Weight").to_frame(), width="stretch", column_config={
                     "Target Weight": st.column_config.NumberColumn(format="percent")
                 })
+            constraints = st.expander("Custom construction constraints", icon=":material/rule:", on_change="rerun")
+            if constraints.open:
+                with constraints:
+                    st.caption(
+                        "Define every classification explicitly. PortfolioLens does not infer sectors or asset classes. "
+                        "Excluding an asset sets its maximum weight to zero."
+                    )
+                    with st.form("constraint_form"):
+                        objective = st.selectbox(
+                            "Objective", ["Minimum Variance", "Maximum Sharpe", "Target Return"],
+                        )
+                        constraint_editor = st.data_editor(
+                            pd.DataFrame({
+                                "Ticker": r["tickers"], "Included": True,
+                                "Minimum Weight (%)": 0.0, "Maximum Weight (%)": 100.0,
+                                "User-defined Group": "",
+                            }),
+                            disabled=["Ticker"], hide_index=True, width="stretch", key="constraint_editor",
+                            column_config={
+                                "Included": st.column_config.CheckboxColumn(required=True),
+                                "Minimum Weight (%)": st.column_config.NumberColumn(min_value=0.0, max_value=100.0, format="%.2f%%", required=True),
+                                "Maximum Weight (%)": st.column_config.NumberColumn(min_value=0.0, max_value=100.0, format="%.2f%%", required=True),
+                                "User-defined Group": st.column_config.TextColumn(help="Optional explicit group label, such as Growth."),
+                            },
+                        )
+                        group_cap_text = st.text_input(
+                            "Group caps (%)", placeholder="Growth:60, Defensive:50",
+                            help="Optional comma-separated Group:percent pairs matching the editable group labels.",
+                        )
+                        constrained_target = st.number_input(
+                            "Target arithmetic annual return (%)",
+                            min_value=float(expected_assets.min() * 100),
+                            max_value=float(expected_assets.max() * 100),
+                            value=float(r["construction_stats"].loc["Current", "Optimizer Expected Return"] * 100),
+                            step=0.25, help="Used only when the selected objective is Target Return.",
+                        )
+                        constraint_submit = st.form_submit_button(
+                            "Run constrained optimization", type="primary", icon=":material/calculate:",
+                        )
+                    if constraint_submit:
+                        try:
+                            tickers_index = pd.Index(constraint_editor["Ticker"])
+                            included = pd.Series(constraint_editor["Included"].to_numpy(dtype=bool), index=tickers_index)
+                            minimums = pd.Series(
+                                constraint_editor["Minimum Weight (%)"].to_numpy(dtype=float) / 100,
+                                index=tickers_index,
+                            )
+                            maximums = pd.Series(
+                                constraint_editor["Maximum Weight (%)"].to_numpy(dtype=float) / 100,
+                                index=tickers_index,
+                            )
+                            minimums.loc[~included] = 0.0
+                            maximums.loc[~included] = 0.0
+                            groups = pd.Series(
+                                constraint_editor["User-defined Group"].fillna("").astype(str).str.strip().to_numpy(),
+                                index=tickers_index,
+                            )
+                            group_caps = parse_group_caps(group_cap_text)
+                            constrained_weights = constrained_portfolio_weights(
+                                a.asset_returns, objective, r["risk_free"],
+                                constrained_target / 100 if objective == "Target Return" else None,
+                                minimums, maximums, groups, group_caps,
+                            )
+                            constrained_stats = optimizer_statistics(
+                                a.asset_returns, constrained_weights, r["risk_free"],
+                            )
+                            validation = constraint_validation_summary(
+                                constrained_weights, minimums, maximums, groups, group_caps,
+                            )
+                            st.session_state["constrained_result"] = (
+                                constrained_weights, constrained_stats, validation,
+                            )
+                        except (ValueError, RuntimeError) as exc:
+                            st.error(f"Constrained optimization unavailable: {exc}")
+                    if "constrained_result" in st.session_state:
+                        constrained_weights, constrained_stats, validation = st.session_state["constrained_result"]
+                        with st.container(horizontal=True):
+                            st.metric("Expected return", pct(constrained_stats["Optimizer Expected Return"]), border=True)
+                            st.metric("Volatility", pct(constrained_stats["Optimizer Volatility"]), border=True)
+                            st.metric("Sharpe", ratio(constrained_stats["Optimizer Sharpe"]), border=True)
+                        st.dataframe(constrained_weights.rename("Constrained Weight").to_frame(), width="stretch", column_config={
+                            "Constrained Weight": st.column_config.NumberColumn(format="percent")
+                        })
+                        st.dataframe(validation, width="stretch", hide_index=True, column_config={
+                            "Result": st.column_config.NumberColumn(format="percent"),
+                            "Limit": st.column_config.NumberColumn(format="percent"),
+                            "Pass": st.column_config.CheckboxColumn(),
+                            "Breach": st.column_config.NumberColumn(format="percent"),
+                        })
         st.dataframe(a.allocations, width="stretch", column_config={
             column: st.column_config.NumberColumn(format="percent") for column in a.allocations.columns
         })
@@ -628,6 +719,7 @@ if tabs[8].open:
         report_policy = st.session_state.get("selected_rebalancing_policy", "Quarterly")
         if report_policy not in r["policy_histories"]:
             report_policy = "Quarterly"
+        constrained_report = st.session_state.get("constrained_result")
         report = generate_html_report(
             title="PortfolioLens Investment Research Report", tickers=r["tickers"], weights=r["weights"],
             start=a.prices.index.min().date(), end=a.prices.index.max().date(), summary=summary,
@@ -644,6 +736,11 @@ if tabs[8].open:
             optimized_allocations=r["frontier_weights"] if not r["frontier_weights"].empty else None,
             rebalancing_policies=r["policy_summary"],
             rebalancing_history=r["policy_histories"][report_policy],
+            constrained_allocation=(
+                constrained_report[0].rename("Constrained Weight").to_frame()
+                if constrained_report is not None else None
+            ),
+            constraint_validation=constrained_report[2] if constrained_report is not None else None,
         )
         downloads = {
             "Performance metrics": metric_frame(a.performance).to_csv(),

@@ -93,6 +93,14 @@ def _health_table(frame: pd.DataFrame) -> str:
         )
     return _table(formatted)
 
+
+def _constraint_table(frame: pd.DataFrame) -> str:
+    formatted = frame.copy().astype(object)
+    for column in ("Result", "Limit", "Breach"):
+        if column in formatted:
+            formatted[column] = frame[column].map(_pct)
+    return _table(formatted)
+
 def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, start: object, end: object,
                          summary: list[str], performance: pd.DataFrame, risk: pd.DataFrame,
                          benchmark: pd.DataFrame, attribution: pd.DataFrame, allocations: pd.DataFrame,
@@ -105,7 +113,9 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
                          what_if: pd.DataFrame | None = None, efficient_frontier: pd.DataFrame | None = None,
                          optimized_allocations: pd.DataFrame | None = None,
                          rebalancing_policies: pd.DataFrame | None = None,
-                         rebalancing_history: pd.DataFrame | None = None) -> bytes:
+                         rebalancing_history: pd.DataFrame | None = None,
+                         constrained_allocation: pd.DataFrame | None = None,
+                         constraint_validation: pd.DataFrame | None = None) -> bytes:
     """Generate a self-contained, deterministic investment research report."""
     assumptions = [
         "Daily simple returns and a 252-trading-day annualization convention.",
@@ -137,6 +147,8 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
                 ("What-if comparison", _comparison_table(what_if) if what_if is not None else "<p>No hypothetical scenario was included.</p>"),
                 ("Efficient frontier", _comparison_table(efficient_frontier) if efficient_frontier is not None else "<p>Efficient frontier unavailable.</p>"),
                 ("Optimized allocations", _percentage_table(optimized_allocations) if optimized_allocations is not None else "<p>Optimized allocations unavailable.</p>"),
+                ("Custom constrained allocation", _percentage_table(constrained_allocation) if constrained_allocation is not None else "<p>No custom constrained allocation was included.</p>"),
+                ("Constraint validation", _constraint_table(constraint_validation) if constraint_validation is not None else "<p>No custom constraint validation was included.</p>"),
                 ("Allocation comparison", _percentage_table(allocations)),
                 (f"Rebalancing plan — {rebalancing_method}", _financial_table(rebalancing)),
                 ("Rebalancing policy comparison", _comparison_table(rebalancing_policies) if rebalancing_policies is not None else "<p>Policy comparison unavailable.</p>"),
