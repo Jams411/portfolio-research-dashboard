@@ -1,8 +1,12 @@
 # Portfolio Research Dashboard
 
+**From portfolio inputs to an auditable investment-research report.**
+
 A focused, internship-ready Streamlit application for historical portfolio research. It turns a ticker-and-weight input into a reproducible view of performance, market risk, benchmark-relative results, attribution, allocation alternatives, rebalancing trades, a lagged momentum backtest, stress tests, and a downloadable HTML research report.
 
 The project is intentionally small enough to explain in an interview: market data enter through one validated boundary, financial calculations are pure functions, the UI only orchestrates those functions, and core formulas and reconciliation rules are covered by deterministic local tests.
+
+> **Deployment status:** the repository is Community Cloud-ready. A public hosted URL will be added only after the deployment has been opened and verified in a signed-out browser.
 
 ## Why this project matters
 
@@ -54,8 +58,28 @@ docs/PROJECT_HISTORY.md             evidence-backed project milestones
 docs/PROJECT_JOURNAL.md             chronological engineering narrative
 docs/DECISIONS.md                   product and methodology decisions
 docs/ROADMAP.md                     completed, planned, deferred and avoided work
+docs/DEPLOYMENT.md                  Community Cloud setup and verification checklist
+docs/DEMO_GUIDE.md                  two- and five-minute interview demonstrations
+docs/SHOWCASE_REVIEW.md             final visual and functional review record
+docs/images/                        reproducible application screenshot gallery
 CHANGELOG.md                        user-facing milestone changes
 ```
+
+For module ownership, dependencies, state, and end-to-end diagrams, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Screenshot gallery
+
+All captures use the documented four-ETF sample portfolio. Displayed market results are historical examples, not expected returns.
+
+| Landing and workflow | Performance |
+|---|---|
+| ![Application landing page](docs/images/01-application-overview.jpg) | ![Performance dashboard](docs/images/02-performance-dashboard.jpg) |
+| Risk and correlation | Benchmark and attribution |
+| ![Risk and correlation analysis](docs/images/03-risk-correlation.jpg) | ![Benchmark and attribution analysis](docs/images/04-benchmark-attribution.jpg) |
+| Construction and rebalancing | Momentum strategy |
+| ![Portfolio construction and rebalancing](docs/images/05-construction-rebalancing.jpg) | ![Momentum strategy](docs/images/06-momentum-strategy.jpg) |
+| Stress testing | Research report |
+| ![Stress testing](docs/images/07-stress-testing.jpg) | ![Research report and downloads](docs/images/08-research-report.jpg) |
 
 ## Installation and local execution
 
@@ -88,6 +112,8 @@ Tests cover validation, data layout/missingness, returns, portfolio aggregation,
 
 The app downloads data only after the user clicks **Run analysis**. `requirements.txt` uses bounded versions compatible with Community Cloud; Streamlit 1.55 or newer is required for state-aware, lazily rendered tabs.
 
+Follow the complete [deployment and post-deployment checklist](docs/DEPLOYMENT.md). Do not describe the app as deployed until its public URL passes that signed-out verification.
+
 ## Methodology and assumptions
 
 Daily simple returns and 252 trading days are used consistently. Holdings use constant weights for historical portfolio returns. The benchmark is downloaded separately and aligned on common dates. Historical VaR/CVaR use the empirical lower tail. Risk contribution uses Euler decomposition. Optimization is long-only and uses historical sample means/covariances. The momentum signal uses short and long simple moving averages, is shifted by one full period, and pays proportional costs whenever position changes. See [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
@@ -98,13 +124,23 @@ yfinance data can be delayed, revised, incomplete, or temporarily unavailable. C
 
 For research and educational use only. This application does not provide personalized financial advice.
 
-## Screenshots
+## Project Story
 
-After deployment, add desktop screenshots of Overview, Risk, Construction, and Research Report here. Keep real market-data timestamps visible and avoid presenting example outcomes as expected returns.
+**Context from current development session — verify before treating as canonical.**
+
+This focused dashboard was created to demonstrate an end-to-end portfolio-research workflow that is easy to use, test, deploy, and explain in an internship interview. It connects portfolio analytics, market-risk measurement, benchmark-relative investment research, allocation and rebalancing decisions, and one transparent systematic strategy without becoming a collection of unrelated institutional features.
+
+Clarity and financial correctness were prioritized over breadth. That choice led to explicit missing-data handling, reconciled contribution formulas, long-only optimization checks, one-period strategy lag, deterministic reporting, and synthetic offline tests. Advanced machine learning, automatic strategy tuning, live execution, personalized advice, and fragile report tooling were deferred or avoided because their data and model risks would weaken this project’s central story.
+
+University materials reviewed during the current development session informed the roadmap around performance measurement, single-index benchmark research, rebalancing, transaction costs, warm-up periods, and overfitting controls. Course code and formulas were not copied or treated as verified implementation evidence.
+
+The project is separate from the frozen Portfolio Intelligence Platform. That platform was not inspected or modified during this showcase phase, and no claim is made here about its internal architecture. This repository intentionally remains the smaller, focused, interview-ready application.
 
 ## Interview-ready explanation
 
 “I built a modular Streamlit research dashboard that validates and aligns adjusted market data, computes portfolio and benchmark-relative analytics, decomposes risk using Euler contributions, compares explainable long-only allocations, produces a self-financing rebalance plan, and backtests a one-day-lagged momentum rule with costs. I separated calculations from presentation and tested the main pipeline entirely with synthetic data, so the financial logic is reproducible without network access.”
+
+Use [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md) for a timed walkthrough and interview questions.
 
 ## Suggested next improvement
 
