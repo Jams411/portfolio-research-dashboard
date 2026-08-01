@@ -171,3 +171,13 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Alternatives considered:** Regress raw returns, geometrically convert the risk-free rate, use an external regression package, or report CAPM metrics from an independently annualized sample.
 - **Consequences:** Results are historical, benchmark-sensitive single-factor estimates. Residual standard error uses two fitted-parameter degrees of freedom; idiosyncratic variance uses sample variance so the displayed risk decomposition reconciles exactly.
 - **Status:** Accepted.
+
+## D017 — Keep the research layer deterministic and disclose the Health Score heuristic
+
+- **Date:** 2026-08-01
+- **Decision:** Build portfolio comparison, what-if analysis, research insights, and the Portfolio Health Score exclusively from tested PortfolioLens metrics. Publish every score component, weight, threshold, missing-metric treatment, insight value, and trigger rule.
+- **Context:** Phase 3 changes PortfolioLens from a collection of analytical tabs into a research workflow, creating a risk that polished presentation could imply advice, prediction, or unsupported precision.
+- **Rationale:** Traceability preserves interview and user explainability. A deterministic layer is reproducible, testable, deployment-safe, and consistent with the focused research product.
+- **Alternatives considered:** LLM-written commentary, an opaque composite score, personalized recommendations, or a score presented without component coverage.
+- **Consequences:** The score is explicitly an application-specific historical heuristic rather than a course formula or suitability measure. What-if scenarios remain long-only, explicit, and non-persistent; insights describe computed evidence and never prescribe trades.
+- **Status:** Accepted.

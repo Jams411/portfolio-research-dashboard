@@ -10,6 +10,16 @@ The project was created under the former working name `portfolio-research-dashbo
 
 Interview explainability and financial correctness were prioritized over feature count. That principle explains the use of small financial functions, one explicit strategy, deterministic reporting, strict data validation, and synthetic tests. Advanced features were deferred when they required unreliable classifications, new data sources, opaque models, personalized advice, or disproportionate methodology and deployment complexity.
 
+## 2026-08-01 — Phase 3 research workflow
+
+- **Date:** 2026-08-01
+- **Goal:** Turn the existing analytical dashboard into a professional research application without introducing opaque narrative generation or investment advice.
+- **What changed:** Added a reusable research module, professional HTML report, Health Score and component audit table, allocation comparison, submitted what-if workflow, and deterministic insights with explicit evidence and rules.
+- **Methodology choice:** All historical portfolio comparisons reuse the established constant-weight and arithmetic-return conventions. The Health Score is openly labeled an application heuristic, and unavailable component weights are rescaled with visible coverage.
+- **Engineering choice:** Business logic remains independent of Streamlit and is tested synthetically. Streamlit owns form state and presentation only; scenario inputs never mutate the saved analysis.
+- **Risks managed:** No LLM dependency, predictive language, personalized recommendations, silent score imputation, implicit asset classification, or scenario-weight normalization was introduced.
+- **Next step:** Phase 2B construction work remains the tested long-only frontier, feasible target-return portfolios, and carefully framed tangency/CAL presentation. Rebalancing simulation and turnover remain separate later work.
+
 ## 2026-08-01 — Phase 2A benchmark research
 
 - **Date:** 2026-08-01

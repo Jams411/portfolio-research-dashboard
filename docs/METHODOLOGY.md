@@ -53,6 +53,26 @@ Equal weights allocate `1/N`. Inverse-volatility weights are proportional to `1/
 
 Rebalancing assumes the stated portfolio value, no cash flow, fractional trading, and no taxes. Estimated trade is target dollars minus current dollars. Buys and sells reconcile before costs and rounding. By default, only an exactly unchanged weight is labeled Hold; callers may opt into a display threshold, which changes the action label but not the disclosed target-allocation gap.
 
+## Research workspace and Portfolio Health Score
+
+Portfolio comparison evaluates every available allocation method on the same aligned asset-return history, annual risk-free rate, constant-weight portfolio-return model, and performance formulas. The displayed weight distance from current is `0.5 × Σ|w_scenario,i - w_current,i|`. It describes allocation difference only; it is not realized turnover, a trade-cost estimate, or a rebalance simulation.
+
+The Portfolio Health Score is an application-specific historical diagnostic, not a formula copied from the Portfolio Management course. It is a bounded weighted average of five disclosed components:
+
+| Component | Weight | Normalized rule |
+|---|---:|---|
+| Diversification | 25% | `effective holdings / number of holdings` |
+| Risk-adjusted return | 25% | Sharpe linearly mapped from `-1 → 0%` to `2 → 100%` |
+| Drawdown resilience | 20% | `1 - abs(maximum drawdown) / 50%` |
+| Tail resilience | 15% | `1 - daily historical 95% CVaR / 10%` |
+| Benchmark efficiency | 15% | information ratio linearly mapped from `-1 → 0%` to `1 → 100%` |
+
+Every normalized result is clipped to `[0,1]`. If a metric is unavailable, its component is excluded and the remaining weighted points are rescaled to 100; metric coverage is always displayed. Formally, `score = Σ(weight_i × normalized_i) / Σ(available weight_i)`. The thresholds are transparent presentation choices, not universal investment standards. The score does not measure suitability, forecast return, diversification across unobserved risk factors, or portfolio optimality.
+
+What-if analysis accepts hypothetical nonnegative weights that must sum to 100% and one explicit finite shock per holding. Historical comparison uses the same constant-weight formulas as the main analysis. Instantaneous shock impact is `Σw_i s_i`, and the scenario does not overwrite the analyzed portfolio, simulate a rebalance path, or include taxes, market impact, and trading costs.
+
+Deterministic insights are selected by fixed rules using computed Sharpe, cumulative excess return, maximum drawdown, largest weight, effective holdings, beta, idiosyncratic risk share, Euler volatility contribution, and CVaR. The interface displays the supporting metric, value, and rule beside every observation. No LLM or generative model creates, ranks, or rewrites insights, and the statements do not instruct users to buy, sell, or change an allocation.
+
 ## Momentum strategy
 
 The strategy operates on the first requested holding so the traded instrument is explicit. It is long when the short simple moving average is above the long simple moving average and otherwise in cash. A signal observed at close on day `t` becomes the position for day `t+1`; the signal is shifted one full period to avoid look-ahead bias. Before both averages exist, the strategy remains in cash. Performance comparison begins only after the long-window warm-up, so strategy and buy-and-hold use the same evaluation period. Proportional transaction cost is deducted on each absolute position change. The MVP does not search or optimize parameters.

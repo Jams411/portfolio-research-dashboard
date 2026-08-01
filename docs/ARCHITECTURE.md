@@ -13,8 +13,9 @@ flowchart LR
     Validation --> YF["yfinance"]
     Validation --> Pipeline["Analytics pipeline"]
     Pipeline --> Analytics["Performance, risk, attribution, construction"]
+    Analytics --> Research["Comparison, health score and deterministic insights"]
     App --> Decisions["Rebalancing, strategy, stress"]
-    Analytics --> State["Streamlit session state"]
+    Research --> State["Streamlit session state"]
     Decisions --> State
     State --> Views["Charts, tables, explanations"]
     State --> Exports["CSV and deterministic HTML"]
@@ -30,6 +31,7 @@ portfolio_dashboard/
   data.py                           input validation and yfinance price boundary
   performance.py                    returns and performance scorecard
   risk.py                           tail, benchmark and contribution analytics
+  research.py                       comparison, score, scenario and deterministic insight diagnostics
   construction.py                   allocation methods and constrained optimizers
   pipeline.py                       main analytics orchestration and Analysis result
   rebalancing.py                    target-allocation trade plan
@@ -117,6 +119,16 @@ pytest.ini                          local pytest configuration
 - **Important dependencies:** pandas, NumPy, and `TRADING_DAYS`.
 - **Financial concepts:** Empirical lower-tail loss, covariance beta, active risk, relative drawdown, Euler decomposition, and contribution reconciliation.
 - **Common failure modes:** Invalid confidence, empty tails, fewer than three aligned regression observations, zero benchmark variance, zero tracking error, nonpositive portfolio variance, or misaligned labels.
+
+### `research.py` — deterministic investment research diagnostics
+
+- **Why it exists:** Keeps research interpretation and scenario mathematics testable and independent of Streamlit and report rendering.
+- **Owns:** Like-for-like allocation comparison, Portfolio Health Score decomposition and coverage, validated long-only what-if comparison, explicit shock reuse, and rules-based insight evidence.
+- **Key inputs:** Aligned asset returns, current and candidate weights, existing performance/benchmark dictionaries, volatility contributions, CVaR, explicit shocks, portfolio value, and risk-free rate.
+- **Key outputs:** Comparison DataFrames, score/component audit table, scenario tables and summary, and insight rows containing observation, metric, value, and rule.
+- **Does not own:** Market-data retrieval, optimization, investor suitability, recommendations, forecasts, Streamlit state, or prose generation by an LLM.
+- **How tested:** Synthetic cases reconcile comparison metrics, score points and coverage, weight distance, scenario shock impact, and the traceability/prohibited-language contract.
+- **Common failure modes:** Mismatched labels, negative/nonfinite weights, weights not summing to 100%, incomplete shocks, or unavailable score inputs.
 - **How tested:** Synthetic VaR/CVaR, beta, tracking error, information ratio, relative drawdown, and risk-contribution reconciliation tests.
 
 ### `construction.py` — allocation comparisons

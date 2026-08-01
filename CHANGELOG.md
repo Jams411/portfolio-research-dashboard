@@ -6,6 +6,11 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ### Added
 
+- Added a professional investment research workspace and print-safe deterministic HTML report.
+- Added like-for-like allocation comparison using the existing constant-weight return and performance methodology.
+- Added a transparent Portfolio Health Score with disclosed component weights, thresholds, points, and missing-metric coverage.
+- Added interactive long-only what-if weights and explicit asset shocks without mutating the analyzed portfolio.
+- Added deterministic insights that display their computed metric, value, and trigger rule and contain no LLM-generated advice.
 - Added excess-return single-index regression with alpha, beta, R², residual volatility, systematic/idiosyncratic variance and risk shares, and observation count.
 - Added CAPM required return, Jensen’s alpha, and Treynor ratio to benchmark analysis and the deterministic research report.
 - Added a Community Cloud deployment checklist, timed interview demo guide, final showcase review, and eight live-application screenshots.

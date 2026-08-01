@@ -20,6 +20,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - PortfolioLens product branding and repository identity, without scope or methodology changes
 - Phase 1 Portfolio Management methodology alignment: arithmetic annualized return, annualized variance, `w′μ`, `w′Σw`, and one shared arithmetic Sharpe convention across performance and optimization
 - Phase 2A benchmark research: excess-return single-index OLS, alpha, beta, R², residual volatility, systematic/idiosyncratic variance, CAPM required return, Jensen’s alpha, and Treynor ratio
+- Phase 3 professional investment research: structured HTML report, like-for-like portfolio comparison, transparent Portfolio Health Score, interactive long-only what-if scenarios, and deterministic metric-traceable insights
 
 ## In progress
 

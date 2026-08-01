@@ -1,5 +1,14 @@
 # Project history
 
+## 2026-08-01 — Phase 3 professional investment research application
+
+- **What changed:** Added a dedicated investment research workspace, transparent Portfolio Health Score, like-for-like allocation comparison, interactive hypothetical weight/shock analysis, metric-and-rule-linked deterministic insights, and a print-safe professional HTML report.
+- **Why it changed:** PortfolioLens already computed broad analytics but required users to assemble the research interpretation across separate tabs. Phase 3 creates a coherent evidence-first workflow without adding predictive or advisory claims.
+- **Problem solved:** Users can now compare supported portfolios under one methodology, inspect every score point, test an explicit scenario, trace each observation to a computed metric, and export the same research structure.
+- **Career relevance:** Portfolio analytics, investment research, manager/performance evaluation, risk communication, scenario analysis, and explainable financial software.
+- **Tradeoffs:** The Health Score uses disclosed application thresholds that are necessarily judgmental. What-if results remain historical constant-weight estimates plus instantaneous shocks, not forecasts or implementation simulations. No LLM investment advice was added.
+- **Evidence:** Synthetic unit tests cover score arithmetic and missing-metric coverage, portfolio comparison reconciliation, scenario validation/shock reconciliation, prohibited advice language, report sections, and offline Streamlit research-workspace rendering.
+
 ## 2026-08-01 — Phase 2A benchmark regression and CAPM evaluation
 
 - **What changed:** Added an excess-return single-index OLS model with annualized alpha, beta, R², residual volatility, systematic/idiosyncratic variance and shares, observations, CAPM required return, Jensen’s alpha, and Treynor ratio. The dashboard and HTML report now explain and label the model separately from cumulative benchmark-relative results.

@@ -2,7 +2,7 @@
 
 **Multi-Asset Portfolio Analytics & Investment Research**
 
-PortfolioLens is a focused, internship-ready Streamlit application for historical portfolio research. It turns a ticker-and-weight input into a reproducible view of performance, market risk, benchmark-relative results, attribution, allocation alternatives, rebalancing trades, a lagged momentum backtest, stress tests, and a downloadable HTML research report.
+PortfolioLens is a focused, internship-ready Streamlit application for historical portfolio research. It turns a ticker-and-weight input into a reproducible investment-research workflow spanning performance, market risk, benchmark-relative results, attribution, allocation alternatives, a transparent Portfolio Health Score, interactive what-if analysis, deterministic insights, rebalancing trades, a lagged momentum backtest, stress tests, and a professional downloadable HTML report.
 
 [Launch PortfolioLens](https://portfolio-research-dashboard.streamlit.app/) · [View the GitHub repository](https://github.com/Jams411/portfoliolens)
 
@@ -31,6 +31,7 @@ This application demonstrates:
 - Excess-return single-index alpha/beta/R², residual and systematic/idiosyncratic risk, CAPM required return, Jensen’s alpha, Treynor, correlation, covariance, VaR/CVaR, concentration, effective holdings, and reconciled return/volatility attribution
 - Benchmark excess return, tracking error, information ratio, relative drawdown and relative wealth
 - Current, equal-weight, inverse-volatility, minimum-variance and maximum-Sharpe long-only allocations
+- Like-for-like portfolio comparison, a fully disclosed historical Health Score, validated hypothetical weights/shocks, and metric-traceable deterministic insights
 - Dollar rebalancing plan with intuitive buy/sell signs and CSV export
 - Dual-moving-average long/cash strategy on the first requested holding, with one-day signal lag and transaction costs
 - Editable per-asset custom shocks and complete historical stress windows
@@ -45,6 +46,7 @@ portfolio_dashboard/
   data.py                           inputs, yfinance parsing, missing-data policy
   performance.py                    returns and performance metrics
   risk.py                           benchmark metrics and attribution
+  research.py                       research comparison, score, scenarios and deterministic insights
   construction.py                   allocation methods and SLSQP optimizers
   rebalancing.py                    target trade plan
   strategy.py                       lagged momentum backtest
@@ -103,7 +105,7 @@ Open the local URL Streamlit prints. Select a preset, adjust inputs if desired, 
 .venv/bin/python -m compileall app.py portfolio_dashboard tests
 ```
 
-Tests cover validation, data layout/missingness, arithmetic return, CAGR, annualized variance/volatility, portfolio `w′μ` and `w′Σw`, displayed/optimizer Sharpe reconciliation, Sortino, portfolio aggregation, drawdown, VaR/CVaR, excess-return regression and CAPM reconciliation, tracking error, information ratio, risk-contribution reconciliation, allocation failure handling, rebalancing, signal lag, costs, stress tests, report units, the integrated analytics pipeline, and the offline Streamlit entrypoint.
+Tests cover validation, data layout/missingness, arithmetic return, CAGR, annualized variance/volatility, portfolio `w′μ` and `w′Σw`, displayed/optimizer Sharpe reconciliation, Sortino, portfolio aggregation, drawdown, VaR/CVaR, excess-return regression and CAPM reconciliation, tracking error, information ratio, risk-contribution reconciliation, allocation comparison, Health Score arithmetic and coverage, what-if validation and reconciliation, deterministic insight traceability, allocation failure handling, rebalancing, signal lag, costs, stress tests, professional report units/sections, the integrated analytics pipeline, and the offline Streamlit research workspace.
 
 ## Streamlit Community Cloud deployment
 
