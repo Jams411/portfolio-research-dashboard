@@ -9,14 +9,17 @@ Daily return is the simple return `r_t = P_t / P_(t-1) - 1`. Portfolio return as
 ## Performance
 
 - Total return: `Π(1+r_t)-1`
+- Historical arithmetic annualized return: `252 × mean(r_t)`; this is the historical expected-return estimate used by Sharpe, Sortino, and maximum-Sharpe optimization
 - CAGR: `(Π(1+r_t))^(252/n)-1`
+- Annualized variance: sample variance of daily returns times `252`
 - Annualized volatility: sample standard deviation of daily returns times `sqrt(252)`
-- Sharpe: `(CAGR - annual risk-free rate) / annualized volatility`
-- Sortino: `(CAGR - annual risk-free rate) / annualized target downside deviation`; the annual risk-free rate is converted to an equivalent daily minimum acceptable return, and every observation contributes either its squared shortfall or zero
+- Performance Sharpe: `(historical arithmetic annualized return - annual risk-free rate) / annualized volatility`
+- Optimizer Sharpe: the same arithmetic annualized excess-return formula evaluated for candidate weights; it is mathematically identical to performance Sharpe for the same return series and weights
+- Sortino: `(historical arithmetic annualized return - annual risk-free rate) / annualized target downside deviation`; the annual risk-free rate is converted to an equivalent daily minimum acceptable return, and every observation contributes either its squared shortfall or zero
 - Drawdown: wealth divided by its running peak minus one, with the initial portfolio value included as the first peak
 - Calmar: CAGR divided by the absolute maximum drawdown
 
-The risk-free input is annual and is not converted into a daily cash return. It is used in annualized ratios only. A 252-trading-day convention is used throughout.
+Arithmetic return and CAGR answer different questions. Arithmetic annualized return is a historical mean estimate suitable for one-period mean-variance comparisons; CAGR is the realized compound growth rate over the selected path. Neither is presented as a forecast. The annual risk-free input is subtracted from annualized ratio numerators. For Sortino's downside target only, it is converted to an equivalent daily rate. A 252-trading-day convention is used throughout.
 
 ## Risk and benchmark comparison
 
@@ -36,7 +39,7 @@ Weight concentration is shown directly and through effective number of holdings 
 
 Manual UI weights may be entered as percentage points (for example `50,35,15`) or decimal weights (`0.50,0.35,0.15`) and are converted to decimal weights exactly once. Equal-weight mode ignores the disabled manual field and constructs `1/N` directly from the validated ticker count.
 
-Equal weights allocate `1/N`. Inverse-volatility weights are proportional to `1/σ_i`. Minimum variance minimizes `w′Σw`; maximum Sharpe maximizes historical arithmetic annualized excess return divided by portfolio volatility. Both optimized methods constrain every weight to `[0,1]` and the sum to one. A failed solver result is never displayed as valid. Historical inputs are estimates, not forecasts, and “maximum Sharpe” names the mathematical objective rather than a recommendation.
+Equal weights allocate `1/N`. Inverse-volatility weights are proportional to `1/σ_i`. For arithmetic annualized asset-return vector `μ`, annualized sample covariance matrix `Σ`, and weights `w`, portfolio expected return is `w′μ` and portfolio variance is `w′Σw`; volatility is `sqrt(w′Σw)`. Minimum variance minimizes `w′Σw`. Maximum Sharpe maximizes `(w′μ-r_f)/sqrt(w′Σw)`, using the same Sharpe formula as the displayed scorecard. Both optimized methods constrain every weight to `[0,1]` and the sum to one. A failed solver result is never displayed as valid. Historical inputs are estimates, not forecasts, and “maximum Sharpe” names the mathematical objective rather than a recommendation.
 
 Rebalancing assumes the stated portfolio value, no cash flow, fractional trading, and no taxes. Estimated trade is target dollars minus current dollars. Buys and sells reconcile before costs and rounding. By default, only an exactly unchanged weight is labeled Hold; callers may opt into a display threshold, which changes the action label but not the disclosed target-allocation gap.
 

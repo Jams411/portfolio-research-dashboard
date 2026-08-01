@@ -166,11 +166,13 @@ tabs = st.tabs(tab_names, key="analysis_tab", on_change="rerun")
 if tabs[0].open:
     with tabs[0]:
         st.subheader("Portfolio at a glance")
-        cols = st.columns(5)
+        cols = st.columns(6)
         cards = [
-            ("Total return", pct(a.performance["Total Return"])), ("CAGR", pct(a.performance["CAGR"])),
+            ("Total return", pct(a.performance["Total Return"])),
+            ("Arithmetic return", pct(a.performance["Historical Arithmetic Annualized Return"])),
+            ("CAGR", pct(a.performance["CAGR"])),
             ("Volatility", pct(a.performance["Annualized Volatility"])),
-            ("Sharpe", ratio(a.performance["Sharpe Ratio"])),
+            ("Performance Sharpe", ratio(a.performance["Sharpe Ratio"])),
             ("Max drawdown", pct(a.performance["Maximum Drawdown"])),
         ]
         for col, (label, value) in zip(cols, cards):
@@ -187,6 +189,10 @@ if tabs[0].open:
 if tabs[1].open:
     with tabs[1]:
         st.subheader("Performance")
+        st.caption(
+            "Arithmetic return is the historical expected-return estimate used by Sharpe and optimization. "
+            "CAGR is realized compound growth. Performance Sharpe and optimizer Sharpe use the same arithmetic convention."
+        )
         st.dataframe(display_metric_frame(a.performance), width="stretch")
         line_chart((1 + a.portfolio_returns).cumprod().to_frame("Portfolio"), "Cumulative portfolio growth", "Growth of $1")
         line_chart(drawdown_series(a.portfolio_returns).to_frame("Drawdown"), "Portfolio drawdown", "Drawdown")
@@ -358,7 +364,7 @@ if tabs[8].open:
     with tabs[8]:
         st.subheader("Methodology and limitations")
         st.markdown("""
-**Returns and annualization.** Adjusted prices are converted to simple daily returns. CAGR compounds realized daily returns; volatility uses sample standard deviation × √252. Sharpe subtracts the annual risk-free rate from CAGR. Sortino uses target downside deviation after converting the annual risk-free rate to an equivalent daily minimum acceptable return.
+**Returns and annualization.** Adjusted prices are converted to simple daily returns. Historical arithmetic annualized return is the daily sample mean × 252 and is the expected-return estimate used by Sharpe, Sortino, and maximum-Sharpe optimization. CAGR separately measures realized compound growth. Annualized variance is the daily sample variance × 252; volatility is its square root. Performance Sharpe and optimizer Sharpe both equal arithmetic annualized excess return divided by annualized volatility. Sortino uses the same arithmetic excess-return numerator and target downside deviation after converting the annual risk-free rate to an equivalent daily minimum acceptable return.
 
 **Data and missing values.** yfinance is the sole data source. Holdings are aligned to complete common trading dates; prices are never filled or invented. Any unavailable requested ticker stops the analysis. The benchmark is downloaded separately and then inner-aligned for comparison.
 

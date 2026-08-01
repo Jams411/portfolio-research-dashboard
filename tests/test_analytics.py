@@ -255,6 +255,8 @@ def test_main_pipeline_integration(returns):
 
 def test_metric_formatting_preserves_ratios_and_percentages():
     assert metric_value("Total Return", .125) == "12.50%"
+    assert metric_value("Historical Arithmetic Annualized Return", .125) == "12.50%"
+    assert metric_value("Annualized Variance", .025) == "0.0250"
     assert metric_value("Sharpe Ratio", 1.25) == "1.25"
     assert metric_value("Position Changes", 3.0) == "3"
 

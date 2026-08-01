@@ -76,7 +76,7 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
                 ("Allocation comparison", _percentage_table(allocations)),
                 (f"Rebalancing plan — {rebalancing_method}", _financial_table(rebalancing)),
                 ("Momentum-strategy results", _metric_table(strategy)), ("Stress-test results", _financial_table(stress)),
-                ("Methodology", "<p>Simple daily returns; 252-day annualization; constant weights; empirical 95% VaR/CVaR; covariance beta; Euler volatility attribution; long-only constrained optimization; one-day-lagged dual-moving-average signal; proportional transaction costs.</p>"),
+                ("Methodology", "<p>Simple daily returns; arithmetic annualized return for Sharpe, Sortino, and optimization; CAGR for realized compound growth; annualized sample variance and volatility; 252-day annualization; constant weights; empirical 95% VaR/CVaR; covariance beta; Euler volatility attribution; long-only constrained optimization; one-day-lagged dual-moving-average signal; proportional transaction costs.</p>"),
                 ("Limitations and disclaimer", "<p>Historical adjusted prices may contain provider errors and do not predict future results. Excludes taxes, liquidity constraints, market impact and slippage beyond configured cost. Optimization uses historical estimates. Research and educational use only; not personalized financial advice.</p>")]
     body = "".join(f"<section><h2>{escape(name)}</h2>{content}</section>" for name, content in sections)
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")

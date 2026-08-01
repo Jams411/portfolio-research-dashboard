@@ -98,12 +98,12 @@ pytest.ini                          local pytest configuration
 ### `performance.py` — return and performance calculations
 
 - **Why it exists:** Centralizes reusable performance formulas for portfolios and strategies.
-- **Owns:** Simple returns, constant-weight portfolio returns, total return, CAGR, volatility, Sharpe, Sortino, drawdown, Calmar, scorecards, and monthly returns.
+- **Owns:** Simple returns, constant-weight portfolio returns, arithmetic annualized return, CAGR, annualized variance/volatility, portfolio `w′μ` and `w′Σw`, Sharpe, Sortino, drawdown, Calmar, scorecards, and monthly returns.
 - **Does not own:** Benchmark regression, asset contributions, allocation optimization, or display formatting.
 - **Key inputs:** Price or return Series/DataFrames, labeled weights, annual risk-free rate, and optional periods per year.
 - **Key outputs:** Return series, scalar metrics, metric dictionaries, drawdown series, and monthly tables.
 - **Important dependencies:** pandas, NumPy, and `TRADING_DAYS`.
-- **Financial concepts:** Daily simple returns, compounding, annualization, target downside deviation, and initial-wealth drawdown.
+- **Financial concepts:** Daily simple returns, arithmetic expected return, compound growth, sample variance/volatility, covariance-matrix portfolio moments, arithmetic excess-return Sharpe, target downside deviation, and initial-wealth drawdown.
 - **Common failure modes:** Empty returns, nonpositive compound wealth for CAGR, zero volatility, invalid weight labels, missing asset returns, or no downside observations.
 - **How tested:** Known synthetic returns cover aggregation, CAGR, volatility, Sharpe, Sortino, drawdown, and integration reconciliation.
 
@@ -401,6 +401,6 @@ Deployment uses `app.py`, Python 3.11 where selectable, and `requirements.txt`. 
 
 The pipeline converts prices to simple daily returns, calculates a constant-weight portfolio, and produces performance, benchmark, contribution, and allocation results in an immutable analysis object. Separate pure modules handle rebalancing, a one-day-lagged moving-average strategy with costs, explicit stress scenarios, and deterministic HTML reporting. Streamlit session state holds the current analysis and editable choices; core modules do not depend on Streamlit.
 
-The main calculations include compounded return and CAGR, annualized volatility, Sharpe and Sortino as currently documented, initial-wealth drawdown, historical VaR/CVaR, covariance beta, tracking error, information ratio, exact cumulative return contribution, and Euler volatility contribution. Construction compares current, equal, inverse-volatility, long-only minimum-variance, and long-only maximum-Sharpe weights.
+The main calculations include arithmetic annualized return, compounded total return and CAGR, annualized sample variance/volatility, portfolio `w′μ` and `w′Σw`, arithmetic excess-return Sharpe and Sortino, initial-wealth drawdown, historical VaR/CVaR, covariance beta, tracking error, information ratio, exact cumulative return contribution, and Euler volatility contribution. Construction compares current, equal, inverse-volatility, long-only minimum-variance, and maximum-Sharpe weights using the same Sharpe convention as the scorecard.
 
 The key tradeoffs are strict complete-date alignment, a daily constant-weight portfolio model, historical sample optimization, one explicit strategy, and no database or live execution. Correctness is validated with offline synthetic tests, known formulas, failure cases, contribution reconciliation, optimizer constraints, lag and cost checks, an end-to-end pipeline test, and Streamlit smoke tests. Methodology and architecture changes are required to update tests and permanent documentation.”

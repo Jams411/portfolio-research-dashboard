@@ -10,6 +10,18 @@ The project was created under the former working name `portfolio-research-dashbo
 
 Interview explainability and financial correctness were prioritized over feature count. That principle explains the use of small financial functions, one explicit strategy, deterministic reporting, strict data validation, and synthetic tests. Advanced features were deferred when they required unreliable classifications, new data sources, opaque models, personalized advice, or disproportionate methodology and deployment complexity.
 
+## 2026-08-01 — Phase 1 course-roadmap implementation
+
+- **Date:** 2026-08-01
+- **Goal:** Resolve the foundational return and Sharpe inconsistency identified by the complete Portfolio Management course audit.
+- **Context:** PortfolioLens displayed CAGR-based Sharpe while its maximum-Sharpe optimizer used arithmetic annualized expected return. The course risk/return, Markowitz, CML, and performance-evaluation materials consistently supported arithmetic average excess return for this purpose.
+- **What changed:** Added explicit arithmetic annualized return, annualized sample variance, portfolio `w′μ` and `w′Σw` helpers, and one shared Sharpe formula used by performance, strategy, Sortino, and optimization. CAGR remains a separate realized compound-growth metric.
+- **Why it changed:** Portfolio evaluation and construction must use the same financial convention if users are expected to compare the displayed scorecard with optimized allocations.
+- **Relevant career or course connection:** FIN5745 portfolio theory and performance measurement; asset-management, portfolio-analytics, and quantitative-research interviews.
+- **Tradeoffs:** Historical Sharpe and Sortino outputs change. The arithmetic estimate is backward-looking and is not a forecast. No frontier, regression, rebalancing simulation, shorting, leverage, or advanced course model was added.
+- **Lessons learned:** A familiar metric name is insufficient evidence of methodological equivalence; numerator, annualization, risk-free treatment, and optimizer objective must reconcile explicitly.
+- **Next step:** Phase 2 begins with benchmark excess-return regression and CAPM performance metrics, followed by frontier/target-return construction and rebalancing realism.
+
 ## 2026-08-01 — PortfolioLens identity
 
 - **Date:** 2026-08-01

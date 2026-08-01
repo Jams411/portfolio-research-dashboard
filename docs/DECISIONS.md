@@ -151,3 +151,13 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Alternatives considered:** Preserve prior results with a stale-data banner or retain outputs only during execution failures.
 - **Consequences:** Editing any analysis input hides the existing result until the user completes another successful run. Failed runs show an actionable error and empty-state guidance only.
 - **Status:** Accepted.
+
+## D015 — Separate arithmetic expected return from compound growth
+
+- **Date:** 2026-08-01
+- **Decision:** Use `252 × mean(daily return)` as the historical expected-return estimate for Sharpe, Sortino, and maximum-Sharpe optimization; retain CAGR exclusively as realized compound growth. Expose annualized sample variance and reusable `w′μ` and `w′Σw` calculations.
+- **Context:** Performance Sharpe previously used CAGR while construction optimized arithmetic annualized excess return, so the same portfolio could be evaluated under two different Sharpe conventions.
+- **Rationale:** The Portfolio Management course materials use average excess return for Sharpe and mean-variance construction. One shared formula makes the scorecard, strategy statistics, and optimizer auditable and internally consistent.
+- **Alternatives considered:** Change optimization to use CAGR, display two different Sharpe ratios, or retain the mismatch with additional disclosure.
+- **Consequences:** Historical Sharpe and Sortino values change. CAGR, total return, volatility, optimization constraints, and all non-return workflows remain intact. Arithmetic estimates remain historical and are not forecasts.
+- **Status:** Accepted.

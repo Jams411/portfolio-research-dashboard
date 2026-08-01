@@ -2,7 +2,8 @@
 import math
 
 PERCENT_METRICS = {
-    "Total Return", "Buy & Hold Total Return", "CAGR", "Annualized Volatility",
+    "Total Return", "Buy & Hold Total Return", "Historical Arithmetic Annualized Return",
+    "CAGR", "Annualized Volatility",
     "Maximum Drawdown", "Best Daily Return", "Worst Daily Return",
     "Positive-Day Percentage", "Positive Active-Day Rate", "Portfolio Return",
     "Benchmark Return", "Excess Return", "Tracking Error", "Relative Drawdown",
@@ -24,6 +25,8 @@ def metric_value(name: str, value: float) -> str:
     """Format a named metric with its financial unit, preserving ratios as ratios."""
     if name in PERCENT_METRICS:
         return pct(value)
+    if name == "Annualized Variance":
+        return ratio(value, 4)
     if name in COUNT_METRICS:
         return "N/A" if value is None or not math.isfinite(float(value)) else f"{int(value):,}"
     return ratio(value)

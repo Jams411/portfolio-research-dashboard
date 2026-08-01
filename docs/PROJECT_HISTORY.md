@@ -1,5 +1,14 @@
 # Project history
 
+## 2026-08-01 — Phase 1 portfolio-methodology alignment
+
+- **What changed:** Added explicit historical arithmetic annualized return and annualized variance, exposed reusable portfolio expected-return and covariance-matrix variance formulas, and standardized performance, strategy, Sortino, and optimizer Sharpe on arithmetic annualized excess return.
+- **Why it changed:** The course audit found that the scorecard used CAGR while maximum-Sharpe construction used arithmetic expected return. That mismatch made portfolio evaluation and optimization methodologically inconsistent.
+- **Problem solved:** The same portfolio now has one auditable Sharpe formula across analytics and construction, while CAGR remains a distinct realized compound-growth measure.
+- **Course or career connection:** FIN5745 risk-and-return, Markowitz, CML, and performance-evaluation workbooks; portfolio analytics, asset management, and interview explanation.
+- **Tradeoffs:** Historical Sharpe and Sortino values change. Arithmetic expected return remains backward-looking and is explicitly not presented as a forecast. Frontier, regression, and rebalancing extensions remain Phase 2.
+- **Evidence:** Synthetic formula, matrix reconciliation, scorecard-separation, and optimizer/display consistency tests added with this milestone.
+
 ## 2026-08-01 — PortfolioLens product rename
 
 - **What changed:** Renamed the current product and exported report branding from Portfolio Research Dashboard to PortfolioLens, adopted the subtitle “Multi-Asset Portfolio Analytics & Investment Research,” and prepared the repository and deployment references for the new identity.

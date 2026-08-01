@@ -18,6 +18,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - README, methodology, deployment instructions, project history, project journal, architecture reference, decision log, roadmap, and changelog
 - Live visual/functional review, Community Cloud checklist, demo guide, and eight-screen showcase gallery
 - PortfolioLens product branding and repository identity, without scope or methodology changes
+- Phase 1 Portfolio Management methodology alignment: arithmetic annualized return, annualized variance, `w′μ`, `w′Σw`, and one shared arithmetic Sharpe convention across performance and optimization
 
 ## In progress
 
@@ -29,16 +30,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 
 These are prioritized candidates from the code audit and course-material review, not yet approved methodology changes.
 
-### Milestone 1 — Financial convention consistency
-
-- Standardize the Sharpe numerator and periodic risk-free-rate treatment across performance and optimization.
-- Review Sortino’s numerator against the same convention while retaining target downside deviation.
-- Centralize annual-to-periodic rate conversion.
-- Add synthetic formula tests and update methodology before changing displayed results.
-
-Why: the current scorecard uses CAGR in Sharpe and Sortino while maximum-Sharpe construction uses arithmetic expected return. The Portfolio Management materials reviewed in the current session use average excess return for Sharpe.
-
-### Milestone 2 — Benchmark research
+### Phase 2 — Benchmark research
 
 - Add a tested excess-return single-index regression.
 - Report historical alpha, beta, R², residual volatility, and observations.
@@ -47,7 +39,16 @@ Why: the current scorecard uses CAGR in Sharpe and Sortino while maximum-Sharpe 
 
 Why: these extend existing benchmark analytics with high career and interview value while remaining explainable.
 
-### Milestone 3 — Rebalancing realism
+### Phase 2 — Portfolio construction and optimization gaps
+
+- Generate a tested long-only efficient frontier.
+- Add target-return minimum-variance portfolios with feasibility checks.
+- Present maximum Sharpe as a constrained historical tangency estimate.
+- Consider a non-leveraged capital-allocation-line view only after the frontier workflow is stable.
+
+Why: the course audit substantiated the frontier, target-return, tangency, and risk-free/risky allocation models; they require deliberate interface and optimizer diagnostics beyond Phase 1.
+
+### Phase 2 — Rebalancing realism
 
 - Add buy-and-hold weight drift and monthly, quarterly, and annual rebalance simulations.
 - Track turnover, costs, and portfolio value.
@@ -55,7 +56,7 @@ Why: these extend existing benchmark analytics with high career and interview va
 
 Why: rebalancing frequency materially affects realized weights, costs, and results, and makes the current daily-rebalancing assumption easier to explain.
 
-### Milestone 4 — Strategy robustness
+### Later — Strategy robustness
 
 - Add calendar-year or fixed-subperiod strategy comparisons.
 - Optionally allow a fixed validation split without parameter optimization.
@@ -63,7 +64,7 @@ Why: rebalancing frequency materially affects realized weights, costs, and resul
 
 Why: subperiod evidence is more informative than a single full-period result and supports discussion of regime dependence and overfitting.
 
-### Milestone 5 — Engineering hardening
+### Later — Engineering hardening
 
 - Add lightweight Ruff configuration and financial invariant tests.
 - Split Streamlit views into modules without behavior changes if the entrypoint continues to grow.
@@ -72,7 +73,6 @@ Why: subperiod evidence is more informative than a single full-period result and
 
 ## Deferred
 
-- **Efficient frontier:** Relevant to mean–variance theory, but requires a stable target-return optimizer, feasibility tests, and careful uncertainty language. Current allocation comparisons deliver most of the interview value with less complexity.
 - **Equal-risk-contribution optimization:** More complete than inverse volatility, but adds nonlinear optimization and edge cases. Defer until existing construction conventions are fully aligned.
 - **Volatility targeting and regime rotation:** Course-relevant but would add another portfolio/strategy layer before the single momentum model has subperiod diagnostics.
 - **Brinson allocation/selection attribution:** Requires trustworthy benchmark constituent weights and classifications; current holdings contribution should not be mislabeled as Brinson attribution.
@@ -86,6 +86,7 @@ Why: subperiod evidence is more informative than a single full-period result and
 - **Machine-learning price-direction prediction:** Adds leakage, label, tuning, and stability risks disproportionate to this focused project.
 - **Automatic strategy parameter optimization:** Encourages overfitting and weakens the MVP’s explainability.
 - **Monte Carlo optimization for visual effect:** Does not improve decision quality over the tested deterministic methods.
+- **Risk parity as a course-derived feature:** The completed Portfolio Management audit did not substantively support it; inverse volatility remains an application-specific heuristic, not course-derived risk parity.
 - **Silent asset-class inference:** Ticker classification is unreliable and can create hidden stress assumptions.
 - **Personalized recommendations, risk scoring, or investment-policy generation:** Outside the educational research scope and risks implying individualized advice.
 - **Live trading and brokerage integration:** Introduces execution, security, compliance, and operational responsibilities beyond the product goal.
