@@ -166,6 +166,7 @@ if run:
             "risk_free": risk_free, "transaction_cost": transaction_cost, "analysis": analysis,
             "strategy_asset": strategy_asset, "strategy_data": strategy_data,
             "strategy_stats": strategy_stats, "historical": historical, "plans": plans,
+            "short_window": int(short_window), "long_window": int(long_window),
             "frontier": frontier, "frontier_weights": frontier_weights,
             "construction_stats": construction_stats, "cal": cal,
             "construction_error": construction_error,
@@ -741,6 +742,10 @@ if tabs[8].open:
                 if constrained_report is not None else None
             ),
             constraint_validation=constrained_report[2] if constrained_report is not None else None,
+            transaction_cost_rate=r["transaction_cost"],
+            rebalancing_threshold=r["rebalancing_threshold"],
+            selected_rebalancing_policy=report_policy,
+            strategy_short_window=r["short_window"], strategy_long_window=r["long_window"],
         )
         downloads = {
             "Performance metrics": metric_frame(a.performance).to_csv(),

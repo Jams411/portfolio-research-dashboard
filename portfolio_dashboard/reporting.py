@@ -115,7 +115,12 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
                          rebalancing_policies: pd.DataFrame | None = None,
                          rebalancing_history: pd.DataFrame | None = None,
                          constrained_allocation: pd.DataFrame | None = None,
-                         constraint_validation: pd.DataFrame | None = None) -> bytes:
+                         constraint_validation: pd.DataFrame | None = None,
+                         transaction_cost_rate: float | None = None,
+                         rebalancing_threshold: float | None = None,
+                         selected_rebalancing_policy: str | None = None,
+                         strategy_short_window: int | None = None,
+                         strategy_long_window: int | None = None) -> bytes:
     """Generate a self-contained, deterministic investment research report."""
     assumptions = [
         "Daily simple returns and a 252-trading-day annualization convention.",
@@ -128,6 +133,24 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
         assumptions.append(f"Annual risk-free assumption: {risk_free_rate:.2%}.")
     if initial_value is not None:
         assumptions.append(f"Illustrative initial portfolio value: ${initial_value:,.2f}.")
+    if transaction_cost_rate is not None:
+        assumptions.append(f"Proportional transaction-cost rate: {transaction_cost_rate:.2%}.")
+    if rebalancing_threshold is not None:
+        assumptions.append(f"Threshold-policy absolute weight-drift trigger: {rebalancing_threshold:.2%}.")
+    if selected_rebalancing_policy:
+        assumptions.append(f"Detailed rebalancing policy: {escape(selected_rebalancing_policy)}.")
+    input_rows = {
+        "Holdings": ", ".join(tickers), "Analysis start": str(start), "Analysis end": str(end),
+        "Benchmark": benchmark_ticker or "N/A",
+        "Initial value": f"${initial_value:,.2f}" if initial_value is not None else "N/A",
+        "Annual risk-free rate": f"{risk_free_rate:.2%}" if risk_free_rate is not None else "N/A",
+        "Transaction-cost rate": f"{transaction_cost_rate:.2%}" if transaction_cost_rate is not None else "N/A",
+        "Rebalancing threshold": f"{rebalancing_threshold:.2%}" if rebalancing_threshold is not None else "N/A",
+        "Momentum windows": (
+            f"{strategy_short_window}/{strategy_long_window} trading days"
+            if strategy_short_window is not None and strategy_long_window is not None else "N/A"
+        ),
+    }
     health_content = "<p>Health diagnostic unavailable.</p>"
     if health_score is not None and pd.notna(health_score) and health_components is not None:
         coverage = "N/A" if health_coverage is None else f"{health_coverage:.0%}"
@@ -137,6 +160,7 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
             + "<p class='note'>This transparent heuristic summarizes selected historical diagnostics. It does not measure suitability, forecast returns, or prescribe an allocation.</p>"
         )
     sections = [("Executive summary", "<ul>" + "".join(f"<li>{escape(x)}</li>" for x in summary) + "</ul>"),
+                ("Portfolio inputs", _table(pd.Series(input_rows, name="Value").to_frame())),
                 ("Research assumptions", "<ul>" + "".join(f"<li>{item}</li>" for item in assumptions) + "</ul>"),
                 ("Portfolio health diagnostic", health_content),
                 ("Holdings and weights", _percentage_table(weights.rename("Weight").to_frame())),

@@ -524,6 +524,9 @@ def test_report_uses_metric_units_and_selected_rebalancing_method():
             "Constraint": ["Weights sum to 100%"], "Result": [1.0], "Limit": [1.0],
             "Pass": [True], "Breach": [0.0], "Affected Asset": ["Portfolio"],
         }),
+        transaction_cost_rate=.001, rebalancing_threshold=.05,
+        selected_rebalancing_policy="Quarterly",
+        strategy_short_window=50, strategy_long_window=200,
     ).decode()
     assert "12.50%" in html
     assert ">1.25<" in html
@@ -534,6 +537,9 @@ def test_report_uses_metric_units_and_selected_rebalancing_method():
     assert "Efficient frontier" in html and "Optimized allocations" in html
     assert "Rebalancing policy comparison" in html and "Selected rebalancing history" in html
     assert "Custom constrained allocation" in html and "Constraint validation" in html
+    assert "Portfolio inputs" in html and "Transaction-cost rate" in html
+    assert "Threshold-policy absolute weight-drift trigger: 5.00%" in html
+    assert "50/200 trading days" in html
     assert "Benchmark: SPY" in html and "Annual risk-free assumption: 4.00%" in html
 
 
