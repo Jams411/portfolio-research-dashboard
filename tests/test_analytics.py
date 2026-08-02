@@ -4,9 +4,11 @@ import pandas as pd
 import pytest
 
 from portfolio_dashboard.construction import (
+    annualized_optimizer_inputs,
     capital_allocation_line, complete_portfolio_statistics, complete_portfolio_weights,
     efficient_frontier, inverse_volatility_weights,
     maximum_sharpe_weights, minimum_variance_weights, optimizer_statistics,
+    optimization_diagnostics,
     target_return_weights, constrained_portfolio_weights, constraint_validation_summary,
     parse_group_caps, quadratic_utility, utility_optimal_complete_portfolio,
 )
@@ -43,6 +45,21 @@ def returns() -> pd.DataFrame:
     index = pd.bdate_range("2020-01-01", periods=300)
     x = np.arange(300)
     return pd.DataFrame({"A": 0.0005 + 0.008 * np.sin(x / 9), "B": 0.0002 + 0.004 * np.cos(x / 13)}, index=index)
+
+
+def returns_with_exact_annual_moments(expected: np.ndarray, covariance: np.ndarray, observations: int = 40) -> pd.DataFrame:
+    """Build deterministic simple returns with exact sample annual moments."""
+    columns = len(expected)
+    raw = np.column_stack([
+        np.sin(np.arange(observations) * (index + 1.3))
+        for index in range(columns)
+    ])
+    centered = raw - raw.mean(axis=0)
+    q, _ = np.linalg.qr(centered)
+    standardized = q[:, :columns] * np.sqrt(observations - 1)
+    daily_covariance = covariance / 252
+    values = expected / 252 + standardized @ np.linalg.cholesky(daily_covariance).T
+    return pd.DataFrame(values, columns=[chr(65 + index) for index in range(columns)])
 
 def test_ticker_and_weight_validation():
     assert parse_tickers(" aapl, MSFT, aapl ") == ["AAPL", "MSFT"]
@@ -332,6 +349,112 @@ def test_maximum_sharpe_and_nonleveraged_cal_share_tangency_statistics(returns):
     assert line.iloc[-1]["Risky Portfolio Weight"] == 1
     assert line.iloc[-1]["Expected Return"] == pytest.approx(stats["Optimizer Expected Return"])
     assert line.iloc[-1]["Volatility"] == pytest.approx(stats["Optimizer Volatility"])
+
+
+def test_two_asset_frontier_matches_closed_form_and_endpoints():
+    expected = np.array([.07, .13])
+    covariance = np.array([[.04, .006], [.006, .09]])
+    values = returns_with_exact_annual_moments(expected, covariance)
+    denominator = covariance[0, 0] + covariance[1, 1] - 2 * covariance[0, 1]
+    closed_gmv = np.array([
+        (covariance[1, 1] - covariance[0, 1]) / denominator,
+        (covariance[0, 0] - covariance[0, 1]) / denominator,
+    ])
+    gmv = minimum_variance_weights(values)
+    assert gmv.to_numpy() == pytest.approx(closed_gmv, abs=1e-7)
+    target = .10
+    target_weights = target_return_weights(values, target)
+    closed_target = np.array([(expected[1] - target) / (expected[1] - expected[0]),
+                              (target - expected[0]) / (expected[1] - expected[0])])
+    assert target_weights.to_numpy() == pytest.approx(closed_target, abs=1e-7)
+    frontier, weights = efficient_frontier(values, .03, points=41)
+    assert frontier.iloc[0]["Optimizer Expected Return"] == pytest.approx(closed_gmv @ expected)
+    assert frontier.iloc[-1]["Optimizer Expected Return"] == pytest.approx(expected.max())
+    assert weights.iloc[:, -1].to_numpy() == pytest.approx([0, 1], abs=1e-7)
+    assert frontier["Optimizer Expected Return"].is_monotonic_increasing
+    assert frontier["Optimizer Volatility"].is_monotonic_increasing
+
+
+def test_three_asset_optimizers_match_dense_simplex_search_and_frontier_is_efficient():
+    expected = np.array([.065, .095, .14])
+    covariance = np.array([
+        [.0225, .0040, .0060],
+        [.0040, .0400, .0100],
+        [.0060, .0100, .0900],
+    ])
+    values = returns_with_exact_annual_moments(expected, covariance, observations=60)
+    grid = np.linspace(0, 1, 501)
+    candidates = np.array([[a, b, 1 - a - b] for a in grid for b in grid if a + b <= 1])
+    variances = np.einsum("ij,jk,ik->i", candidates, covariance, candidates)
+    sharpes = (candidates @ expected - .03) / np.sqrt(variances)
+    gmv = minimum_variance_weights(values).to_numpy()
+    tangency = maximum_sharpe_weights(values, .03).to_numpy()
+    assert gmv @ covariance @ gmv <= variances.min() + 2e-7
+    assert (tangency @ expected - .03) / np.sqrt(tangency @ covariance @ tangency) >= sharpes.max() - 2e-5
+    frontier, _ = efficient_frontier(values, .03, points=51)
+    assert frontier["Optimizer Expected Return"].is_monotonic_increasing
+    assert frontier["Optimizer Volatility"].is_monotonic_increasing
+    coordinates = frontier[["Optimizer Expected Return", "Optimizer Volatility"]].to_numpy()
+    for left, right in zip(coordinates[:-1], coordinates[1:]):
+        assert not (
+            right[1] <= left[1] and right[0] >= left[0]
+        ), "An efficient-frontier point must not be dominated by its successor."
+    tangency_stats = optimizer_statistics(values, pd.Series(tangency, index=values.columns), .03)
+    distance = np.hypot(
+        frontier["Optimizer Expected Return"] - tangency_stats["Optimizer Expected Return"],
+        frontier["Optimizer Volatility"] - tangency_stats["Optimizer Volatility"],
+    ).min()
+    assert distance < 1e-7
+
+
+def test_diagonal_and_near_singular_covariance_are_stable_without_regularization():
+    diagonal = np.diag([.01, .04, .09])
+    values = returns_with_exact_annual_moments(np.array([.06, .08, .11]), diagonal)
+    gmv = minimum_variance_weights(values)
+    inverse_variances = 1 / np.diag(diagonal)
+    assert gmv.to_numpy() == pytest.approx(inverse_variances / inverse_variances.sum(), abs=1e-7)
+
+    near_singular = np.array([[.04, .039999], [.039999, .04]])
+    correlated = returns_with_exact_annual_moments(np.array([.08, .081]), near_singular)
+    stable = minimum_variance_weights(correlated)
+    assert stable.sum() == pytest.approx(1.0, abs=1e-7)
+    assert stable.between(0, 1).all()
+    diagnostics = optimization_diagnostics(correlated, stable, .02)
+    assert diagnostics["Covariance condition number"] > 10_000
+    assert diagnostics["Covariance stabilization"] == "None"
+
+
+def test_cal_reconciles_from_tangency_return_not_stale_sharpe():
+    tangency = {
+        "Optimizer Expected Return": .11,
+        "Optimizer Volatility": .20,
+        "Optimizer Sharpe": 999.0,
+    }
+    line = capital_allocation_line(tangency, .03, points=11)
+    assert line.iloc[0]["Volatility"] == 0
+    assert line.iloc[0]["Expected Return"] == pytest.approx(.03)
+    assert line.iloc[-1]["Volatility"] == pytest.approx(.20)
+    assert line.iloc[-1]["Expected Return"] == pytest.approx(.11)
+    assert line.iloc[-1]["Sharpe Ratio"] == pytest.approx(.40)
+    complete = complete_portfolio_statistics(tangency, .03, .6)
+    cal_point = line.iloc[6]
+    assert complete["Optimizer Expected Return"] == pytest.approx(cal_point["Expected Return"])
+    assert complete["Optimizer Volatility"] == pytest.approx(cal_point["Volatility"])
+
+
+def test_optimization_diagnostics_reconcile_constraints_and_tangency(returns):
+    tangency_weights = maximum_sharpe_weights(returns, .02)
+    tangency = optimizer_statistics(returns, tangency_weights, .02)
+    frontier, _ = efficient_frontier(returns, .02, points=31)
+    diagnostics = optimization_diagnostics(
+        returns, tangency_weights, .02, target_return=tangency["Optimizer Expected Return"],
+        frontier=frontier, tangency_statistics=tangency,
+    )
+    assert diagnostics["Annualization factor"] == 252
+    assert diagnostics["Weight-sum residual"] < 1e-10
+    assert diagnostics["Target-return residual"] < 1e-10
+    assert diagnostics["Tangency/frontier distance"] < 1e-7
+    assert diagnostics["CAL tangency residual"] < 1e-12
 
 
 def test_workbook_two_complete_portfolio_reconciles_with_cal(returns):

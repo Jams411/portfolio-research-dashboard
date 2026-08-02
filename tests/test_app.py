@@ -1,5 +1,7 @@
 """Offline smoke tests for the Streamlit entrypoint."""
 
+import base64
+import json
 import numpy as np
 import pandas as pd
 import pytest
@@ -32,6 +34,13 @@ def widget(items, label):
 def run_analysis(app):
     widget(app.button, "Run analysis").click()
     return app.run(timeout=20)
+
+
+def plotly_values(value):
+    """Decode Plotly's compact numeric-array representation used by AppTest."""
+    if isinstance(value, dict) and "bdata" in value:
+        return np.frombuffer(base64.b64decode(value["bdata"]), dtype=np.dtype(value["dtype"]))
+    return np.asarray(value)
 
 
 def test_app_renders_helpful_initial_state():
@@ -129,6 +138,32 @@ def test_portfolio_optimization_view_exposes_workbook_two_tools_offline(offline_
     assert any("Optimized weights" in item.value for item in offline_app.markdown)
     assert any(item.label == "Download complete-portfolio weights" for item in offline_app.get("download_button"))
     assert any(item.label == "Download optimized weights" for item in offline_app.get("download_button"))
+
+
+def test_frontier_chart_reconciles_professional_traces_offline(offline_app):
+    widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, AGG, GLD")
+    widget(offline_app.text_input, "Weights (%)").set_value("50,35,15")
+    widget(offline_app.number_input, "Annual risk-free rate (%)").set_value(4.0)
+    run_analysis(offline_app)
+    offline_app.session_state["analysis_tab"] = "Portfolio Optimization"
+    offline_app.run(timeout=30)
+    assert not offline_app.exception
+    specification = json.loads(offline_app.get("plotly_chart")[0].proto.spec)
+    assert specification["layout"]["title"]["text"] == "Efficient Frontier and Capital Allocation Line"
+    names = {trace.get("name") for trace in specification["data"]}
+    assert {
+        "Efficient Frontier", "Capital Allocation Line", "Current Portfolio",
+        "Global Minimum Variance", "Tangency Portfolio", "Complete Portfolio",
+    } <= names
+    line = next(trace for trace in specification["data"] if trace.get("name") == "Capital Allocation Line")
+    line_x, line_y = plotly_values(line["x"]), plotly_values(line["y"])
+    assert line_x[0] == pytest.approx(0.0)
+    assert line_y[0] == pytest.approx(.04)
+    tangency = next(trace for trace in specification["data"] if trace.get("name") == "Tangency Portfolio")
+    tangency_x, tangency_y = plotly_values(tangency["x"]), plotly_values(tangency["y"])
+    assert line_x[-1] == pytest.approx(tangency_x[0])
+    assert line_y[-1] == pytest.approx(tangency_y[0])
+    assert any(item.label == "Optimization Diagnostics" for item in offline_app.expander)
 
 
 def test_workbook_one_risk_foundations_render_and_export_offline(offline_app):

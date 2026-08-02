@@ -14,7 +14,7 @@ from portfolio_dashboard.config import PRESETS, TRADING_DAYS
 from portfolio_dashboard.construction import (
     capital_allocation_line, constrained_portfolio_weights, constraint_validation_summary,
     complete_portfolio_statistics, complete_portfolio_weights, efficient_frontier,
-    optimizer_statistics, parse_group_caps, target_return_weights,
+    optimization_diagnostics, optimizer_statistics, parse_group_caps, target_return_weights,
     utility_optimal_complete_portfolio,
 )
 from portfolio_dashboard.data import MarketDataError, download_prices, parse_tickers, parse_weight_input, validate_dates
@@ -176,7 +176,7 @@ if run:
                 rebalancing_threshold, risk_free,
             )
             try:
-                frontier, frontier_weights = efficient_frontier(analysis.asset_returns, risk_free, points=25)
+                frontier, frontier_weights = efficient_frontier(analysis.asset_returns, risk_free, points=50)
                 construction_stats = pd.DataFrame({
                     name: optimizer_statistics(analysis.asset_returns, analysis.allocations[name], risk_free)
                     for name in analysis.allocations.columns
@@ -484,39 +484,107 @@ if tabs[4].open:
                 "Optimizer Volatility": st.column_config.NumberColumn(format="percent"),
                 "Optimizer Sharpe": st.column_config.NumberColumn(format="%.2f"),
             })
+            frontier_plot = r["frontier"].reset_index()
             frontier_chart = px.line(
-                r["frontier"].reset_index(), x="Optimizer Volatility", y="Optimizer Expected Return",
-                title="Long-only efficient frontier and non-leveraged capital allocation line",
-                labels={"Optimizer Volatility": "Annualized volatility", "Optimizer Expected Return": "Arithmetic expected return"},
+                frontier_plot, x="Optimizer Volatility", y="Optimizer Expected Return",
+                title="Efficient Frontier and Capital Allocation Line",
+                labels={
+                    "Optimizer Volatility": "Annualized volatility",
+                    "Optimizer Expected Return": "Annualized arithmetic expected return",
+                },
+                hover_data={
+                    "Portfolio": True,
+                    "Optimizer Volatility": ":.2%",
+                    "Optimizer Expected Return": ":.2%",
+                    "Optimizer Sharpe": ":.3f",
+                },
             )
+            frontier_chart.update_traces(name="Efficient Frontier", line=dict(color="#2C7FB8", width=3))
             frontier_chart.add_scatter(
                 x=r["cal"]["Volatility"], y=r["cal"]["Expected Return"], mode="lines",
-                name="Capital allocation line (0–100% risky portfolio)",
+                customdata=r["cal"][["Risky Portfolio Weight", "Sharpe Ratio"]],
+                hovertemplate=(
+                    "Capital Allocation Line<br>Annualized volatility: %{x:.2%}<br>"
+                    "Annualized expected return: %{y:.2%}<br>Risky allocation: %{customdata[0]:.0%}<br>"
+                    "Sharpe ratio: %{customdata[1]:.3f}<extra></extra>"
+                ),
+                line=dict(color="#F28E2B", width=3, dash="dash"),
+                name="Capital Allocation Line",
             )
-            for name in ["Current", "Minimum Variance", "Maximum Sharpe"]:
+            marker_styles = {
+                "Current": ("Current Portfolio", "#7F7F7F", "circle"),
+                "Minimum Variance": ("Global Minimum Variance", "#59A14F", "diamond"),
+                "Maximum Sharpe": ("Tangency Portfolio", "#E15759", "star"),
+            }
+            for name, (display_name, color, symbol) in marker_styles.items():
                 if name in r["construction_stats"].index:
                     point = r["construction_stats"].loc[name]
                     frontier_chart.add_scatter(
                         x=[point["Optimizer Volatility"]], y=[point["Optimizer Expected Return"]],
-                        mode="markers+text", text=[name], textposition="top center", name=name,
+                        mode="markers+text", text=[display_name], textposition="top center", name=display_name,
+                        customdata=[[point["Optimizer Sharpe"]]],
+                        hovertemplate=(
+                            f"{display_name}<br>Annualized volatility: %{{x:.2%}}<br>"
+                            "Annualized expected return: %{y:.2%}<br>Sharpe ratio: %{customdata[0]:.3f}<extra></extra>"
+                        ),
+                        marker=dict(color=color, size=12, symbol=symbol),
                     )
             frontier_chart.add_scatter(
                 x=[complete_stats["Optimizer Volatility"]], y=[complete_stats["Optimizer Expected Return"]],
                 mode="markers+text", text=["Complete"], textposition="bottom center", name="Complete Portfolio",
+                customdata=[[complete_stats["Optimizer Sharpe"]]],
+                hovertemplate=(
+                    "Complete Portfolio<br>Annualized volatility: %{x:.2%}<br>Annualized expected return: %{y:.2%}<br>"
+                    "Sharpe ratio: %{customdata[0]:.3f}<extra></extra>"
+                ),
+                marker=dict(color="#B07AA1", size=12, symbol="cross"),
             )
             if "target_return_result" in st.session_state:
                 _, saved_target_stats = st.session_state["target_return_result"]
                 frontier_chart.add_scatter(
                     x=[saved_target_stats["Optimizer Volatility"]],
                     y=[saved_target_stats["Optimizer Expected Return"]],
-                    mode="markers+text", text=["Target"], textposition="top center", name="Target Return",
+                    mode="markers+text", text=["Target"], textposition="top center", name="Target Return Portfolio",
+                    customdata=[[saved_target_stats["Optimizer Sharpe"]]],
+                    hovertemplate=(
+                        "Target Return Portfolio<br>Annualized volatility: %{x:.2%}<br>"
+                        "Annualized expected return: %{y:.2%}<br>Sharpe ratio: %{customdata[0]:.3f}<extra></extra>"
+                    ),
+                    marker=dict(color="#76B7B2", size=12, symbol="triangle-up"),
                 )
             frontier_chart.update_layout(hovermode="closest", legend_title_text="", margin=dict(l=10, r=10, t=50, b=10))
             st.plotly_chart(frontier_chart, width="stretch", theme="streamlit")
             st.caption(
-                "The frontier begins at the global minimum-variance portfolio. The constrained tangency estimate is the long-only maximum-Sharpe portfolio. "
-                "The CAL stops at 100% risky allocation: borrowing, leverage, and short selling are not modeled."
+                "The curve contains only feasible minimum-variance portfolios on the efficient upper branch, beginning at the global minimum-variance portfolio. "
+                "The Capital Allocation Line uses the same long-only tangency portfolio and annual risk-free rate as the optimizer and stops at 100% risky exposure. "
+                "The current portfolio is shown independently and may lie below the frontier. Results are historical estimates, not recommendations."
             )
+
+            target_for_diagnostics = None
+            diagnostic_weights = a.allocations["Maximum Sharpe"]
+            if "target_return_result" in st.session_state:
+                diagnostic_weights, saved_target_stats = st.session_state["target_return_result"]
+                target_for_diagnostics = saved_target_stats["Optimizer Expected Return"]
+            diagnostics = optimization_diagnostics(
+                a.asset_returns,
+                diagnostic_weights,
+                r["risk_free"],
+                target_return=target_for_diagnostics,
+                frontier=r["frontier"],
+                tangency_statistics=tangency_stats,
+            )
+            diagnostic_table = pd.DataFrame({
+                "Diagnostic": list(diagnostics),
+                "Value": [str(value) for value in diagnostics.values()],
+            })
+            with st.expander("Optimization Diagnostics"):
+                st.dataframe(
+                    diagnostic_table, width="stretch", hide_index=True,
+                )
+                st.caption(
+                    "Residuals and distances are reported in annual decimal-return/volatility units. "
+                    "No covariance regularization is applied; optimization failures are surfaced instead of replaced."
+                )
             st.markdown("**Complete portfolio: risk-free asset plus tangency portfolio**")
             with st.container(horizontal=True):
                 st.metric("Risky allocation", pct(complete_stats["Risky Portfolio Weight"]), border=True)

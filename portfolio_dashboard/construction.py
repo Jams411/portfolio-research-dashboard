@@ -9,6 +9,22 @@ from scipy.optimize import linprog, minimize
 from .config import TRADING_DAYS
 from .performance import sharpe_from_statistics
 
+WEIGHT_TOLERANCE = 1e-7
+RETURN_TOLERANCE = 1e-7
+
+
+def annualized_optimizer_inputs(returns: pd.DataFrame) -> tuple[pd.Series, pd.DataFrame]:
+    """Return aligned arithmetic means and sample covariance in annual units."""
+    if returns.empty or len(returns) < 2 or returns.shape[1] == 0:
+        raise RuntimeError("Optimization requires at least two return observations.")
+    if not np.isfinite(returns.to_numpy()).all():
+        raise RuntimeError("Optimization inputs must be finite and complete.")
+    expected = returns.mean() * TRADING_DAYS
+    covariance = returns.cov() * TRADING_DAYS
+    if not np.isfinite(expected.to_numpy()).all() or not np.isfinite(covariance.to_numpy()).all():
+        raise RuntimeError("Optimization estimates are not finite.")
+    return expected, covariance
+
 
 def optimizer_statistics(
     returns: pd.DataFrame, weights: pd.Series, risk_free_rate: float = 0.0
@@ -17,8 +33,9 @@ def optimizer_statistics(
     aligned = weights.reindex(returns.columns)
     if aligned.isna().any():
         raise ValueError("Weight labels must match return columns.")
-    expected = float(aligned @ (returns.mean() * TRADING_DAYS))
-    variance = float(aligned @ (returns.cov() * TRADING_DAYS) @ aligned)
+    expected_returns, covariance = annualized_optimizer_inputs(returns)
+    expected = float(aligned @ expected_returns)
+    variance = float(aligned @ covariance @ aligned)
     volatility = float(np.sqrt(max(variance, 0.0)))
     return {
         "Optimizer Expected Return": expected,
@@ -47,14 +64,9 @@ def _optimize(
     groups: pd.Series | None = None,
     group_caps: dict[str, float] | None = None,
 ) -> pd.Series:
-    if returns.empty or len(returns) < 2 or returns.shape[1] == 0:
-        raise RuntimeError("Optimization requires at least two return observations.")
-    if not np.isfinite(returns.to_numpy()).all():
-        raise RuntimeError("Optimization inputs must be finite and complete.")
-    cov = returns.cov().to_numpy() * TRADING_DAYS
-    expected = returns.mean().to_numpy() * TRADING_DAYS
-    if not np.isfinite(cov).all() or not np.isfinite(expected).all():
-        raise RuntimeError("Optimization estimates are not finite.")
+    expected_series, covariance = annualized_optimizer_inputs(returns)
+    cov = covariance.to_numpy()
+    expected = expected_series.to_numpy()
     n = len(returns.columns)
     if n == 1:
         return pd.Series([1.0], index=returns.columns)
@@ -113,8 +125,15 @@ def _optimize(
                       options={"maxiter": 1000, "ftol": 1e-12})
     if not result.success or not np.isfinite(result.x).all() or abs(result.x.sum() - 1) > 1e-6:
         raise RuntimeError(f"Optimization did not converge: {result.message}")
-    cleaned = np.clip(result.x, 0, 1)
-    return pd.Series(cleaned / cleaned.sum(), index=returns.columns)
+    cleaned = np.where(np.abs(result.x) < WEIGHT_TOLERANCE, 0.0, result.x)
+    cleaned = np.where(np.abs(cleaned - 1.0) < WEIGHT_TOLERANCE, 1.0, cleaned)
+    cleaned = np.clip(cleaned, 0, 1)
+    cleaned = cleaned / cleaned.sum()
+    if abs(cleaned.sum() - 1.0) > WEIGHT_TOLERANCE or cleaned.min() < -WEIGHT_TOLERANCE:
+        raise RuntimeError("Optimization result violates long-only weight constraints.")
+    if target_return is not None and abs(float(cleaned @ expected) - target_return) > RETURN_TOLERANCE:
+        raise RuntimeError("Optimization result violates the target-return constraint.")
+    return pd.Series(cleaned, index=returns.columns)
 
 
 def minimum_variance_weights(returns: pd.DataFrame) -> pd.Series:
@@ -209,24 +228,47 @@ def parse_group_caps(value: str) -> dict[str, float]:
 
 
 def efficient_frontier(
-    returns: pd.DataFrame, risk_free_rate: float = 0.0, points: int = 25,
+    returns: pd.DataFrame, risk_free_rate: float = 0.0, points: int = 50,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Generate the long-only upper efficient branch from GMV to max return."""
+    """Generate the long-only upper efficient branch, including tangency."""
     if points < 2:
         raise ValueError("Efficient frontier requires at least two points.")
     gmv = minimum_variance_weights(returns)
     gmv_return = optimizer_statistics(returns, gmv, risk_free_rate)["Optimizer Expected Return"]
-    maximum_return = float((returns.mean() * TRADING_DAYS).max())
-    targets = np.linspace(gmv_return, maximum_return, points)
+    tangency = maximum_sharpe_weights(returns, risk_free_rate)
+    tangency_return = optimizer_statistics(returns, tangency, risk_free_rate)["Optimizer Expected Return"]
+    expected, _ = annualized_optimizer_inputs(returns)
+    maximum_return = float(expected.max())
+    base_targets = np.linspace(gmv_return, maximum_return, points)
+    targets = np.unique(np.append(base_targets, np.clip(tangency_return, gmv_return, maximum_return)))
+    targets.sort()
     rows: list[dict[str, float]] = []
     weights: dict[str, pd.Series] = {}
-    for index, target_return in enumerate(targets):
-        candidate = gmv if index == 0 else target_return_weights(returns, float(target_return))
+    failed_points = 0
+    for target_return in targets:
+        try:
+            if np.isclose(target_return, gmv_return, atol=RETURN_TOLERANCE):
+                candidate = gmv
+            elif np.isclose(target_return, tangency_return, atol=RETURN_TOLERANCE):
+                candidate = tangency
+            else:
+                candidate = target_return_weights(returns, float(target_return))
+        except (ValueError, RuntimeError):
+            failed_points += 1
+            continue
         stats = optimizer_statistics(returns, candidate, risk_free_rate)
-        label = f"Frontier {index + 1}"
+        if rows and stats["Optimizer Expected Return"] <= rows[-1]["Optimizer Expected Return"] + RETURN_TOLERANCE:
+            continue
+        if rows and stats["Optimizer Volatility"] < rows[-1]["Optimizer Volatility"] - WEIGHT_TOLERANCE:
+            continue
+        label = f"Frontier {len(rows) + 1}"
         rows.append({"Portfolio": label, "Target Return": float(target_return), **stats})
         weights[label] = candidate
-    return pd.DataFrame(rows).set_index("Portfolio"), pd.DataFrame(weights)
+    if not rows:
+        raise RuntimeError("No feasible efficient-frontier points were produced.")
+    frontier = pd.DataFrame(rows).set_index("Portfolio")
+    frontier.attrs["Failed Points"] = failed_points
+    return frontier, pd.DataFrame(weights)
 
 
 def capital_allocation_line(
@@ -236,15 +278,70 @@ def capital_allocation_line(
     if points < 2:
         raise ValueError("Capital Allocation Line requires at least two points.")
     volatility = tangency_statistics["Optimizer Volatility"]
-    sharpe = tangency_statistics["Optimizer Sharpe"]
-    if not np.isfinite(volatility) or volatility <= 0 or not np.isfinite(sharpe):
-        raise ValueError("Tangency statistics must contain positive volatility and finite Sharpe.")
+    expected = tangency_statistics["Optimizer Expected Return"]
+    if not np.isfinite([volatility, expected, risk_free_rate]).all() or volatility <= 0:
+        raise ValueError("Tangency statistics must contain finite return and positive volatility.")
+    sharpe = sharpe_from_statistics(expected, volatility, risk_free_rate)
     risky_weight = np.linspace(0.0, 1.0, points)
     return pd.DataFrame({
         "Risky Portfolio Weight": risky_weight,
         "Expected Return": risk_free_rate + risky_weight * volatility * sharpe,
         "Volatility": risky_weight * volatility,
+        "Sharpe Ratio": np.where(risky_weight > 0, sharpe, np.nan),
     })
+
+
+def optimization_diagnostics(
+    returns: pd.DataFrame,
+    weights: pd.Series,
+    risk_free_rate: float,
+    *,
+    target_return: float | None = None,
+    frontier: pd.DataFrame | None = None,
+    tangency_statistics: dict[str, float] | None = None,
+) -> dict[str, float | int | str | bool]:
+    """Return auditable estimation, constraint, and reconciliation diagnostics."""
+    expected, covariance = annualized_optimizer_inputs(returns)
+    aligned = weights.reindex(expected.index)
+    if aligned.isna().any():
+        raise ValueError("Diagnostic weight labels must match return columns.")
+    statistics = optimizer_statistics(returns, aligned, risk_free_rate)
+    target_residual = (
+        abs(statistics["Optimizer Expected Return"] - target_return)
+        if target_return is not None else float("nan")
+    )
+    frontier_distance = float("nan")
+    cal_residual = float("nan")
+    if tangency_statistics is not None:
+        if frontier is not None and not frontier.empty:
+            distances = np.hypot(
+                frontier["Optimizer Expected Return"] - tangency_statistics["Optimizer Expected Return"],
+                frontier["Optimizer Volatility"] - tangency_statistics["Optimizer Volatility"],
+            )
+            frontier_distance = float(distances.min())
+        line = capital_allocation_line(tangency_statistics, risk_free_rate, points=2)
+        cal_residual = abs(
+            float(line.iloc[-1]["Expected Return"])
+            - tangency_statistics["Optimizer Expected Return"]
+        )
+    return {
+        "Expected-return estimation": "Daily simple-return arithmetic mean × 252",
+        "Covariance estimation": "Aligned daily sample covariance (n−1) × 252",
+        "Annualization factor": TRADING_DAYS,
+        "Observations": len(returns),
+        "Optimizer success": not frontier.attrs.get("Failed Points", 0) if frontier is not None else True,
+        "Failed frontier points": frontier.attrs.get("Failed Points", 0) if frontier is not None else 0,
+        "Weight-sum residual": abs(float(aligned.sum()) - 1.0),
+        "Lower-bound breach": max(-float(aligned.min()), 0.0),
+        "Upper-bound breach": max(float(aligned.max()) - 1.0, 0.0),
+        "Minimum weight": float(aligned.min()),
+        "Maximum weight": float(aligned.max()),
+        "Target-return residual": target_residual,
+        "Tangency/frontier distance": frontier_distance,
+        "CAL tangency residual": cal_residual,
+        "Covariance condition number": float(np.linalg.cond(covariance.to_numpy())),
+        "Covariance stabilization": "None",
+    }
 
 
 def complete_portfolio_statistics(
@@ -293,12 +390,12 @@ def quadratic_utility(expected_return: float, volatility: float, risk_aversion: 
 def utility_optimal_complete_portfolio(
     tangency_statistics: dict[str, float], risk_free_rate: float, risk_aversion: float,
 ) -> dict[str, float | bool]:
-    """Select a lending-only complete portfolio using Workbook 3 utility.
+    """Select a lending-only complete portfolio using quadratic utility.
 
-    The unconstrained classroom solution is
+    The unconstrained mean-variance solution is
     ``y* = (E[r_T] - r_f) / (A sigma_T^2)``. PortfolioLens applies its
     existing non-leveraged product boundary by clipping ``y*`` to ``[0, 1]``
-    and reports whether that boundary changed the classroom solution.
+    and reports whether that boundary changed the unconstrained solution.
     """
     expected = tangency_statistics.get("Optimizer Expected Return", float("nan"))
     volatility = tangency_statistics.get("Optimizer Volatility", float("nan"))
