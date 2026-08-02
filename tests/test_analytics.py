@@ -14,7 +14,9 @@ from portfolio_dashboard.data import (
     parse_weight_input, validate_weights,
 )
 from portfolio_dashboard.performance import (
-    annualized_arithmetic_return, annualized_variance, annualized_volatility, cagr,
+    annualized_arithmetic_return, annualized_variance, annualized_volatility,
+    arithmetic_mean_return, asset_risk_return_table, cagr, coefficient_of_variation,
+    diversification_effect, geometric_mean_return, holding_period_return,
     drawdown_series, max_drawdown, performance_metrics, portfolio_expected_return,
     portfolio_returns, portfolio_variance, sharpe_from_statistics, sharpe_ratio,
     simple_returns, sortino_ratio,
@@ -100,6 +102,59 @@ def test_performance_formulas():
     assert np.isfinite(sortino_ratio(pd.Series([.01, -.01, .02, -.03, .01])))
     dd = drawdown_series(pd.Series([.1, -.2, .1]))
     assert max_drawdown(pd.Series([.1, -.2, .1])) == pytest.approx(dd.min())
+
+
+def test_workbook_one_holding_period_arithmetic_geometric_and_annualization():
+    values = pd.Series([.10, -.10, .20])
+    assert holding_period_return(100, 108, 4) == pytest.approx(.12)
+    assert arithmetic_mean_return(values) == pytest.approx(values.mean())
+    assert geometric_mean_return(values) == pytest.approx(np.prod(1 + values) ** (1 / 3) - 1)
+    assert cagr(values, periods_per_year=12) == pytest.approx((1 + geometric_mean_return(values)) ** 12 - 1)
+    with pytest.raises(ValueError, match="positive"):
+        holding_period_return(0, 10)
+    assert np.isnan(geometric_mean_return(pd.Series([-1.5])))
+    assert np.isnan(geometric_mean_return(pd.Series([-2.0, -2.0])))
+    assert np.isnan(cagr(pd.Series([-2.0, -2.0])))
+    assert np.isnan(arithmetic_mean_return(pd.Series(dtype=float)))
+
+
+def test_workbook_one_asset_table_uses_sample_risk_and_reconciles_units():
+    values = pd.DataFrame({"A": [.01, -.02, .03], "B": [.02, .01, -.01]})
+    table = asset_risk_return_table(values, periods_per_year=12)
+    assert table.loc["A", "Periodic Arithmetic Mean"] == pytest.approx(values["A"].mean())
+    assert table.loc["A", "Annualized Sample Variance"] == pytest.approx(values["A"].var(ddof=1) * 12)
+    assert table.loc["A", "Annualized Sample Volatility"] ** 2 == pytest.approx(
+        table.loc["A", "Annualized Sample Variance"]
+    )
+    assert table.loc["A", "Coefficient of Variation"] == pytest.approx(
+        table.loc["A", "Annualized Sample Volatility"]
+        / table.loc["A", "Historical Arithmetic Annualized Return"]
+    )
+    assert np.isnan(coefficient_of_variation(0.0, .1))
+    assert coefficient_of_variation(.05, 0.0) == 0.0
+    insufficient = asset_risk_return_table(pd.DataFrame({"A": [.01, np.nan]}), periods_per_year=12)
+    assert np.isnan(insufficient.loc["A", "Annualized Sample Variance"])
+
+
+def test_workbook_one_covariance_correlation_two_asset_and_diversification():
+    values = pd.DataFrame({"A": [.01, -.02, .03, -.01], "B": [-.01, .02, -.03, .01]})
+    weights = pd.Series({"A": .6, "B": .4})
+    covariance = values.cov() * 12
+    expected_two_asset = (
+        weights["A"] ** 2 * covariance.loc["A", "A"]
+        + weights["B"] ** 2 * covariance.loc["B", "B"]
+        + 2 * weights["A"] * weights["B"] * covariance.loc["A", "B"]
+    )
+    assert portfolio_variance(values, weights, 12) == pytest.approx(expected_two_asset)
+    assert values.corr().loc["A", "B"] == pytest.approx(-1.0)
+    effect = diversification_effect(values, weights, 12)
+    assert effect["Portfolio Volatility"] == pytest.approx(np.sqrt(expected_two_asset))
+    assert effect["Diversification Reduction"] > 0
+    assert effect["Weighted Standalone Volatility"] - effect["Diversification Reduction"] == pytest.approx(
+        effect["Portfolio Volatility"]
+    )
+    with pytest.raises(ValueError, match="labels"):
+        diversification_effect(values, pd.Series({"A": 1.0}), 12)
 
 
 def test_drawdown_includes_initial_wealth_baseline():

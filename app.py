@@ -14,7 +14,9 @@ from portfolio_dashboard.construction import (
 )
 from portfolio_dashboard.data import MarketDataError, download_prices, parse_tickers, parse_weight_input, validate_dates
 from portfolio_dashboard.formatting import metric_value, money, pct, ratio
-from portfolio_dashboard.performance import drawdown_series, monthly_returns
+from portfolio_dashboard.performance import (
+    asset_risk_return_table, diversification_effect, drawdown_series, monthly_returns,
+)
 from portfolio_dashboard.pipeline import run_analysis
 from portfolio_dashboard.rebalancing import compare_rebalancing_policies, rebalancing_plan
 from portfolio_dashboard.reporting import generate_html_report, research_summary
@@ -262,11 +264,42 @@ if tabs[2].open:
         st.subheader("Risk and diversification")
         var95, cvar95 = historical_var(a.portfolio_returns), historical_cvar(a.portfolio_returns)
         effective = 1 / float((r["weights"] ** 2).sum())
+        diversification = diversification_effect(a.asset_returns, r["weights"])
         with st.container(horizontal=True):
             st.metric("Historical VaR (95%)", pct(var95), border=True)
             st.metric("Historical CVaR (95%)", pct(cvar95), border=True)
             st.metric("Effective holdings", f"{effective:.2f}", border=True)
             st.metric("Largest risk contributor", a.volatility_contributions.idxmax(), border=True)
+        with st.container(horizontal=True):
+            st.metric("Weighted standalone volatility", pct(diversification["Weighted Standalone Volatility"]), border=True)
+            st.metric("Portfolio volatility", pct(diversification["Portfolio Volatility"]), border=True)
+            st.metric("Diversification reduction", pct(diversification["Diversification Reduction"]), border=True)
+            st.metric("Reduction vs. standalone", pct(diversification["Diversification Reduction Percentage"]), border=True)
+        st.caption(
+            "Diversification reduction compares portfolio volatility with the weighted average of standalone asset volatilities. "
+            "It reflects observed covariance and is descriptive, not a forecast or a systematic-risk estimate."
+        )
+        st.markdown("**Asset-level return and risk foundations**")
+        asset_foundations = asset_risk_return_table(a.asset_returns)
+        st.dataframe(asset_foundations, width="stretch", column_config={
+            "Periodic Arithmetic Mean": st.column_config.NumberColumn(format="percent"),
+            "Periodic Geometric Mean": st.column_config.NumberColumn(format="percent"),
+            "Historical Arithmetic Annualized Return": st.column_config.NumberColumn(format="percent"),
+            "CAGR": st.column_config.NumberColumn(format="percent"),
+            "Annualized Sample Variance": st.column_config.NumberColumn(format="%.4f"),
+            "Annualized Sample Volatility": st.column_config.NumberColumn(format="percent"),
+            "Coefficient of Variation": st.column_config.NumberColumn(format="%.2f"),
+        })
+        st.download_button(
+            "Download asset risk-and-return table",
+            asset_foundations.to_csv().encode("utf-8"),
+            "portfoliolens_asset_risk_return.csv",
+            "text/csv",
+        )
+        st.caption(
+            "Returns are simple adjusted-price returns. Arithmetic mean is the historical expected-return estimate; "
+            "geometric mean is periodic compound growth; CAGR annualizes compound growth. Historical variance and covariance use sample estimates (n−1)."
+        )
         corr = a.asset_returns.corr(); cov = a.asset_returns.cov() * TRADING_DAYS
         fig = px.imshow(corr, text_auto=".2f", zmin=-1, zmax=1, color_continuous_scale="RdBu_r", title="Daily return correlations")
         st.plotly_chart(fig, width="stretch", theme="streamlit")
