@@ -4,6 +4,7 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Rendered the complete top-level tab bar before analysis so **Portfolio Optimization** is discoverable on initial load, and added a runtime commit identifier for verifying the revision served by Streamlit Cloud.
 - Promoted Workbook 2 analytics to a dedicated **Portfolio Optimization** application section, with explicit GMV/tangency labels, a consolidated optimized-weights table and export, and an honest risk-preference control that does not imply the workbook supplied a numerical utility model.
 
 ### Added

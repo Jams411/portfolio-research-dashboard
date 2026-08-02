@@ -52,8 +52,23 @@ def test_app_renders_helpful_initial_state():
     assert any(item.label == "Use equal weights" for item in app.checkbox)
     assert any(item.label == "Run analysis" for item in app.button)
     assert any("No market data are downloaded" in item.value for item in app.info)
-    assert not app.tabs
+    assert [tab.label for tab in app.tabs] == [
+        "Overview", "Performance", "Risk", "Benchmark & Attribution", "Portfolio Optimization",
+        "Momentum Strategy", "Stress Testing", "Research Workspace", "Research Report", "Methodology & Limitations",
+    ]
+    assert any("Application build:" in item.value for item in app.caption)
     assert not app.metric
+
+
+def test_portfolio_optimization_is_visible_before_analysis():
+    app = AppTest.from_file("app.py").run(timeout=20)
+    app.session_state["analysis_tab"] = "Portfolio Optimization"
+    app.run(timeout=20)
+    assert not app.exception
+    assert any(tab.label == "Portfolio Optimization" for tab in app.tabs)
+    assert any(item.value == "Portfolio Optimization" for item in app.subheader)
+    assert any("efficient frontier" in item.value.lower() for item in app.info)
+    assert any("Global Minimum Variance" in item.value for item in app.markdown)
 
 
 def test_app_rejects_multiple_benchmark_tickers_before_download():
@@ -144,11 +159,11 @@ def test_failed_run_clears_prior_results_and_successful_rerun_recovers(offline_a
     widget(offline_app.text_input, "Benchmark").set_value("SPY, VTI")
     offline_app.run(timeout=20)
     assert "result" not in offline_app.session_state
-    assert not offline_app.tabs
+    assert any(tab.label == "Portfolio Optimization" for tab in offline_app.tabs)
     run_analysis(offline_app)
     assert any("exactly one benchmark ticker" in item.value for item in offline_app.error)
     assert "result" not in offline_app.session_state
-    assert not offline_app.tabs
+    assert any(tab.label == "Portfolio Optimization" for tab in offline_app.tabs)
     assert not offline_app.metric
 
     widget(offline_app.text_input, "Benchmark").set_value("SPY")

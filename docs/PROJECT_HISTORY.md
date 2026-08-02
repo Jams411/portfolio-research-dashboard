@@ -172,3 +172,4 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 
 - **What changed:** Promoted the existing mean-variance backend from the combined Construction & Rebalancing tab to an explicitly named Portfolio Optimization section. Added direct GMV, tangency, target-return, complete-portfolio and optimized-weight labels/exports, while documenting why the direct risky-allocation control is not a risk-aversion coefficient.
 - **Why:** Workbook 2 calculations were present and tested but were too difficult to discover in the application navigation.
+- **Follow-up:** The tab bar originally rendered only after a successful analysis because the empty-state `st.stop()` preceded `st.tabs`. Navigation now renders on initial load, Portfolio Optimization has a dedicated pre-analysis empty state, and the running Git revision is visible in-app.

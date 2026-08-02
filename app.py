@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 from datetime import date
+import os
+from pathlib import Path
+import subprocess
 
 import pandas as pd
 import plotly.express as px
@@ -56,6 +59,27 @@ def line_chart(frame: pd.DataFrame, title: str, y_title: str) -> None:
     st.plotly_chart(fig, width="stretch", theme="streamlit")
 
 
+@st.cache_data(show_spinner=False)
+def build_identifier() -> str:
+    """Return the deployed source revision without requiring a build-time secret."""
+    for variable in ("STREAMLIT_GIT_COMMIT", "COMMIT_SHA", "GITHUB_SHA"):
+        value = os.environ.get(variable, "").strip()
+        if value:
+            return value[:12]
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short=12", "HEAD"],
+            cwd=Path(__file__).resolve().parent,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        return result.stdout.strip() or "unknown"
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+
+
 ANALYSIS_STATE_KEYS = (
     "result", "current_shocks", "selected_target_method", "normalized", "analysis_tab", "shock_editor",
     "what_if_weights", "what_if_shocks", "what_if_result", "what_if_weight_editor", "what_if_shock_editor",
@@ -73,6 +97,7 @@ def clear_analysis_state() -> None:
 
 st.title("PortfolioLens")
 st.caption("Multi-Asset Portfolio Analytics & Investment Research")
+st.caption(f"Application build: `{build_identifier()}`")
 
 with st.sidebar:
     st.header("Analysis inputs")
@@ -186,10 +211,43 @@ if run:
     except (ValueError, MarketDataError) as exc:
         st.error(f"Analysis could not run: {exc}")
 
+tab_names = [
+    "Overview", "Performance", "Risk", "Benchmark & Attribution", "Portfolio Optimization",
+    "Momentum Strategy", "Stress Testing", "Research Workspace", "Research Report", "Methodology & Limitations",
+]
+tabs = st.tabs(tab_names, key="analysis_tab", on_change="rerun")
+
 if "result" not in st.session_state:
-    st.info("Choose a preset or enter portfolio inputs in the sidebar, then select **Run analysis**. No market data are downloaded until then.")
-    st.markdown("### What this application answers")
-    st.write("How has the portfolio performed? What drives risk? How does it compare with a benchmark? Which historical long-only portfolios satisfy explicit constraints? How do rebalancing policies, implementation costs, strategy behavior, and stress losses differ?")
+    open_tab = next((index for index, tab in enumerate(tabs) if tab.open), 0)
+    with tabs[open_tab]:
+        if open_tab == 4:
+            st.subheader("Portfolio Optimization")
+            st.info("Run an analysis from the sidebar to calculate the efficient frontier and optimized portfolios.")
+            st.markdown("""
+**This top-level workspace displays:**
+
+- Efficient Frontier and current portfolio point
+- Global Minimum Variance and Maximum Sharpe / Tangency portfolios
+- Target Return portfolio construction
+- Non-leveraged Capital Allocation Line
+- Complete portfolio risk preference
+- Expected return, volatility, Sharpe ratio, and optimized weights
+- Methodology, limitations, and downloadable results
+""")
+            st.caption(
+                "Historical arithmetic returns and sample covariance are estimation inputs, not forecasts. "
+                "Long-only weights sum to 100%; short selling and leverage are disabled. Workbook 2 does not "
+                "supply a numerical risk-aversion utility function, so risk preference is selected directly."
+            )
+        elif open_tab == 9:
+            st.subheader("Methodology and limitations")
+            st.write(f"Application build: `{build_identifier()}`")
+            st.info("Run an analysis to view the complete methodology alongside calculated results.")
+        else:
+            st.info("Choose a preset or enter portfolio inputs in the sidebar, then select **Run analysis**. No market data are downloaded until then.")
+            if open_tab == 0:
+                st.markdown("### What this application answers")
+                st.write("How has the portfolio performed? What drives risk? How does it compare with a benchmark? Which historical long-only portfolios satisfy explicit constraints? How do rebalancing policies, implementation costs, strategy behavior, and stress losses differ?")
     st.stop()
 
 r = st.session_state["result"]
@@ -211,12 +269,6 @@ st.caption(
     f"{len(a.prices):,} observations · benchmark: {r['benchmark_ticker']}"
 )
 st.caption("Historical research only · constant portfolio weights · not personalized financial advice")
-
-tab_names = [
-    "Overview", "Performance", "Risk", "Benchmark & Attribution", "Portfolio Optimization",
-    "Momentum Strategy", "Stress Testing", "Research Workspace", "Research Report", "Methodology & Limitations",
-]
-tabs = st.tabs(tab_names, key="analysis_tab", on_change="rerun")
 
 if tabs[0].open:
     with tabs[0]:
@@ -908,6 +960,7 @@ if tabs[8].open:
 if tabs[9].open:
     with tabs[9]:
         st.subheader("Methodology and limitations")
+        st.caption(f"Application build: `{build_identifier()}`")
         st.markdown("""
 **Returns and annualization.** Adjusted prices are converted to simple daily returns. Historical arithmetic annualized return is the daily sample mean × 252 and is the expected-return estimate used by Sharpe, Sortino, and maximum-Sharpe optimization. CAGR separately measures realized compound growth. Annualized variance is the daily sample variance × 252; volatility is its square root. Performance Sharpe and optimizer Sharpe both equal arithmetic annualized excess return divided by annualized volatility. Sortino uses the same arithmetic excess-return numerator and target downside deviation after converting the annual risk-free rate to an equivalent daily minimum acceptable return.
 
