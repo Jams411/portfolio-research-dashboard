@@ -221,3 +221,13 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Alternatives considered:** Change Streamlit networking code to evade sandbox restrictions, require deployment credentials, treat every redirect as failure, or add a brittle Playwright dependency that cannot pass an authentication gate.
 - **Consequences:** Pull requests and `main` pushes receive complete offline verification. The daily health workflow can prove direct HTTP success or Streamlit reachability, but an authentication redirect cannot prove signed-out UI rendering; that remains a documented manual check.
 - **Status:** Accepted.
+
+## D022 — Separate finite-scenario population risk from historical sample estimation
+
+- **Date:** 2026-08-01
+- **Decision:** Preserve Workbook 1's `VAR.P`, `STDEV.P`, and probability-weighted population formulas as the correct convention for its complete classroom scenario sets, while retaining sample variance/covariance (`ddof=1`) for PortfolioLens historical market estimates. Add explicit labels, HPR and geometric-mean helpers, coefficient of variation, and observed diversification reduction without duplicating population statistics in the live UI.
+- **Context:** The workbook teaches both complete hypothetical outcome distributions and short historical exercises with population Excel functions. PortfolioLens observes a sample from an unknown market-return process.
+- **Rationale:** Methodology should follow the statistical question, not copy an Excel function mechanically. Showing parallel population and sample market tables would add confusion without improving the research workflow.
+- **Alternatives considered:** Replace PortfolioLens sample risk with population risk, display both conventions for all market series, or treat similarly named existing metrics as complete workbook coverage.
+- **Consequences:** Exact workbook examples reconcile under their documented population convention; live historical estimates retain `n-1` denominators. Users receive explicit arithmetic/geometric and variance/covariance labels, while probability games and common-correlation limits remain educational-only.
+- **Status:** Accepted.

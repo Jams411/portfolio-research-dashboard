@@ -6,6 +6,8 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ### Added
 
+- Added Workbook 1 foundations: explicit price-plus-income holding-period return, periodic arithmetic and geometric mean helpers, asset-level return/risk tables, coefficient of variation, and a covariance-based diversification-reduction summary with CSV export.
+- Added deterministic Workbook 1 reconciliation tests for compounding, sample risk, correlation/covariance, two-asset and matrix portfolio variance, unit consistency, and invalid inputs.
 - Added GitHub Actions CI for full pytest, compilation/import, Streamlit configuration, non-socket AppTest, dependency, Markdown-link, and repository-diff verification.
 - Added a daily and manually dispatchable public-deployment health workflow with readable success, authentication-redirect, DNS, timeout, and server-error diagnostics.
 - Expanded the offline initial-page smoke test to verify PortfolioLens branding, sidebar inputs, the no-download empty state, and absence of uncaught exceptions.

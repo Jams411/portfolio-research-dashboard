@@ -29,8 +29,9 @@ This application demonstrates:
 
 - Comma-separated ticker validation, equal/custom weights, presets, date range, benchmark, capital, risk-free rate and transaction-cost controls
 - Adjusted yfinance history with caching, safe single/MultiIndex handling, strict failed-ticker reporting and complete-common-date alignment
-- Total return, arithmetic annualized return, CAGR, annualized variance/volatility, consistently defined Sharpe, Sortino, drawdown, Calmar, tail risk, monthly returns and wealth charts
-- Excess-return single-index alpha/beta/R², residual and systematic/idiosyncratic risk, CAPM required return, Jensen’s alpha, Treynor, correlation, covariance, VaR/CVaR, concentration, effective holdings, and reconciled return/volatility attribution
+- Explicit holding-period-return logic; asset-level periodic arithmetic/geometric returns, annualized arithmetic return/CAGR, sample variance/volatility, coefficient of variation, and downloadable foundation tables
+- Total return, consistently defined Sharpe, Sortino, drawdown, Calmar, tail risk, monthly returns and wealth charts
+- Excess-return single-index alpha/beta/R², residual and systematic/idiosyncratic risk, CAPM required return, Jensen’s alpha, Treynor, correlation, covariance, transparent diversification reduction, VaR/CVaR, concentration, effective holdings, and reconciled return/volatility attribution
 - Benchmark excess return, tracking error, information ratio, relative drawdown and relative wealth
 - Current, equal-weight, inverse-volatility, minimum-variance and maximum-Sharpe long-only allocations
 - Long-only efficient frontier, GMV, constrained tangency, target-return portfolios, and a non-leveraged Capital Allocation Line

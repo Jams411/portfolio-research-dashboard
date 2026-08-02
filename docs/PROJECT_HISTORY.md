@@ -150,3 +150,12 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - **Course or career connection:** Financial input correctness, state integrity, operational controls, and trustworthy investment-research presentation.
 - **Tradeoffs:** Any input edit hides the prior result and requires a fresh successful run; this is intentionally stricter than retaining stale analysis with a warning.
 - **Evidence:** Regression tests and the production-fix commit created with this milestone.
+
+## 2026-08-01 — Workbook 1 risk-and-return trace and foundations
+
+- **What changed:** Directly audited every nonempty worksheet in `2026S_FIN5745 PM_Workbook 1. Risk & Return of Portfolio Investments_Q.xlsx`; added HPR, periodic arithmetic/geometric return, coefficient-of-variation, asset foundation table, diversification-reduction calculations, UI explanations/export, deterministic tests, and permanent worksheet-level traceability.
+- **Why it changed:** Similar metric names did not prove that PortfolioLens matched the workbook's formula, units, compounding, or population/sample assumptions.
+- **Problem solved:** PortfolioLens now exposes the workbook-backed return/risk foundations while explicitly preserving sample statistics for historical estimation and population statistics for finite classroom scenarios.
+- **Course or career connection:** Portfolio mathematics, financial-methodology governance, market-risk estimation, and interview explanation.
+- **Tradeoffs:** Probability games and the identical-correlation limit remain educational-only; no generic scenario editor or duplicate population-risk dashboard was added.
+- **Evidence:** Workbook 1 tests, `COURSE_TRACEABILITY.md`, Decision D022, and commits created for this milestone.

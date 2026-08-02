@@ -13,6 +13,40 @@ Daily return is the simple return `r_t = P_t / P_(t-1) - 1`. Portfolio return as
 - CAGR: `(Π(1+r_t))^(252/n)-1`
 - Annualized variance: sample variance of daily returns times `252`
 - Annualized volatility: sample standard deviation of daily returns times `sqrt(252)`
+
+### Portfolio Management Workbook 1 — Risk & Return of Portfolio Investments
+
+The explicit holding-period-return helper follows the workbook relationship
+`HPR = (ending value - beginning value + cash income) / beginning value`. The
+live market pipeline uses simple adjusted-price returns, `P_t/P_(t-1)-1`;
+because adjusted prices embed distributions, separately adding those same
+distributions would double count income. Log returns are not used.
+
+Periodic arithmetic mean is `sum(r_t)/n`. Periodic geometric mean is
+`[product(1+r_t)]^(1/n)-1`; CAGR is the same compound path annualized as
+`[product(1+r_t)]^(252/n)-1`. The app labels arithmetic annualized return as a
+historical expected-return estimate and CAGR as realized compound growth.
+
+Workbook probability tables and short finite exercises use population
+variance, `sum[p_s(r_s-E[r])^2]`, or Excel `VAR.P`/`STDEV.P`. PortfolioLens does
+not silently carry that classroom convention into observed market estimation:
+historical asset variance, covariance, and correlation use sample estimators
+(`ddof=1`) because the observations estimate an unknown return distribution.
+Annualized covariance is daily sample covariance times 252; annualized
+portfolio variance is `w'Σw` and volatility is its square root. This convention
+is explicitly labeled in the UI and exports.
+
+Coefficient of variation is the unitless relationship `CV=σ/E[r]`, computed
+with annualized volatility and annualized arithmetic expected return so its
+numerator and denominator share a horizon. It is undefined at zero expected
+return; negative expected returns produce mathematically valid negative values
+whose rankings require care.
+
+The displayed diversification reduction is
+`sum(w_i σ_i) - sqrt(w'Σw)` for long-only weights. The percentage divides that
+gap by weighted standalone volatility. It describes the effect of observed
+cross-asset covariance; it is neither a forecast nor a systematic-risk measure.
+Return and Euler volatility contributions remain separate reconciled analyses.
 - Performance Sharpe: `(historical arithmetic annualized return - annual risk-free rate) / annualized volatility`
 - Optimizer Sharpe: the same arithmetic annualized excess-return formula evaluated for candidate weights; it is mathematically identical to performance Sharpe for the same return series and weights
 - Sortino: `(historical arithmetic annualized return - annual risk-free rate) / annualized target downside deviation`; the annual risk-free rate is converted to an equivalent daily minimum acceptable return, and every observation contributes either its squared shortfall or zero

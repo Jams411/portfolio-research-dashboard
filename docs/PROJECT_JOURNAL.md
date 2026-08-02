@@ -192,3 +192,17 @@ Interview explainability and financial correctness were prioritized over feature
 - **Open questions:** The candidate hosted URL still requires Streamlit account authorization/public-access verification.
 - **Next step:** Push the prepared repository, authorize or create the Community Cloud app, and execute the signed-out post-deployment checklist.
 - **Related commit hashes:** `2c55055`; documentation and screenshot commits follow this entry in Git history.
+
+## 2026-08-01 — Workbook 1 methodology reconciliation
+
+- **Date:** 2026-08-01
+- **Goal:** Trace one risk-and-return workbook completely and close only the practical, supported PortfolioLens gaps.
+- **Context:** The workbook mixes complete probability universes, short historical exercises, drawing-based instructor logic, a student photo, and stale Excel add-in residue.
+- **What changed:** Added explicit HPR, arithmetic/geometric, asset risk, CV, and diversification functions and UI; recorded all nine sheets and their status.
+- **Why it changed:** A deep source audit showed the key missing value was terminology and convention transparency, not another advanced model.
+- **Relevant career or course connection:** Risk/return calculation, covariance reasoning, statistical-estimator choice, and model documentation.
+- **Tradeoffs:** Retained sample statistics for observed markets instead of mechanically copying `VAR.P`; excluded probability games/common-correlation limits from the main UI.
+- **Lessons learned:** Workbook formatting and named ranges are not methodology. Formula provenance, units, denominator choice, and the difference between finite scenarios and estimated distributions must be evaluated together.
+- **Open questions:** None requiring a product decision; the unrecoverable historical Solver bounds are documented rather than inferred.
+- **Next step:** Run full repository and deployment verification and preserve commit/CI evidence.
+- **Related commit hashes:** Commits created with this milestone; verify final hashes from Git history.
