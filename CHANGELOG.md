@@ -4,6 +4,7 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Updated the canonical deployment URL and automated health check to `https://portfolio-lens.streamlit.app` after verifying the product-aligned Streamlit deployment.
 - Rendered the complete top-level tab bar before analysis so **Portfolio Optimization** is discoverable on initial load, and added a runtime commit identifier for verifying the revision served by Streamlit Cloud.
 - Promoted Workbook 2 analytics to a dedicated **Portfolio Optimization** application section, with explicit GMV/tangency labels, a consolidated optimized-weights table and export, and an honest risk-preference control that does not imply the workbook supplied a numerical utility model.
 
@@ -39,7 +40,7 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 - Standardized displayed performance Sharpe, strategy Sharpe, Sortino, and maximum-Sharpe optimization on arithmetic annualized excess return; CAGR remains the separate realized compound-growth metric.
 - Clarified arithmetic return, CAGR, performance Sharpe, and optimizer Sharpe in the dashboard and deterministic report.
 - Renamed the product from Portfolio Research Dashboard to PortfolioLens, with the subtitle “Multi-Asset Portfolio Analytics & Investment Research”; product scope and financial methodology are unchanged.
-- Renamed the GitHub repository in place to `Jams411/portfoliolens`; the verified Streamlit deployment retains its existing URL while the preferred slug is unavailable.
+- Renamed the GitHub repository in place to `Jams411/portfoliolens`; the deployment initially retained its legacy address until a product-aligned URL was verified.
 - Collapsed secondary momentum controls, added a persistent research-only scope reminder, and established a native Streamlit showcase theme without changing analytics.
 - Replaced the light showcase theme with a high-contrast native dark financial theme and made Streamlit theme inheritance explicit for Plotly charts.
 - Expanded the README with a screenshot gallery, deployment status, architecture links, demonstration guidance, and the evidence-labeled project story.

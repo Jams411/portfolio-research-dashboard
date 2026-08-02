@@ -1,5 +1,7 @@
 # Demonstration guide
 
+Verified demo URL: [portfolio-lens.streamlit.app](https://portfolio-lens.streamlit.app/)
+
 ## Standard demo portfolio
 
 Introduce the application as **PortfolioLens — Multi-Asset Portfolio Analytics & Investment Research**.

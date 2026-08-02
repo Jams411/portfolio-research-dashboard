@@ -2,6 +2,14 @@
 
 Significant product, financial-methodology, architecture, and scope decisions are recorded here. Add new entries rather than rewriting prior decisions; mark superseded entries explicitly.
 
+## D024 — Adopt the verified product-aligned Streamlit URL
+
+- **Date:** 2026-08-02
+- **Status:** Accepted
+- **Decision:** Use `https://portfolio-lens.streamlit.app` as the canonical PortfolioLens deployment URL in current documentation, demos, badges or links, and automated health checks.
+- **Context:** The product-aligned address is now the verified Streamlit deployment. Earlier slug-availability concerns are historical and no longer govern current links.
+- **Consequences:** Public references and operational checks resolve to one URL; future URL changes require the same repository-wide validation and governance update.
+
 ## D015 — Rename the product to PortfolioLens
 
 - **Date:** 2026-08-01

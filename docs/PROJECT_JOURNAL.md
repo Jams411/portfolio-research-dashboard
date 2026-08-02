@@ -2,6 +2,14 @@
 
 This journal explains the project’s evolution in plain language. It complements, rather than replaces, the evidence-focused [project history](PROJECT_HISTORY.md), formal [decision log](DECISIONS.md), user-facing [changelog](../CHANGELOG.md), and forward-looking [roadmap](ROADMAP.md).
 
+## 2026-08-02 — Verified PortfolioLens deployment address
+
+- **Goal:** Align every current public-deployment reference with the verified product URL.
+- **What changed:** Updated documentation, governance records, and the credential-free deployment-health workflow to `https://portfolio-lens.streamlit.app`.
+- **Why it changed:** The prior address was no longer the verified canonical deployment.
+- **Tradeoffs:** Historical deployment decisions remain understandable through the journal, while operational links now have one source of truth.
+- **Verification:** Repository-wide URL search, full offline tests, documentation validation, CI, and deployment-health workflow.
+
 ## Product origin and boundaries
 
 **Context from current development session — verify before treating as canonical.**

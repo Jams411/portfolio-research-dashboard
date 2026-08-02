@@ -1,5 +1,11 @@
 # Project history
 
+## 2026-08-02 — Canonical Streamlit deployment URL
+
+- **What changed:** Replaced current deployment references and the automated health-check target with `https://portfolio-lens.streamlit.app`.
+- **Why:** The product-aligned Streamlit deployment URL is now verified and is the canonical public address.
+- **Evidence:** README launch link, deployment runbook, demo guide, deployment-health workflow, CI, and the successful post-push deployment check.
+
 ## 2026-08-01 — Independent CI and deployment verification
 
 - **What changed:** Added GitHub Actions CI for the complete offline suite and non-socket Streamlit startup, a scheduled credential-free deployment-health classifier, stronger initial-page AppTest assertions, and reusable Markdown-link validation.

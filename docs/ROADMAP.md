@@ -28,6 +28,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - Phase 4 educational companion: two-asset variance derivation, frontier/CAL intuition, CAPM/single-index interpretation, and educational-only Treynor–Black/APT/multifactor boundaries
 - Workbook 1 deep trace: HPR, periodic arithmetic/geometric means, asset sample variance/volatility, coefficient of variation, covariance/correlation matrices, portfolio moments, and observed diversification reduction
 - Workbook 2 deep trace: recoverable long-only target-return and unconstrained tangency Solver models, frontier/CML methodology comparison, and non-leveraged complete portfolios combining the tangency portfolio with the risk-free asset
+- Verified product-aligned Streamlit deployment at `https://portfolio-lens.streamlit.app`, with matching documentation and automated health checks
 
 ## Deferred — separately approved future work only
 
@@ -56,7 +57,6 @@ Why: subperiod evidence is more informative than a single full-period result and
 - **Bond duration and convexity:** Requires explicit coupon, maturity, yield, frequency, and instrument assumptions that yfinance price history does not reliably provide.
 - **Fundamental clustering:** A defensible machine-learning research idea only with reproducible, point-in-time fundamental data. It should begin outside the core dashboard if revisited.
 - **Multifactor or Treynor–Black live models:** Educational companion only unless reliable factor data and a separately approved estimation design become available.
-- **Preferred Streamlit subdomain:** The verified deployment remains `portfolio-research-dashboard.streamlit.app`; `portfoliolens.streamlit.app` belongs to another deployment and requires manual platform availability before reconsideration.
 
 ## Educational-only
 

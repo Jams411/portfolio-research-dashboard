@@ -32,6 +32,6 @@ jobs:
       - name: Check deployed URL
         run: >-
           python scripts/check_deployment.py
-          https://portfolio-research-dashboard.streamlit.app
+          https://portfolio-lens.streamlit.app
           --timeout 15
           --max-redirects 8
