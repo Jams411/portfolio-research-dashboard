@@ -1,4 +1,5 @@
 """Deterministic unit and integration tests for financial calculations."""
+import inspect
 import numpy as np
 import pandas as pd
 import pytest
@@ -933,12 +934,39 @@ def test_rebalancing_policy_comparison_uses_common_history():
         "B": np.cos(np.arange(len(index)) / 17) * .006,
     }, index=index)
     summary, histories, trades = compare_rebalancing_policies(
-        returns, pd.Series({"A": .6, "B": .4}), 10_000, .001, .04, .02,
+        asset_returns=returns,
+        target_weights=pd.Series({"A": .6, "B": .4}),
+        initial_value=10_000,
+        transaction_cost_rate=.001,
+        threshold=.04,
+        risk_free_rate=.02,
     )
     assert set(summary.index) == {"Buy and Hold", "Monthly", "Quarterly", "Annual", "Threshold"}
     assert summary.loc["Buy and Hold", "Total Turnover"] == 0
     assert len({len(history) for history in histories.values()}) == 1
     assert set(trades) == set(summary.index)
+
+
+def test_rebalancing_policy_api_contract_includes_benchmark_and_three_returns():
+    signature = inspect.signature(compare_rebalancing_policies)
+    assert list(signature.parameters) == [
+        "asset_returns", "target_weights", "initial_value", "transaction_cost_rate",
+        "threshold", "risk_free_rate", "benchmark_returns",
+    ]
+    assert signature.parameters["benchmark_returns"].default is None
+    index = pd.bdate_range("2024-01-02", periods=12)
+    x = np.arange(12)
+    returns = pd.DataFrame({
+        "A": .001 + .002 * np.sin(x),
+        "B": .0005 + .001 * np.cos(x),
+    }, index=index)
+    result = compare_rebalancing_policies(
+        asset_returns=returns,
+        target_weights=pd.Series({"A": .6, "B": .4}),
+        initial_value=10_000,
+        benchmark_returns=pd.Series(.0008 + .0015 * np.sin(x / 2), index=index),
+    )
+    assert isinstance(result, tuple) and len(result) == 3
 
 
 def test_rebalancing_policy_comparison_reconciles_benchmark_relative_metrics():
@@ -949,7 +977,13 @@ def test_rebalancing_policy_comparison_reconciles_benchmark_relative_metrics():
     }, index=index)
     benchmark = pd.Series(np.sin(np.arange(len(index)) / 10) * .005 + .0002, index=index)
     summary, histories, _ = compare_rebalancing_policies(
-        returns, pd.Series({"A": .6, "B": .4}), 10_000, .001, .05, .02, benchmark,
+        asset_returns=returns,
+        target_weights=pd.Series({"A": .6, "B": .4}),
+        initial_value=10_000,
+        transaction_cost_rate=.001,
+        threshold=.05,
+        risk_free_rate=.02,
+        benchmark_returns=benchmark,
     )
     policy = "Buy and Hold"
     active = histories[policy]["Daily Return"] - benchmark

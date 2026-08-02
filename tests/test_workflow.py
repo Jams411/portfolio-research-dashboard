@@ -69,7 +69,13 @@ def test_complete_four_etf_research_workflow():
     assert validation["Pass"].all()
 
     policy_summary, policy_histories, policy_trades = compare_rebalancing_policies(
-        analysis.asset_returns, weights, 100_000, .001, .05, .04, benchmark_returns,
+        asset_returns=analysis.asset_returns,
+        target_weights=weights,
+        initial_value=100_000,
+        transaction_cost_rate=.001,
+        threshold=.05,
+        risk_free_rate=.04,
+        benchmark_returns=benchmark_returns,
     )
     assert policy_summary.loc["Buy and Hold", "Rebalancing Dates"] == 0
     assert policy_summary.loc["Monthly", "Transaction Costs"] > 0

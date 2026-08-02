@@ -192,8 +192,13 @@ if run:
                 for name in analysis.allocations.columns
             }
             policy_summary, policy_histories, policy_trades = compare_rebalancing_policies(
-                analysis.asset_returns, weights, initial_value, transaction_cost,
-                rebalancing_threshold, risk_free, analysis.benchmark_returns,
+                asset_returns=analysis.asset_returns,
+                target_weights=weights,
+                initial_value=initial_value,
+                transaction_cost_rate=transaction_cost,
+                threshold=rebalancing_threshold,
+                risk_free_rate=risk_free,
+                benchmark_returns=analysis.benchmark_returns,
             )
             try:
                 frontier, frontier_weights = efficient_frontier(analysis.asset_returns, risk_free, points=50)
