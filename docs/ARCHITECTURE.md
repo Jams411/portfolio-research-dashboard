@@ -27,8 +27,8 @@ flowchart LR
 app.py                              Streamlit entrypoint, controls, navigation and views
 portfolio_dashboard/
   __init__.py                       package marker and package description
-  config.py                         shared constants, presets and stress windows
-  data.py                           input validation and yfinance price boundary
+  config.py                         shared constants, benchmark aliases, presets and stress windows
+  data.py                           input validation, benchmark resolution and yfinance price boundary
   performance.py                    returns and performance scorecard
   risk.py                           tail, benchmark and contribution analytics
   research.py                       comparison, score, scenario and deterministic insight diagnostics

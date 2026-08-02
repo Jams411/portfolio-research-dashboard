@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from dataclasses import dataclass
 from typing import Sequence
 
 import numpy as np
 import pandas as pd
 import yfinance as yf
 
-from .config import MIN_OBSERVATIONS, WEIGHT_TOLERANCE
+from .config import BENCHMARK_TICKER_ALIASES, MIN_OBSERVATIONS, WEIGHT_TOLERANCE
 
 
 class InputError(ValueError):
@@ -18,6 +19,24 @@ class InputError(ValueError):
 
 class MarketDataError(RuntimeError):
     """Raised when requested market data are unavailable or incomplete."""
+
+
+@dataclass(frozen=True)
+class TickerResolution:
+    """User-facing and provider-native symbols for one benchmark input."""
+
+    display_symbol: str
+    provider_symbol: str
+
+    @property
+    def was_mapped(self) -> bool:
+        return self.display_symbol != self.provider_symbol
+
+    @property
+    def notice(self) -> str | None:
+        if not self.was_mapped:
+            return None
+        return f"{self.display_symbol} was mapped to Yahoo Finance symbol {self.provider_symbol}."
 
 
 def parse_tickers(value: str | Sequence[str]) -> list[str]:
@@ -31,6 +50,14 @@ def parse_tickers(value: str | Sequence[str]) -> list[str]:
     if not result:
         raise InputError("Enter at least one ticker symbol.")
     return result
+
+
+def resolve_benchmark_ticker(symbol: str) -> TickerResolution:
+    """Resolve only an explicit benchmark alias; never guess equity symbols."""
+    display = str(symbol).strip().upper()
+    if not display:
+        raise InputError("Enter exactly one benchmark ticker.")
+    return TickerResolution(display, BENCHMARK_TICKER_ALIASES.get(display, display))
 
 
 def validate_dates(start: date | datetime | str, end: date | datetime | str) -> tuple[pd.Timestamp, pd.Timestamp]:
@@ -99,7 +126,10 @@ def parse_weight_input(
 def extract_adjusted_prices(raw: pd.DataFrame, tickers: Sequence[str]) -> pd.DataFrame:
     """Extract adjusted prices safely from either yfinance column layout."""
     if raw is None or raw.empty:
-        raise MarketDataError("The market-data provider returned no rows.")
+        raise MarketDataError(
+            "The market-data provider returned no rows. "
+            "Try a Yahoo Finance symbol such as ^GSPC for the S&P 500."
+        )
     if isinstance(raw.columns, pd.MultiIndex):
         for field in ("Adj Close", "Close"):
             for level in range(raw.columns.nlevels):
@@ -126,7 +156,11 @@ def align_prices(prices: pd.DataFrame, tickers: Sequence[str], min_observations:
     """Align assets on complete common dates without filling or inventing prices."""
     missing = [ticker for ticker in tickers if ticker not in prices.columns or prices[ticker].dropna().empty]
     if missing:
-        raise MarketDataError("No usable history for: " + ", ".join(missing) + ". Check the symbols and date range.")
+        raise MarketDataError(
+            "No usable history for: " + ", ".join(missing)
+            + ". Check the symbols and date range. "
+            "Try a Yahoo Finance symbol such as ^GSPC for the S&P 500."
+        )
     aligned = prices.loc[:, list(tickers)].sort_index().replace([np.inf, -np.inf], np.nan).dropna(how="any")
     if len(aligned) < min_observations:
         raise MarketDataError(

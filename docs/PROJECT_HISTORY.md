@@ -198,3 +198,10 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - **Why:** Passing unit tests did not by itself prove that the plotted curve, tangency marker and CAL were mutually consistent or professionally presented.
 - **Assessment:** The previous frontier was mathematically sound in its core formulas and target range but partially complete as a plotted numerical product. It did not guarantee exact tangency-grid membership, and its CAL accepted a potentially stale Sharpe field.
 - **Evidence:** Decision D025, expanded deterministic optimizer/AppTest coverage, Methodology reconciliation values and commits created for this milestone.
+
+## 2026-08-02 — Transparent benchmark ticker aliases
+
+- **What changed:** Added a centralized, case-insensitive benchmark alias allowlist; resolved provider symbols before download; retained friendly benchmark labels in charts/reports; added a visible mapping notice and more useful no-data guidance.
+- **Why:** Common index notation such as `SPX` is natural to users but is not the Yahoo Finance symbol expected by yfinance.
+- **Boundary:** Aliases apply only to the benchmark field. Portfolio holdings are never silently remapped, preserving the meaning of ambiguous equity symbols.
+- **Evidence:** Alias unit tests, non-socket AppTest, Decision D026 and CI.

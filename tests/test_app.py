@@ -90,6 +90,20 @@ def test_app_rejects_multiple_benchmark_tickers_before_download():
     assert any("exactly one benchmark ticker" in item.value for item in app.error)
 
 
+def test_benchmark_alias_uses_provider_symbol_and_preserves_display_label(offline_app):
+    widget(offline_app.text_input, "Benchmark").set_value("spx")
+    run_analysis(offline_app)
+    assert not offline_app.exception and not offline_app.error
+    result = offline_app.session_state["result"]
+    assert result["benchmark_ticker"] == "SPX"
+    assert result["benchmark_provider_ticker"] == "^GSPC"
+    assert result["analysis"].benchmark_prices.name == "Benchmark"
+    assert any(
+        "SPX was mapped to Yahoo Finance symbol ^GSPC." in item.value
+        for item in offline_app.info
+    )
+
+
 def test_equal_weight_mode_ignores_invalid_manual_weights(offline_app):
     widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, AGG, GLD")
     widget(offline_app.text_input, "Weights (%)").set_value("invalid, stale, weights")

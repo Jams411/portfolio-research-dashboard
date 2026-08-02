@@ -17,7 +17,10 @@ from portfolio_dashboard.construction import (
     optimization_diagnostics, optimizer_statistics, parse_group_caps, target_return_weights,
     utility_optimal_complete_portfolio,
 )
-from portfolio_dashboard.data import MarketDataError, download_prices, parse_tickers, parse_weight_input, validate_dates
+from portfolio_dashboard.data import (
+    MarketDataError, download_prices, parse_tickers, parse_weight_input,
+    resolve_benchmark_ticker, validate_dates,
+)
 from portfolio_dashboard.formatting import metric_value, money, pct, ratio
 from portfolio_dashboard.performance import (
     asset_risk_return_table, diversification_effect, drawdown_series, monthly_returns,
@@ -117,7 +120,9 @@ with st.sidebar:
     start_input = st.date_input("Start date", date(2018, 1, 1), on_change=clear_analysis_state)
     end_input = st.date_input("End date", date.today(), on_change=clear_analysis_state)
     benchmark_ticker = st.text_input(
-        "Benchmark", "SPY", help="Enter exactly one benchmark ticker.", on_change=clear_analysis_state
+        "Benchmark", "SPY",
+        help="Enter one ticker or supported index alias, such as SPX, DJIA, NASDAQ, VIX, or RUT.",
+        on_change=clear_analysis_state,
     )
     initial_value = st.number_input(
         "Initial portfolio value", min_value=1.0, value=100000.0, step=5000.0,
@@ -152,14 +157,16 @@ if run:
         benchmark_candidates = parse_tickers(benchmark_ticker)
         if len(benchmark_candidates) != 1:
             raise ValueError("Enter exactly one benchmark ticker.")
-        benchmark = benchmark_candidates[0]
+        benchmark_resolution = resolve_benchmark_ticker(benchmark_candidates[0])
+        benchmark = benchmark_resolution.display_symbol
+        benchmark_provider = benchmark_resolution.provider_symbol
         start, end = validate_dates(start_input, end_input)
         weights, normalized = parse_weight_input(tickers, weight_text, equal_weight=equal)
         if short_window >= long_window:
             raise ValueError("Short moving-average window must be below the long window.")
         with st.spinner("Downloading adjusted market history and running analytics…"):
             prices = cached_prices(tuple(tickers), start, end)
-            benchmark_prices = cached_prices((benchmark,), start, end)[benchmark]
+            benchmark_prices = cached_prices((benchmark_provider,), start, end)[benchmark_provider]
             analysis = run_analysis(prices, benchmark_prices, weights, risk_free)
             strategy_asset = tickers[0]
             strategy_data, strategy_stats = momentum_backtest(
@@ -190,7 +197,10 @@ if run:
                 )
                 construction_error = str(exc)
         st.session_state["result"] = {
-            "tickers": tickers, "benchmark_ticker": benchmark, "weights": weights,
+            "tickers": tickers, "benchmark_ticker": benchmark,
+            "benchmark_provider_ticker": benchmark_provider,
+            "benchmark_alias_notice": benchmark_resolution.notice,
+            "weights": weights,
             "requested_start": start, "requested_end": end, "initial_value": initial_value,
             "risk_free": risk_free, "transaction_cost": transaction_cost, "analysis": analysis,
             "strategy_asset": strategy_asset, "strategy_data": strategy_data,
@@ -253,6 +263,8 @@ if "result" not in st.session_state:
 
 r = st.session_state["result"]
 a = r["analysis"]
+if r.get("benchmark_alias_notice"):
+    st.info(r["benchmark_alias_notice"], icon=":material/swap_horiz:")
 cvar95 = historical_cvar(a.portfolio_returns)
 allocation_comparison = portfolio_comparison(a.asset_returns, a.allocations, r["weights"], r["risk_free"])
 health_score, health_coverage, health_components = portfolio_health_score(

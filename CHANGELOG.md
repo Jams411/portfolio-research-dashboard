@@ -4,6 +4,8 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Added transparent benchmark ticker aliases for SPX/S&P500/SP500, DJIA/DOW, NASDAQ, VIX and RUT, preserving friendly display labels while downloading provider-native Yahoo Finance symbols.
+- Improved empty market-data errors with an actionable `^GSPC` example and added guards for case handling, native symbols, unknown symbols and ambiguous portfolio holdings.
 - Re-audited the efficient frontier independently against two-asset closed forms and a dense three-asset simplex search. The curve now guarantees the feasible upper branch from GMV, includes the tangency target, removes duplicate/dominated points, and skips failed solves instead of connecting them.
 - Reconciled the Capital Allocation Line directly from the tangency return, volatility, and shared risk-free rate; added explicit endpoint, slope, complete-portfolio, condition-number, constraint-residual, and chart-data tests.
 - Professionalized all public application and HTML-report terminology and added an automated public-string guard while retaining course provenance in internal evidence records.

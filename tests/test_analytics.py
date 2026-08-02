@@ -14,7 +14,7 @@ from portfolio_dashboard.construction import (
 )
 from portfolio_dashboard.data import (
     InputError, MarketDataError, align_prices, extract_adjusted_prices, parse_tickers,
-    parse_weight_input, validate_weights,
+    parse_weight_input, resolve_benchmark_ticker, validate_weights,
 )
 from portfolio_dashboard.performance import (
     annualized_arithmetic_return, annualized_variance, annualized_volatility,
@@ -69,6 +69,35 @@ def test_ticker_and_weight_validation():
     assert normalized.sum() == pytest.approx(1); assert changed
     with pytest.raises(InputError): validate_weights(["A"], [-1])
     with pytest.raises(InputError): validate_weights(["A", "B"], [1])
+
+
+@pytest.mark.parametrize("alias,provider", [
+    ("SPX", "^GSPC"), ("S&P500", "^GSPC"), ("SP500", "^GSPC"),
+    ("DJIA", "^DJI"), ("DOW", "^DJI"), ("NASDAQ", "^IXIC"),
+    ("VIX", "^VIX"), ("RUT", "^RUT"),
+])
+def test_benchmark_aliases_resolve_explicitly(alias, provider):
+    resolution = resolve_benchmark_ticker(alias)
+    assert resolution.display_symbol == alias
+    assert resolution.provider_symbol == provider
+    assert resolution.notice == f"{alias} was mapped to Yahoo Finance symbol {provider}."
+
+
+def test_benchmark_alias_resolution_handles_case_native_and_unknown_symbols():
+    lower = resolve_benchmark_ticker(" spx ")
+    assert lower.display_symbol == "SPX" and lower.provider_symbol == "^GSPC"
+    native = resolve_benchmark_ticker("^gspc")
+    assert native.display_symbol == "^GSPC" and native.provider_symbol == "^GSPC"
+    assert native.notice is None
+    unknown = resolve_benchmark_ticker("aapl")
+    assert unknown.display_symbol == "AAPL" and unknown.provider_symbol == "AAPL"
+    assert unknown.notice is None
+    assert parse_tickers("DOW") == ["DOW"]  # Portfolio holdings are never alias-resolved.
+
+
+def test_no_data_errors_suggest_a_yahoo_index_symbol():
+    with pytest.raises(MarketDataError, match=r"\^GSPC for the S&P 500"):
+        extract_adjusted_prices(pd.DataFrame(), ["SPX"])
 
 
 def test_weight_input_parses_percentages_exactly_once():

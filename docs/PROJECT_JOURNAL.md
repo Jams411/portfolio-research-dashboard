@@ -252,3 +252,11 @@ Interview explainability and financial correctness were prioritized over feature
 - **Tradeoffs:** No curve interpolation and no covariance regularization were added. Failed targets reduce the number of displayed points rather than being bridged. Condition number and failure counts are disclosed.
 - **Public/internal boundary:** App and exported-report strings use professional portfolio-management terminology. Workbook names, course evidence and audit decisions remain in internal documentation.
 - **Related commit hashes:** `a6a4f23`, `7867f98`, and the documentation commit created for this milestone.
+
+## 2026-08-02 — Benchmark alias boundary
+
+- **Goal:** Accept familiar index notation without obscuring the symbol sent to Yahoo Finance.
+- **What changed:** Added explicit benchmark-only aliases, a visible provider-symbol notice, preserved display labels, and actionable no-data guidance.
+- **Tradeoff:** `DOW` maps to `^DJI` only in the benchmark field because it is also an equity ticker. Portfolio holdings are never remapped automatically.
+- **Lesson:** Symbol normalization requires field context; a global alias rewrite can silently change the security being analyzed.
+- **Related decision:** D026.

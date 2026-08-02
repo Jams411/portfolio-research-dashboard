@@ -269,3 +269,12 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Alternatives considered:** Smooth/interpolate the curve, plot the full minimum-variance boundary, regularize covariance silently, trust cached Sharpe, or remove course provenance from all documentation.
 - **Consequences:** The curve may have fewer points when a solve fails, rather than drawing through invalid data. Singular matrices are not silently altered. Diagnostics disclose residuals, condition number and stabilization policy. Internal traceability remains intact.
 - **Status:** Accepted.
+
+## D026 — Resolve only explicit benchmark aliases
+
+- **Date:** 2026-08-02
+- **Decision:** Maintain one small alias dictionary for common benchmark indices, resolve it before Yahoo Finance download, disclose mappings, and retain the normalized user label in presentation. Do not apply aliases to portfolio holdings.
+- **Context:** Users commonly enter `SPX`, while Yahoo Finance requires `^GSPC`. Some requested aliases, particularly `DOW`, can also be valid equity symbols outside benchmark context.
+- **Rationale:** Field-scoped resolution improves usability without silently changing an investment holding. A centralized allowlist is auditable and avoids fuzzy symbol guessing.
+- **Consequences:** Unknown and provider-native symbols pass through unchanged. Portfolio holdings still require their exact Yahoo Finance symbols. Financial calculations are unaffected.
+- **Status:** Accepted.

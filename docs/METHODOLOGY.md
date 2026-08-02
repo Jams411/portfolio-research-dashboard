@@ -2,6 +2,12 @@
 
 ## Data and returns
 
+### Benchmark ticker resolution
+
+Benchmark input is normalized to uppercase and checked against the explicit `BENCHMARK_TICKER_ALIASES` mapping in `portfolio_dashboard/config.py` before the Yahoo Finance request. The provider-native symbol is used only for download and storage; the normalized user alias remains the benchmark label in charts and reports. Direct Yahoo symbols and unknown tickers pass through unchanged. Alias resolution is intentionally limited to the benchmark input: PortfolioLens does not infer or rewrite portfolio holdings, including ambiguous equity symbols such as `DOW`.
+
+Supported mappings are `SPX`, `S&P500`, and `SP500` → `^GSPC`; `DJIA` and `DOW` → `^DJI`; `NASDAQ` → `^IXIC`; `VIX` → `^VIX`; and `RUT` → `^RUT`. This changes symbol interoperability only and does not alter returns, alignment, benchmark regression, or any financial formula.
+
 The data source is yfinance adjusted close, falling back to its close field only when adjusted close is absent from the response. The portfolio and benchmark are fetched separately. Each requested holding must be available; analysis never silently drops a symbol. Holding prices are inner-aligned on complete common trading dates, and no prices are filled or invented. Benchmark comparisons use a further inner alignment.
 
 Daily return is the simple return `r_t = P_t / P_(t-1) - 1`. Portfolio return assumes constant target weights: `r_p,t = Σ w_i r_i,t`. This describes a daily rebalanced analytical portfolio and does not claim to reproduce an un-rebalanced brokerage account.

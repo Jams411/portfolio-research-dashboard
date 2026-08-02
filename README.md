@@ -29,6 +29,7 @@ This application demonstrates:
 
 - Comma-separated ticker validation, equal/custom weights, presets, date range, benchmark, capital, risk-free rate and transaction-cost controls
 - Adjusted yfinance history with caching, safe single/MultiIndex handling, strict failed-ticker reporting and complete-common-date alignment
+- Transparent benchmark aliases for common index names such as SPX, DJIA, NASDAQ, VIX and RUT, with provider-symbol disclosure and friendly report labels
 - Explicit holding-period-return logic; asset-level periodic arithmetic/geometric returns, annualized arithmetic return/CAGR, sample variance/volatility, coefficient of variation, and downloadable foundation tables
 - Total return, consistently defined Sharpe, Sortino, drawdown, Calmar, tail risk, monthly returns and wealth charts
 - Excess-return single-index alpha/beta/R², residual and systematic/idiosyncratic risk, CAPM required return, Jensen’s alpha, Treynor, correlation, covariance, transparent diversification reduction, VaR/CVaR, concentration, effective holdings, and reconciled return/volatility attribution
@@ -149,6 +150,10 @@ Clarity and financial correctness were prioritized over breadth. That choice led
 External methodology sources informed the roadmap around performance measurement, single-index benchmark research, rebalancing, transaction costs, warm-up periods, and overfitting controls. Source formulas were independently implemented and validated rather than copied or treated as verified production evidence.
 
 The project is separate from the frozen Portfolio Intelligence Platform. That platform was not inspected or modified during this showcase phase, and no claim is made here about its internal architecture. This repository intentionally remains the smaller, focused, interview-ready application.
+
+### Benchmark symbols
+
+The benchmark field accepts Yahoo Finance symbols directly and a small explicit alias set. `SPX`, `S&P500`, and `SP500` resolve to `^GSPC`; `DJIA` and `DOW` to `^DJI`; `NASDAQ` to `^IXIC`; `VIX` to `^VIX`; and `RUT` to `^RUT`. PortfolioLens discloses every mapping and retains the entered alias in charts and reports. Aliases apply only to the benchmark field so ordinary portfolio equity tickers are never silently rewritten.
 
 ## Interview-ready explanation
 
