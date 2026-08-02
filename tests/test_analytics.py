@@ -4,7 +4,8 @@ import pandas as pd
 import pytest
 
 from portfolio_dashboard.construction import (
-    capital_allocation_line, efficient_frontier, inverse_volatility_weights,
+    capital_allocation_line, complete_portfolio_statistics, complete_portfolio_weights,
+    efficient_frontier, inverse_volatility_weights,
     maximum_sharpe_weights, minimum_variance_weights, optimizer_statistics,
     target_return_weights, constrained_portfolio_weights, constraint_validation_summary,
     parse_group_caps,
@@ -331,6 +332,78 @@ def test_maximum_sharpe_and_nonleveraged_cal_share_tangency_statistics(returns):
     assert line.iloc[-1]["Risky Portfolio Weight"] == 1
     assert line.iloc[-1]["Expected Return"] == pytest.approx(stats["Optimizer Expected Return"])
     assert line.iloc[-1]["Volatility"] == pytest.approx(stats["Optimizer Volatility"])
+
+
+def test_workbook_two_complete_portfolio_reconciles_with_cal(returns):
+    risk_free_rate = .02
+    tangency_weights = maximum_sharpe_weights(returns, risk_free_rate)
+    tangency = optimizer_statistics(returns, tangency_weights, risk_free_rate)
+    risky_weight = .65
+    complete = complete_portfolio_statistics(tangency, risk_free_rate, risky_weight)
+    weights = complete_portfolio_weights(tangency_weights, risky_weight)
+    assert weights.sum() == pytest.approx(1.0)
+    assert weights.loc["Risk-free asset"] == pytest.approx(1 - risky_weight)
+    assert complete["Optimizer Expected Return"] == pytest.approx(
+        risk_free_rate + risky_weight * (tangency["Optimizer Expected Return"] - risk_free_rate)
+    )
+    assert complete["Optimizer Volatility"] == pytest.approx(
+        risky_weight * tangency["Optimizer Volatility"]
+    )
+    assert complete["Optimizer Sharpe"] == pytest.approx(tangency["Optimizer Sharpe"])
+    cal = capital_allocation_line(tangency, risk_free_rate, points=21)
+    cal_point = cal.loc[np.isclose(cal["Risky Portfolio Weight"], risky_weight)].iloc[0]
+    assert complete["Optimizer Expected Return"] == pytest.approx(cal_point["Expected Return"])
+    assert complete["Optimizer Volatility"] == pytest.approx(cal_point["Volatility"])
+
+
+def test_workbook_two_complete_portfolio_zero_risky_and_boundaries(returns):
+    tangency_weights = maximum_sharpe_weights(returns, .02)
+    tangency = optimizer_statistics(returns, tangency_weights, .02)
+    risk_free = complete_portfolio_statistics(tangency, .02, 0.0)
+    assert risk_free["Optimizer Expected Return"] == pytest.approx(.02)
+    assert risk_free["Optimizer Volatility"] == 0
+    assert np.isnan(risk_free["Optimizer Sharpe"])
+    weights = complete_portfolio_weights(tangency_weights, 0.0)
+    assert weights.loc["Risk-free asset"] == 1
+    assert weights.drop("Risk-free asset").eq(0).all()
+    with pytest.raises(ValueError, match="without leverage"):
+        complete_portfolio_statistics(tangency, .02, 1.01)
+    with pytest.raises(ValueError, match="without leverage"):
+        complete_portfolio_weights(tangency_weights, -0.01)
+
+
+def test_workbook_two_complete_portfolio_handles_nonpositive_excess_return():
+    tangency = {
+        "Optimizer Expected Return": .01,
+        "Optimizer Volatility": .10,
+        "Optimizer Sharpe": -.10,
+    }
+    complete = complete_portfolio_statistics(tangency, .02, .50)
+    assert complete["Optimizer Expected Return"] == pytest.approx(.015)
+    assert complete["Optimizer Volatility"] == pytest.approx(.05)
+    assert complete["Optimizer Sharpe"] == pytest.approx(-.10)
+
+
+def test_workbook_two_singular_covariance_is_handled_deterministically():
+    base = pd.Series([-.01, .00, .01, .02, -.005])
+    singular = pd.DataFrame({"A": base, "B": base})
+    weights = minimum_variance_weights(singular)
+    assert weights.sum() == pytest.approx(1.0)
+    assert weights.between(0, 1).all()
+    assert optimizer_statistics(singular, weights)["Optimizer Volatility"] == pytest.approx(
+        base.std(ddof=1) * np.sqrt(252)
+    )
+
+
+def test_workbook_two_optimizer_nonconvergence_fails_clearly(returns, monkeypatch):
+    class FailedResult:
+        success = False
+        message = "synthetic non-convergence"
+        x = np.array([.5, .5])
+
+    monkeypatch.setattr("portfolio_dashboard.construction.minimize", lambda *args, **kwargs: FailedResult())
+    with pytest.raises(RuntimeError, match="synthetic non-convergence"):
+        minimum_variance_weights(returns)
 
 
 def test_explicit_asset_bands_exclusion_and_group_cap_are_enforced(returns):

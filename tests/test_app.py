@@ -103,6 +103,11 @@ def test_construction_and_rebalancing_view_runs_offline(offline_app):
     assert any(item.value == "Portfolio construction and rebalancing" for item in offline_app.subheader)
     assert any(item.label == "Policy detail" for item in offline_app.selectbox)
     assert any(item.label == "Construct target-return portfolio" for item in offline_app.button)
+    assert any(
+        item.label == "Complete portfolio allocation to the tangency portfolio (%)"
+        for item in offline_app.slider
+    )
+    assert any(item.label == "Download complete-portfolio weights" for item in offline_app.get("download_button"))
 
 
 def test_workbook_one_risk_foundations_render_and_export_offline(offline_app):

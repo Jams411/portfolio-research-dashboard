@@ -10,7 +10,8 @@ import streamlit as st
 from portfolio_dashboard.config import PRESETS, TRADING_DAYS
 from portfolio_dashboard.construction import (
     capital_allocation_line, constrained_portfolio_weights, constraint_validation_summary,
-    efficient_frontier, optimizer_statistics, parse_group_caps, target_return_weights,
+    complete_portfolio_statistics, complete_portfolio_weights, efficient_frontier,
+    optimizer_statistics, parse_group_caps, target_return_weights,
 )
 from portfolio_dashboard.data import MarketDataError, download_prices, parse_tickers, parse_weight_input, validate_dates
 from portfolio_dashboard.formatting import metric_value, money, pct, ratio
@@ -373,7 +374,26 @@ if tabs[4].open:
                 "Optimizer expected return is the annualized arithmetic sample mean; optimizer volatility uses the annualized sample covariance matrix. "
                 "These differ from realized CAGR and are historical estimates, not forecasts or recommendations."
             )
-            st.dataframe(r["construction_stats"], width="stretch", column_config={
+            tangency_stats = r["construction_stats"].loc["Maximum Sharpe"].to_dict()
+            risky_allocation = st.slider(
+                "Complete portfolio allocation to the tangency portfolio (%)", 0, 100, 100, 5,
+                help=(
+                    "The remainder is held in the risk-free asset. PortfolioLens models lending from 0% to 100% risky allocation; "
+                    "the workbook's borrowing extension is educational-only and leverage is not enabled."
+                ),
+            ) / 100
+            complete_stats = complete_portfolio_statistics(tangency_stats, r["risk_free"], risky_allocation)
+            complete_weights = complete_portfolio_weights(
+                a.allocations["Maximum Sharpe"], risky_allocation,
+            )
+            comparison_stats = r["construction_stats"].copy()
+            comparison_stats.loc["Complete Portfolio"] = {
+                key: complete_stats[key] for key in comparison_stats.columns
+            }
+            if "target_return_result" in st.session_state:
+                _, saved_target_stats = st.session_state["target_return_result"]
+                comparison_stats.loc["Target Return"] = saved_target_stats
+            st.dataframe(comparison_stats, width="stretch", column_config={
                 "Optimizer Expected Return": st.column_config.NumberColumn(format="percent"),
                 "Optimizer Volatility": st.column_config.NumberColumn(format="percent"),
                 "Optimizer Sharpe": st.column_config.NumberColumn(format="%.2f"),
@@ -394,12 +414,48 @@ if tabs[4].open:
                         x=[point["Optimizer Volatility"]], y=[point["Optimizer Expected Return"]],
                         mode="markers+text", text=[name], textposition="top center", name=name,
                     )
+            frontier_chart.add_scatter(
+                x=[complete_stats["Optimizer Volatility"]], y=[complete_stats["Optimizer Expected Return"]],
+                mode="markers+text", text=["Complete"], textposition="bottom center", name="Complete Portfolio",
+            )
+            if "target_return_result" in st.session_state:
+                _, saved_target_stats = st.session_state["target_return_result"]
+                frontier_chart.add_scatter(
+                    x=[saved_target_stats["Optimizer Volatility"]],
+                    y=[saved_target_stats["Optimizer Expected Return"]],
+                    mode="markers+text", text=["Target"], textposition="top center", name="Target Return",
+                )
             frontier_chart.update_layout(hovermode="closest", legend_title_text="", margin=dict(l=10, r=10, t=50, b=10))
             st.plotly_chart(frontier_chart, width="stretch", theme="streamlit")
             st.caption(
                 "The frontier begins at the global minimum-variance portfolio. The constrained tangency estimate is the long-only maximum-Sharpe portfolio. "
                 "The CAL stops at 100% risky allocation: borrowing, leverage, and short selling are not modeled."
             )
+            st.markdown("**Complete portfolio: risk-free asset plus tangency portfolio**")
+            with st.container(horizontal=True):
+                st.metric("Risky allocation", pct(complete_stats["Risky Portfolio Weight"]), border=True)
+                st.metric("Risk-free allocation", pct(complete_stats["Risk-Free Asset Weight"]), border=True)
+                st.metric("Expected return", pct(complete_stats["Optimizer Expected Return"]), border=True)
+                st.metric("Volatility", pct(complete_stats["Optimizer Volatility"]), border=True)
+            st.dataframe(complete_weights.to_frame(), width="stretch", column_config={
+                "Complete Portfolio Weight": st.column_config.NumberColumn(format="percent")
+            })
+            st.caption(
+                "This is a point on the non-leveraged CAL, not a recommendation. With zero risky allocation, expected return equals the entered risk-free rate and volatility is zero."
+            )
+            with st.container(horizontal=True):
+                st.download_button(
+                    "Download complete-portfolio weights", complete_weights.to_csv(),
+                    "complete_portfolio_weights.csv", "text/csv",
+                )
+                st.download_button(
+                    "Download efficient-frontier data", r["frontier"].to_csv(),
+                    "efficient_frontier.csv", "text/csv",
+                )
+                st.download_button(
+                    "Download frontier weights", r["frontier_weights"].to_csv(),
+                    "frontier_weights.csv", "text/csv",
+                )
             expected_assets = a.asset_returns.mean() * TRADING_DAYS
             with st.form("target_return_form", border=True):
                 target_percent = st.number_input(
@@ -814,7 +870,7 @@ if tabs[9].open:
 
 **Risk and benchmark regression.** Historical 95% VaR and CVaR are nonnegative loss measures based on the empirical lower tail. The single-index model regresses aligned daily portfolio excess returns on benchmark excess returns. Its intercept and residual volatility are annualized; beta is the fitted slope; R² is the explained share of variation. Systematic and idiosyncratic variance are shown separately. CAPM required return, Jensen’s alpha, and Treynor use the same arithmetic return and annual risk-free assumptions. These are historical sample estimates, not forecasts or evidence of manager skill. Euler volatility contributions use the annualized sample covariance matrix and sum to portfolio volatility. Drawdowns include the initial portfolio value as the first peak.
 
-**Portfolio construction.** Baseline analytics and historical stress periods use constant long-only weights. Equal weight and inverse volatility are deterministic comparison allocations; inverse volatility is not described as risk parity. The efficient frontier, global minimum-variance, maximum-Sharpe, and target-return portfolios use historical arithmetic annualized returns and the annualized sample covariance matrix. SLSQP portfolios have weights in [0,1] summing to one, with no leverage or short selling; custom asset bands, exclusions, and explicit user-defined group caps receive a separate feasibility check. The Capital Allocation Line is analytical and nonleveraged. Optimization failure is shown rather than replaced, and optimized portfolios are neither forecasts nor recommendations.
+**Portfolio construction.** Baseline analytics and historical stress periods use constant long-only weights. Equal weight and inverse volatility are deterministic comparison allocations; inverse volatility is not described as risk parity. The efficient frontier, global minimum-variance, maximum-Sharpe, and target-return portfolios use historical arithmetic annualized returns and the annualized sample covariance matrix. SLSQP portfolios have weights in [0,1] summing to one, with no leverage or short selling; custom asset bands, exclusions, and explicit user-defined group caps receive a separate feasibility check. The Capital Allocation Line is analytical and nonleveraged. A complete portfolio combines 0–100% in the long-only tangency portfolio with the remainder in the risk-free asset; borrowing and leverage are not modeled. Optimization failure is shown rather than replaced, and optimized portfolios are neither forecasts nor recommendations.
 
 **Rebalancing simulation.** Rebalancing is a separate holdings-level simulation, not part of the constant-weight baseline. Buy-and-hold, monthly, quarterly, annual, and threshold policies allow weights to drift between trade dates. One-way turnover is half the gross traded value divided by pre-trade portfolio value; proportional transaction costs apply only when trades occur. Trade history records rebalancing dates and before/after allocations.
 

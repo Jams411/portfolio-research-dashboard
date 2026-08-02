@@ -247,6 +247,53 @@ def capital_allocation_line(
     })
 
 
+def complete_portfolio_statistics(
+    tangency_statistics: dict[str, float], risk_free_rate: float, risky_weight: float,
+) -> dict[str, float]:
+    """Combine the tangency portfolio with the risk-free asset without leverage.
+
+    ``E[r_c] = r_f + y(E[r_T]-r_f)`` and ``sigma_c = y sigma_T`` for
+    ``0 <= y <= 1``. Workbook 2 also illustrates borrowing for ``y > 1``;
+    PortfolioLens intentionally keeps that case educational-only.
+    """
+    expected = tangency_statistics.get("Optimizer Expected Return", float("nan"))
+    volatility = tangency_statistics.get("Optimizer Volatility", float("nan"))
+    if not np.isfinite([expected, volatility, risk_free_rate, risky_weight]).all():
+        raise ValueError("Complete-portfolio inputs must be finite.")
+    if volatility <= 0:
+        raise ValueError("The risky portfolio must have positive volatility.")
+    if risky_weight < 0 or risky_weight > 1:
+        raise ValueError("Risky allocation must be between 0% and 100% without leverage.")
+    complete_expected = risk_free_rate + risky_weight * (expected - risk_free_rate)
+    complete_volatility = risky_weight * volatility
+    complete_sharpe = (
+        (complete_expected - risk_free_rate) / complete_volatility
+        if complete_volatility > 0 else float("nan")
+    )
+    return {
+        "Risky Portfolio Weight": float(risky_weight),
+        "Risk-Free Asset Weight": float(1.0 - risky_weight),
+        "Optimizer Expected Return": float(complete_expected),
+        "Optimizer Volatility": float(complete_volatility),
+        "Optimizer Sharpe": float(complete_sharpe),
+    }
+
+
+def complete_portfolio_weights(tangency_weights: pd.Series, risky_weight: float) -> pd.Series:
+    """Return risky-asset and risk-free weights for a non-leveraged complete portfolio."""
+    if tangency_weights.empty or not np.isfinite(tangency_weights.to_numpy()).all():
+        raise ValueError("Tangency weights must be finite and nonempty.")
+    if not np.isclose(tangency_weights.sum(), 1.0, atol=1e-6):
+        raise ValueError("Tangency weights must sum to one.")
+    if (tangency_weights < -1e-10).any():
+        raise ValueError("PortfolioLens complete portfolios require long-only tangency weights.")
+    if not np.isfinite(risky_weight) or risky_weight < 0 or risky_weight > 1:
+        raise ValueError("Risky allocation must be between 0% and 100% without leverage.")
+    result = (tangency_weights * risky_weight).rename("Complete Portfolio Weight")
+    result.loc["Risk-free asset"] = 1.0 - risky_weight
+    return result
+
+
 def allocation_methods(returns: pd.DataFrame, current: pd.Series, risk_free_rate: float) -> tuple[pd.DataFrame, list[str]]:
     methods = {"Current": current, "Equal Weight": equal_weights(returns.columns)}
     warnings: list[str] = []
