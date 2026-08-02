@@ -168,3 +168,7 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - **Course or career connection:** Mean-variance construction, Solver translation, two-fund separation, CAL/CML interpretation, and model-risk governance.
 - **Tradeoffs:** Borrowing, leverage, short sales, IPS authoring, and invented risk-aversion utility remain outside the production application.
 - **Evidence:** Workbook 2 tests, permanent traceability, Decision D023, and commits created for this milestone.
+## 2026-08-01 — Workbook 2 UI exposure correction
+
+- **What changed:** Promoted the existing mean-variance backend from the combined Construction & Rebalancing tab to an explicitly named Portfolio Optimization section. Added direct GMV, tangency, target-return, complete-portfolio and optimized-weight labels/exports, while documenting why the direct risky-allocation control is not a risk-aversion coefficient.
+- **Why:** Workbook 2 calculations were present and tested but were too difficult to discover in the application navigation.

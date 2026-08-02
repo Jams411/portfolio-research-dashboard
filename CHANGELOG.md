@@ -4,6 +4,8 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Promoted Workbook 2 analytics to a dedicated **Portfolio Optimization** application section, with explicit GMV/tangency labels, a consolidated optimized-weights table and export, and an honest risk-preference control that does not imply the workbook supplied a numerical utility model.
+
 ### Added
 
 - Added Workbook 2 complete-portfolio analysis: a user-selected 0–100% allocation between the long-only tangency portfolio and risk-free asset, plotted on the CAL with reconciled expected return, volatility, weights, and direct CSV exports.

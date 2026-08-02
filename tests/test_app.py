@@ -93,21 +93,25 @@ def test_research_workspace_is_initialized_from_computed_analysis(offline_app):
     assert any(button.label == "Run what-if analysis" for button in offline_app.button)
 
 
-def test_construction_and_rebalancing_view_runs_offline(offline_app):
+def test_portfolio_optimization_view_exposes_workbook_two_tools_offline(offline_app):
     widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, QQQ, TLT, GLD")
     widget(offline_app.text_input, "Weights (%)").set_value("40,30,20,10")
     run_analysis(offline_app)
-    offline_app.session_state["analysis_tab"] = "Construction & Rebalancing"
+    offline_app.session_state["analysis_tab"] = "Portfolio Optimization"
     offline_app.run(timeout=30)
     assert not offline_app.exception
-    assert any(item.value == "Portfolio construction and rebalancing" for item in offline_app.subheader)
+    assert any(item.value == "Portfolio Optimization" for item in offline_app.subheader)
     assert any(item.label == "Policy detail" for item in offline_app.selectbox)
     assert any(item.label == "Construct target-return portfolio" for item in offline_app.button)
     assert any(
-        item.label == "Complete portfolio allocation to the tangency portfolio (%)"
+        item.label == "Risk preference — allocation to the tangency portfolio (%)"
         for item in offline_app.slider
     )
+    assert any("Workbook 2 tools" in item.value for item in offline_app.caption)
+    assert any("Current and optimized portfolio statistics" in item.value for item in offline_app.markdown)
+    assert any("Optimized weights" in item.value for item in offline_app.markdown)
     assert any(item.label == "Download complete-portfolio weights" for item in offline_app.get("download_button"))
+    assert any(item.label == "Download optimized weights" for item in offline_app.get("download_button"))
 
 
 def test_workbook_one_risk_foundations_render_and_export_offline(offline_app):

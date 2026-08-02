@@ -213,7 +213,7 @@ st.caption(
 st.caption("Historical research only · constant portfolio weights · not personalized financial advice")
 
 tab_names = [
-    "Overview", "Performance", "Risk", "Benchmark & Attribution", "Construction & Rebalancing",
+    "Overview", "Performance", "Risk", "Benchmark & Attribution", "Portfolio Optimization",
     "Momentum Strategy", "Stress Testing", "Research Workspace", "Research Report", "Methodology & Limitations",
 ]
 tabs = st.tabs(tab_names, key="analysis_tab", on_change="rerun")
@@ -365,7 +365,12 @@ if tabs[3].open:
 
 if tabs[4].open:
     with tabs[4]:
-        st.subheader("Portfolio construction and rebalancing")
+        st.subheader("Portfolio Optimization")
+        st.caption(
+            "Workbook 2 tools: long-only efficient frontier, global minimum-variance portfolio, "
+            "constrained tangency portfolio, target-return portfolio, non-leveraged Capital Allocation Line, "
+            "complete portfolio, and exportable optimized weights."
+        )
         if r["construction_error"]:
             st.warning(f"Efficient frontier unavailable: {r['construction_error']}")
         else:
@@ -376,10 +381,11 @@ if tabs[4].open:
             )
             tangency_stats = r["construction_stats"].loc["Maximum Sharpe"].to_dict()
             risky_allocation = st.slider(
-                "Complete portfolio allocation to the tangency portfolio (%)", 0, 100, 100, 5,
+                "Risk preference — allocation to the tangency portfolio (%)", 0, 100, 100, 5,
                 help=(
-                    "The remainder is held in the risk-free asset. PortfolioLens models lending from 0% to 100% risky allocation; "
-                    "the workbook's borrowing extension is educational-only and leverage is not enabled."
+                    "The remainder is held in the risk-free asset. This directly selects the complete portfolio; it is not a "
+                    "risk-aversion coefficient. Workbook 2 supplies no numerical utility function from which to derive one. "
+                    "PortfolioLens models lending from 0% to 100% risky allocation; borrowing and leverage are not enabled."
                 ),
             ) / 100
             complete_stats = complete_portfolio_statistics(tangency_stats, r["risk_free"], risky_allocation)
@@ -393,6 +399,11 @@ if tabs[4].open:
             if "target_return_result" in st.session_state:
                 _, saved_target_stats = st.session_state["target_return_result"]
                 comparison_stats.loc["Target Return"] = saved_target_stats
+            comparison_stats = comparison_stats.rename(index={
+                "Minimum Variance": "Global Minimum Variance",
+                "Maximum Sharpe": "Tangency (Maximum Sharpe)",
+            })
+            st.markdown("**Current and optimized portfolio statistics**")
             st.dataframe(comparison_stats, width="stretch", column_config={
                 "Optimizer Expected Return": st.column_config.NumberColumn(format="percent"),
                 "Optimizer Volatility": st.column_config.NumberColumn(format="percent"),
@@ -443,6 +454,15 @@ if tabs[4].open:
             st.caption(
                 "This is a point on the non-leveraged CAL, not a recommendation. With zero risky allocation, expected return equals the entered risk-free rate and volatility is zero."
             )
+            risk_aversion = st.expander("Risk aversion and utility: Workbook 2 boundary")
+            if risk_aversion.open:
+                with risk_aversion:
+                    st.write(
+                        "Workbook 2 discusses risk aversion, diminishing marginal utility, and complete portfolios, "
+                        "but it does not provide a risk-aversion coefficient, quadratic utility equation, indifference-curve "
+                        "calculation, or Solver rule for choosing an optimal complete portfolio. PortfolioLens therefore exposes "
+                        "the complete-portfolio allocation directly above and does not label it as a numerical risk-aversion model."
+                    )
             with st.container(horizontal=True):
                 st.download_button(
                     "Download complete-portfolio weights", complete_weights.to_csv(),
@@ -571,6 +591,31 @@ if tabs[4].open:
                             "Pass": st.column_config.CheckboxColumn(),
                             "Breach": st.column_config.NumberColumn(format="percent"),
                         })
+            optimized_weights = pd.DataFrame({
+                "Current Portfolio": r["weights"],
+                "Global Minimum Variance": a.allocations["Minimum Variance"],
+                "Tangency (Maximum Sharpe)": a.allocations["Maximum Sharpe"],
+            })
+            if "target_return_result" in st.session_state:
+                target_weights, _ = st.session_state["target_return_result"]
+                optimized_weights["Target Return"] = target_weights
+            optimized_weights = optimized_weights.reindex(complete_weights.index)
+            optimized_weights["Complete Portfolio"] = complete_weights
+            st.markdown("**Optimized weights**")
+            st.dataframe(optimized_weights, width="stretch", column_config={
+                column: st.column_config.NumberColumn(format="percent")
+                for column in optimized_weights.columns
+            })
+            st.download_button(
+                "Download optimized weights", optimized_weights.to_csv(),
+                "portfolio_optimization_weights.csv", "text/csv",
+            )
+            st.caption(
+                "All risky portfolios are long-only and fully invested. The complete portfolio adds the risk-free asset; "
+                "historical arithmetic estimates are inputs, not forecasts or recommendations."
+            )
+        st.divider()
+        st.markdown("### Rebalancing decision support")
         st.markdown("**Allocation weights and target trade plan**")
         st.dataframe(a.allocations, width="stretch", column_config={
             column: st.column_config.NumberColumn(format="percent") for column in a.allocations.columns
