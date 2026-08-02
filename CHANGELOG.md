@@ -4,6 +4,10 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Added a top-level **Portfolio Strategies** workspace with aligned rebalancing-policy and benchmark comparison, active return, mean absolute periodic difference, tracking error, information ratio, drawdown, turnover, costs, and exports.
+- Added source-supported passive-tracking diagnostics while preserving PortfolioLens's annualized sample tracking-error convention and clearly separating it from the source's population-standard-deviation example.
+- Completed a direct eleven-worksheet trace of the portfolio-strategies workbook; fixed-income, tax, index-construction, and valuation exercises remain documented rather than being forced into the public application.
+
 - Added a top-level **Asset Pricing** workspace with CAPM required returns, realized-versus-required return comparisons, Jensen’s alpha, a Security Market Line, and downloadable security results.
 - Added deterministic CAPM/SML primitives plus an assumption-based linear factor-return decomposition; live multifactor estimation remains excluded because no governed factor-return source is available.
 - Completed a direct seven-worksheet trace of the CAPM, APT and multifactor source workbook, including its monthly excess-return conventions and four-factor assumption tables.

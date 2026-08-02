@@ -30,6 +30,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - Workbook 2 deep trace: recoverable long-only target-return and unconstrained tangency Solver models, frontier/CML methodology comparison, and non-leveraged complete portfolios combining the tangency portfolio with the risk-free asset
 - Workbook 3 deep trace: two-asset asset-class allocation, correlation-sensitive minimum variance, and quadratic-utility complete-portfolio selection with a disclosed non-leveraged boundary
 - Workbook 5-1 deep trace: CAPM/SML comparison and assumption-based APT/four-factor decomposition, with live multifactor estimation explicitly deferred pending a governed factor dataset
+- Workbook 6 deep trace: passive tracking, active-manager comparison, turnover/tax-efficiency distinctions, index construction, and fixed-income strategy exercises; supported benchmark diagnostics are surfaced in Portfolio Strategies while specialized bond/tax models remain educational-only
 - Independent frontier/CAL validation: closed-form and brute-force reconciliation, upper-branch filtering, exact tangency inclusion, endpoint reconciliation, numerical diagnostics, and professional public terminology
 - Verified product-aligned Streamlit deployment at `https://portfolio-lens.streamlit.app`, with matching documentation and automated health checks
 
@@ -59,6 +60,7 @@ Why: subperiod evidence is more informative than a single full-period result and
 - **Volatility targeting and regime rotation:** Course-relevant but would add another portfolio/strategy layer before the single momentum model has subperiod diagnostics.
 - **Brinson allocation/selection attribution:** Requires trustworthy benchmark constituent weights and classifications; current holdings contribution should not be mislabeled as Brinson attribution.
 - **Bond duration and convexity:** Requires explicit coupon, maturity, yield, frequency, and instrument assumptions that yfinance price history does not reliably provide.
+- **Tax-aware fund evaluation:** The source defines turnover and tax-cost ratios, but PortfolioLens has no tax-lot, distribution, jurisdiction, or after-tax data model.
 - **Fundamental clustering:** A defensible machine-learning research idea only with reproducible, point-in-time fundamental data. It should begin outside the core dashboard if revisited.
 - **Multifactor or Treynor–Black live models:** Educational companion only unless reliable factor data and a separately approved estimation design become available.
 - **Live SMB/HML/momentum exposure estimation:** The source workbook supplies factor premia and exposures but no recoverable data-acquisition or regression workflow; production estimation requires a governed, frequency-aligned factor dataset.

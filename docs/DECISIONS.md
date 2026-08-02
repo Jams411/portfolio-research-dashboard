@@ -296,3 +296,12 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Rationale:** Security diagnostics are supported, testable and relevant to research and market-risk roles. Converting historical alpha into unconstrained positions would violate the long-only boundary and imply persistence without forecast governance.
 - **Consequences:** Historical alpha screens carry non-forecast warnings and no Buy/Sell labels. Treynor–Black-style allocation stays educational-only; rolling stability and outlier diagnostics remain possible enhancements.
 - **Status:** Accepted.
+
+## D029 — Surface strategy comparison without attributing unsupported rules to Workbook 6
+
+- **Date:** 2026-08-02
+- **Decision:** Promote the existing rebalancing and momentum outputs into a top-level Portfolio Strategies workspace and add workbook-supported benchmark-difference diagnostics. Do not claim that the source teaches the existing rebalancing schedules or momentum rule.
+- **Context:** Workbook 6 directly supports passive tracking, active-manager comparison, turnover distinctions and fixed-income strategy examples, but contains no CPPI, momentum, periodic-rebalancing, threshold-rebalancing, transaction-cost, or trade-timing model.
+- **Rationale:** A consolidated strategy comparison is professionally useful, while provenance must distinguish source-derived metrics from existing product methodology. Specialized tax and bond workflows require data that adjusted-price history does not provide.
+- **Consequences:** Policy histories gain aligned active return, absolute periodic difference, tracking error and information ratio. Fixed-income, tax, index-construction and valuation exercises remain internally traced and educational-only.
+- **Status:** Accepted.

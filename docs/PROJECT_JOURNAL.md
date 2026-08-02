@@ -279,3 +279,12 @@ Interview explainability and financial correctness were prioritized over feature
 - **Methodology judgment:** Each security's market arithmetic return uses its own aligned regression sample. Live factor estimation is deferred instead of substituting ungoverned ETF proxies or treating static examples as current forecasts.
 - **Validation:** Synthetic zero, negative and high-beta cases; risk-free and benchmark sensitivity; SML coordinates; CAPM table alignment; factor contribution reconciliation; four-ETF offline workflow; public navigation AppTest.
 - **Next step:** Run complete repository verification, push logical commits, and confirm CI and public deployment evidence.
+
+## 2026-08-02 — Portfolio-strategy source integration
+
+- **Goal:** Audit Workbook 6 directly and expose only product-compatible strategy evaluation.
+- **Workbook evidence:** Eleven visible nonempty sheets, 592 formulas, three charts and six media objects. Recoverable work covers index compounding/construction, passive tracking, active managers, fund turnover/tax cost, equity-style rationale, bond sensitivity, duration/convexity, immunization, portfolio positioning and a yield-pickup swap. No Solver, VBA, CPPI, rebalancing schedule, threshold, momentum, transaction-cost or trade-timing model is present.
+- **Implementation:** Added mean absolute periodic benchmark difference and benchmark-relative columns to every simulated policy; replaced the former Momentum Strategy navigation label with Portfolio Strategies; added aligned value/drawdown charts, policy selection and history/trade exports while retaining the lagged momentum research below.
+- **Methodology judgment:** Source population tracking error is documented, but PortfolioLens preserves its established sample tracking-error convention. Existing policy and momentum rules are labeled as product methodology rather than source-derived logic.
+- **Validation:** Deterministic policy reconciliation, no-trade/calendar/threshold/cost tests, four-ETF SPX workflow, AppTest navigation and export assertions, and internal traceability review.
+- **Next step:** Complete full verification, commit in logical milestones, push, and confirm CI and deployment health.

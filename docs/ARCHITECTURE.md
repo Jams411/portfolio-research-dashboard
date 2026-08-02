@@ -34,7 +34,7 @@ portfolio_dashboard/
   research.py                       comparison, score, scenario and deterministic insight diagnostics
   construction.py                   annualized inputs, constrained optimizers, frontier/CAL diagnostics and utility
   pipeline.py                       main analytics orchestration and Analysis result
-  rebalancing.py                    target-allocation trade plan
+  rebalancing.py                    target-allocation, policy simulation and benchmark comparison
   strategy.py                       lagged moving-average backtest
   stress.py                         custom and historical scenarios
   reporting.py                      deterministic narrative and HTML report
@@ -174,9 +174,9 @@ pytest.ini                          local pytest configuration
 ### `rebalancing.py` — target trade plans and holdings-level policy simulation
 
 - **Why it exists:** Separates target trade instructions and path-dependent implementation policies from constant-weight analytics.
-- **Owns:** Current/target gaps, dollar trades, buy/sell labels, holdings drift, periodic/threshold triggers, one-way turnover, proportional costs, and policy comparison.
+- **Owns:** Current/target gaps, dollar trades, buy/sell labels, holdings drift, periodic/threshold triggers, one-way turnover, proportional costs, and aligned benchmark-relative policy comparison.
 - **Does not own:** Tax lots, whole-share rounding, cash flows, liquidity, market impact, cost-aware optimization, or execution.
-- **Key inputs:** Asset returns, target weights, value, policy, drift threshold, transaction-cost rate, risk-free rate, and optional display hold threshold.
+- **Key inputs:** Asset and optional benchmark returns, target weights, value, policy, drift threshold, transaction-cost rate, risk-free rate, and optional display hold threshold.
 - **Key outputs:** Target plan, daily policy histories, before/after trade histories, rebalance dates, and comparison statistics.
 - **Important dependencies:** pandas, NumPy, and `performance_metrics`.
 - **Financial concepts:** Self-financing pre-cost trades, weight drift, calendar/threshold rebalancing, turnover, costs, and path continuity.

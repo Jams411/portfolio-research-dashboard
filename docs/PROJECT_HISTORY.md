@@ -221,3 +221,10 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - **Why it changed:** Existing benchmark analysis reported CAPM metrics but did not expose the cross-security Security Market Line or distinguish production CAPM analysis from the source's supplied-assumption APT and four-factor examples.
 - **Boundary:** Market, SMB, HML and momentum are traced internally. Live multifactor regression is deferred because the workbook contains no recoverable factor-data or exposure-estimation workflow.
 - **Evidence:** CAPM/SML sensitivity tests, synthetic regression integration, factor contribution reconciliation, offline Streamlit AppTest, Decision D028, and the Workbook 5-1 traceability section.
+
+## 2026-08-02 — Workbook 6 strategy and benchmark trace
+
+- **What changed:** Audited all eleven nonempty worksheets and created a top-level Portfolio Strategies workspace combining existing policy simulations with aligned benchmark-relative evaluation, drawdown comparison, turnover, costs and exports.
+- **Why it changed:** The source supports passive tracking and active-manager comparison, while the application previously split policy simulation and momentum across different locations without one professional strategy-comparison surface.
+- **Boundary:** Periodic/threshold rebalancing and momentum are existing PortfolioLens choices, not attributed to this workbook. CPPI is absent. Tax, index-construction and fixed-income exercises remain educational-only because required instrument, constituent and after-tax data are unavailable.
+- **Evidence:** Independent active-return/tracking-error reconciliation, policy-path tests, offline AppTest, Decision D029, and the Workbook 6 traceability section.

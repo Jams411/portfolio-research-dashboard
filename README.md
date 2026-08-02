@@ -41,6 +41,7 @@ This application demonstrates:
 - A dedicated **Portfolio Optimization** analysis tab with current/optimized statistics, direct or utility-based allocation, numerical diagnostics, consolidated optimized weights, and CSV exports
 - Explicit asset bands, exclusions, user-defined groups/caps, feasibility checks, and compliance summaries
 - Buy-and-hold, monthly, quarterly, annual, and threshold rebalancing simulations with drift, turnover, costs, dates, and trade-history exports
+- A dedicated **Portfolio Strategies** workspace comparing rebalancing policies with SPX using active return, tracking error, information ratio, drawdown, turnover, costs, and downloadable histories
 - Like-for-like portfolio comparison, a fully disclosed historical Health Score, validated hypothetical weights/shocks, and metric-traceable deterministic insights
 - Dollar rebalancing plan with intuitive buy/sell signs and CSV export
 - Dual-moving-average long/cash strategy on the first requested holding, with one-day signal lag and transaction costs

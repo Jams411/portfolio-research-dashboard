@@ -185,6 +185,14 @@ The benchmark arithmetic return is calculated from the same aligned observations
 
 The source-supported APT and four-factor calculations are linear assumption models. For supplied exposures `b_k`, supplied factor premia `λ_k`, and a supplied base return `λ_0`, PortfolioLens can reconcile `E[R_i]=λ_0+Σ b_ik λ_k` and each contribution `b_ik λ_k`. The source identifies market excess, size (SMB), value (HML), and momentum factors, but supplies no recoverable factor-return acquisition or exposure-estimation workflow. The public application therefore labels this as a framework and does not fabricate live multifactor estimates from Yahoo Finance data.
 
+## Portfolio-strategy and benchmark comparison
+
+Portfolio Strategies compares buy and hold, monthly, quarterly, annual, and threshold rebalancing on one holdings-level return history. Buy and hold allows weights to drift. Periodic policies trade only after the final available observation of a completed calendar period; the final sample date is not silently treated as a rebalance. Threshold policy trades only when maximum absolute drift reaches the selected band. Trade notional, one-way turnover and proportional costs use the same formulas documented in the rebalancing section.
+
+For each policy, daily active return is `r_policy−r_benchmark`. Annualized active return is `252×mean(active return)`. Tracking error is `sqrt(252)×sample SD(active return)`, and information ratio is annualized active return divided by tracking error. Mean absolute periodic difference is `mean(|r_policy−r_benchmark|)` and deliberately remains in daily units. The source uses population standard deviation for a finite ten-period manager table; PortfolioLens retains its existing sample convention because live history is treated as an estimate from a broader return process. The difference is explicit and tested.
+
+The separate moving-average strategy remains a PortfolioLens product feature, not a source-derived rule. Its signal is shifted one trading day before returns are applied, and costs occur only when the position changes. Neither historical rebalancing-policy results nor momentum outcomes are recommendations or forecasts.
+
 ## General limitations and disclaimer
 
 Historical data may contain provider errors and do not predict future performance. The system excludes taxes, liquidity and position-size limits, financing, corporate-action edge cases, market impact, and slippage beyond the configured proportional cost. It has no live execution, authentication, persistence, or intraday data. For research and educational use only; not personalized financial advice.
