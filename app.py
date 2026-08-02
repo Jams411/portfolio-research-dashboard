@@ -11,6 +11,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+from portfolio_dashboard.asset_pricing import capm_security_table, security_market_line
 from portfolio_dashboard.config import PRESETS, TRADING_DAYS
 from portfolio_dashboard.construction import (
     capital_allocation_line, constrained_portfolio_weights, constraint_validation_summary,
@@ -228,8 +229,8 @@ if run:
 
 tab_names = [
     "Overview", "Performance", "Risk", "Benchmark & Attribution", "Security Analysis",
-    "Portfolio Optimization", "Momentum Strategy", "Stress Testing", "Research Workspace",
-    "Research Report", "Methodology & Limitations",
+    "Asset Pricing", "Portfolio Optimization", "Momentum Strategy", "Stress Testing",
+    "Research Workspace", "Research Report", "Methodology & Limitations",
 ]
 tabs = st.tabs(tab_names, key="analysis_tab", on_change="rerun")
 
@@ -250,6 +251,18 @@ if "result" not in st.session_state:
 - Methodology, limitations, and downloadable results
 """)
         elif open_tab == 5:
+            st.subheader("Asset Pricing")
+            st.info("Run an analysis from the sidebar to compare realized security returns with CAPM required returns.")
+            st.markdown("""
+**This top-level workspace displays:**
+
+- Security-level beta and historical arithmetic return
+- CAPM required return and Jensen's alpha
+- Security Market Line with actual-return observations
+- Above/on/below-line classification without trade recommendations
+- Factor-pricing scope, assumptions, and limitations
+""")
+        elif open_tab == 6:
             st.subheader("Portfolio Optimization")
             st.info("Run an analysis from the sidebar to calculate the efficient frontier and optimized portfolios.")
             st.markdown("""
@@ -268,7 +281,7 @@ if "result" not in st.session_state:
                 "Long-only weights sum to 100%; short selling and leverage are disabled. Users may select "
                 "risky-asset exposure directly or provide an explicit risk-aversion coefficient."
             )
-        elif open_tab == 10:
+        elif open_tab == 11:
             st.subheader("Methodology and limitations")
             st.write(f"Application build: `{build_identifier()}`")
             st.info("Run an analysis to view the complete methodology alongside calculated results.")
@@ -538,6 +551,104 @@ if tabs[4].open:
             f"portfoliolens_{str(selected_security).lower()}_single_index.csv", "text/csv",
         )
 
+if tabs[5].open:
+    with tabs[5]:
+        st.subheader("Asset Pricing")
+        st.caption(
+            "CAPM compares each security's historical arithmetic return with the return implied by its estimated beta, "
+            "the selected benchmark's arithmetic return, and the annual risk-free rate. Results are historical diagnostics, not valuations or recommendations."
+        )
+        capm_table = capm_security_table(
+            a.asset_returns, a.benchmark_returns, r["risk_free"]
+        )
+        market_return = float(a.benchmark_returns.mean() * TRADING_DAYS)
+        st.caption(
+            f"Benchmark: {r['benchmark_ticker']} · Historical arithmetic benchmark return: {market_return:.2%} · "
+            f"Annual risk-free rate: {r['risk_free']:.2%}"
+        )
+        selected_asset_pricing_security = st.selectbox(
+            "Security for CAPM review", list(capm_table.index), key="asset_pricing_security"
+        )
+        selected_capm = capm_table.loc[selected_asset_pricing_security]
+        with st.container(horizontal=True):
+            st.metric("Beta", ratio(selected_capm["Beta"]), border=True)
+            st.metric("Historical arithmetic return", pct(selected_capm["Historical Arithmetic Return"]), border=True)
+            st.metric("CAPM required return", pct(selected_capm["CAPM Required Return"]), border=True)
+            st.metric("Jensen's alpha", pct(selected_capm["Jensen's Alpha"]), border=True)
+
+        st.markdown("### Security Market Line")
+        beta_min = min(0.0, float(capm_table["Beta"].min()))
+        beta_max = max(1.0, float(capm_table["Beta"].max()))
+        beta_padding = max(.1, (beta_max - beta_min) * .1)
+        sml = security_market_line(
+            pd.Series([beta_min - beta_padding, beta_max + beta_padding]),
+            r["risk_free"], market_return,
+        )
+        sml_chart = go.Figure()
+        sml_chart.add_trace(go.Scatter(
+            x=sml["Beta"], y=sml["CAPM Required Return"], mode="lines",
+            name="Security Market Line",
+            hovertemplate="Beta: %{x:.3f}<br>CAPM required return: %{y:.2%}<extra></extra>",
+        ))
+        sml_chart.add_trace(go.Scatter(
+            x=capm_table["Beta"], y=capm_table["Historical Arithmetic Return"],
+            mode="markers+text", text=capm_table.index, textposition="top center",
+            name="Historical security return",
+            customdata=capm_table[["CAPM Required Return", "Jensen's Alpha"]].to_numpy(),
+            hovertemplate=(
+                "Security: %{text}<br>Beta: %{x:.3f}<br>Historical arithmetic return: %{y:.2%}"
+                "<br>CAPM required return: %{customdata[0]:.2%}<br>Jensen's alpha: %{customdata[1]:.2%}<extra></extra>"
+            ),
+        ))
+        sml_chart.add_trace(go.Scatter(
+            x=[1.0], y=[market_return], mode="markers", marker_symbol="diamond", marker_size=11,
+            name=r["benchmark_ticker"],
+            hovertemplate=f"{r['benchmark_ticker']}<br>Beta: 1.000<br>Historical arithmetic return: %{{y:.2%}}<extra></extra>",
+        ))
+        sml_chart.update_layout(
+            title="Security Market Line — historical CAPM comparison",
+            xaxis_title="Beta", yaxis_title="Annualized return",
+            legend_title_text="", margin=dict(l=10, r=10, t=50, b=10),
+        )
+        st.plotly_chart(sml_chart, width="stretch", theme="streamlit")
+        st.dataframe(
+            capm_table, width="stretch",
+            column_config={
+                "Historical Arithmetic Return": st.column_config.NumberColumn(format="percent"),
+                "CAPM Required Return": st.column_config.NumberColumn(format="percent"),
+                "Jensen's Alpha": st.column_config.NumberColumn(format="percent"),
+                "R-Squared": st.column_config.NumberColumn(format="percent"),
+                "Residual Volatility": st.column_config.NumberColumn(format="percent"),
+            },
+        )
+        st.download_button(
+            "Download CAPM analysis CSV", capm_table.to_csv().encode("utf-8"),
+            "portfoliolens_capm_analysis.csv", "text/csv",
+        )
+        st.caption(
+            "Above or below the line means historical arithmetic return exceeded or fell short of the CAPM required return over this sample. "
+            "It does not establish mispricing, intrinsic value, or an expected trading profit."
+        )
+
+        factor_scope = st.expander("Factor-pricing framework", on_change="rerun")
+        if factor_scope.open:
+            with factor_scope:
+                st.dataframe(pd.DataFrame({
+                    "Factor": ["Market excess return", "Size (SMB)", "Value (HML)", "Momentum"],
+                    "Interpretation": [
+                        "Broad-market return above the risk-free rate",
+                        "Small-cap portfolio return less large-cap portfolio return",
+                        "High book-to-market portfolio return less low book-to-market portfolio return",
+                        "Prior winners' return less prior losers' return",
+                    ],
+                    "Live estimate": ["Available", "Not available", "Not available", "Not available"],
+                }), width="stretch", hide_index=True)
+                st.caption(
+                    "PortfolioLens implements the deterministic linear factor-pricing calculation in its analytics layer, but does not estimate "
+                    "SMB, HML, or momentum exposures from Yahoo Finance prices. Reliable factor series, frequency alignment, and source governance "
+                    "are required before multifactor estimates can be presented as live research outputs."
+                )
+
 if tabs[3].open:
     with tabs[3]:
         comparison = pd.concat([
@@ -553,8 +664,8 @@ if tabs[3].open:
         })
         st.caption(f"Return contributions sum to {a.return_contributions.sum():.2%}; portfolio total return is {a.performance['Total Return']:.2%}.")
 
-if tabs[5].open:
-    with tabs[5]:
+if tabs[6].open:
+    with tabs[6]:
         st.subheader("Portfolio Optimization")
         st.caption(
             "Modern portfolio construction tools: long-only efficient frontier, global minimum-variance portfolio, "
@@ -984,8 +1095,8 @@ if tabs[5].open:
                 f"{selected_policy.lower().replace(' ', '_')}_trades.csv", "text/csv",
             )
 
-if tabs[6].open:
-    with tabs[6]:
+if tabs[7].open:
+    with tabs[7]:
         st.subheader(f"Dual-moving-average momentum · {r['strategy_asset']}")
         first_evaluation = r["strategy_data"]["Strategy Growth"].first_valid_index()
         st.caption(
@@ -1008,8 +1119,8 @@ if tabs[6].open:
         st.dataframe(display_metric_frame(stats), width="stretch")
         st.download_button("Download strategy results CSV", r["strategy_data"].to_csv(), "strategy_results.csv", "text/csv")
 
-if tabs[7].open:
-    with tabs[7]:
+if tabs[8].open:
+    with tabs[8]:
         st.subheader("Custom shock test")
         st.caption("No asset classes are inferred. Enter a direct shock for every holding.")
         shock_seed = st.session_state["current_shocks"]
@@ -1041,8 +1152,8 @@ if tabs[7].open:
                 "Benchmark Return": st.column_config.NumberColumn(format="percent"),
             })
 
-if tabs[8].open:
-    with tabs[8]:
+if tabs[9].open:
+    with tabs[9]:
         st.subheader("Investment research workspace")
         with st.container(horizontal=True):
             st.metric("Portfolio Health Score", f"{health_score:.0f}/100", border=True)
@@ -1134,8 +1245,8 @@ if tabs[8].open:
                 "Dollar Impact": st.column_config.NumberColumn(format="dollar"),
             })
 
-if tabs[9].open:
-    with tabs[9]:
+if tabs[10].open:
+    with tabs[10]:
         st.subheader("Deterministic investment-research report")
         current_shocks = st.session_state["current_shocks"]
         shock_table, shock_summary = custom_shock(r["weights"], current_shocks, r["initial_value"])
@@ -1199,8 +1310,8 @@ if tabs[9].open:
             for label, payload in downloads.items():
                 st.download_button(label + " CSV", payload, label.lower().replace(" ", "_") + ".csv", "text/csv")
 
-if tabs[10].open:
-    with tabs[10]:
+if tabs[11].open:
+    with tabs[11]:
         st.subheader("Methodology and limitations")
         st.caption(f"Application build: `{build_identifier()}`")
         st.markdown("""

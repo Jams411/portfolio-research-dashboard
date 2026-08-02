@@ -3,6 +3,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from portfolio_dashboard.asset_pricing import (
+    capm_alpha, capm_required_return, capm_security_table,
+    factor_expected_return, security_market_line,
+)
 from portfolio_dashboard.construction import (
     annualized_optimizer_inputs,
     capital_allocation_line, complete_portfolio_statistics, complete_portfolio_weights,
@@ -362,6 +366,61 @@ def test_security_single_index_diagnostics_handles_perfect_and_invalid_inputs():
         single_index_regression_diagnostics(pd.Series([.01, np.nan, .02]), pd.Series([.01, .02, .03]))
     with pytest.raises(ValueError, match="Confidence"):
         single_index_regression_diagnostics(security, benchmark, confidence=1)
+
+
+def test_capm_required_return_alpha_and_beta_scenarios():
+    risk_free, market = .04, .10
+    assert capm_required_return(0, risk_free, market) == pytest.approx(.04)
+    assert capm_required_return(1, risk_free, market) == pytest.approx(.10)
+    assert capm_required_return(2, risk_free, market) == pytest.approx(.16)
+    assert capm_required_return(-.5, risk_free, market) == pytest.approx(.01)
+    assert capm_alpha(.13, 1.2, risk_free, market) == pytest.approx(.018)
+    assert capm_required_return(1.2, .05, market) < capm_required_return(1.2, .04, market)
+    assert capm_required_return(.8, .05, market) > capm_required_return(.8, .04, market)
+    assert capm_required_return(1.2, risk_free, .12) > capm_required_return(1.2, risk_free, market)
+    with pytest.raises(ValueError, match="finite"):
+        capm_required_return(np.nan, risk_free, market)
+
+
+def test_security_market_line_coordinates_are_sorted_and_exact():
+    line = security_market_line(pd.Series([1.5, 0, -.25, 1]), .03, .11)
+    assert line["Beta"].is_monotonic_increasing
+    assert line.iloc[0]["CAPM Required Return"] == pytest.approx(.01)
+    assert line.loc[line["Beta"].eq(0), "CAPM Required Return"].iloc[0] == pytest.approx(.03)
+    assert line.loc[line["Beta"].eq(1), "CAPM Required Return"].iloc[0] == pytest.approx(.11)
+    with pytest.raises(ValueError, match="nonempty"):
+        security_market_line([], .03, .11)
+
+
+def test_capm_security_table_reconciles_known_synthetic_assets():
+    periods, risk_free = 12, .024
+    index = pd.date_range("2021-01-31", periods=48, freq="ME")
+    market_excess = pd.Series(np.linspace(-.04, .05, len(index)), index=index)
+    benchmark = market_excess + risk_free / periods
+    assets = pd.DataFrame({
+        "Zero Beta": risk_free / periods + .001,
+        "High Beta": risk_free / periods + .0005 + 1.8 * market_excess,
+        "Negative Beta": risk_free / periods - .0002 - .4 * market_excess,
+    }, index=index)
+    table = capm_security_table(assets, benchmark, risk_free, periods)
+    assert table.loc["Zero Beta", "Beta"] == pytest.approx(0, abs=1e-12)
+    assert table.loc["High Beta", "Beta"] == pytest.approx(1.8)
+    assert table.loc["Negative Beta", "Beta"] == pytest.approx(-.4)
+    assert table.loc["High Beta", "Jensen's Alpha"] == pytest.approx(.0005 * periods)
+    assert table.loc["Zero Beta", "CAPM Required Return"] == pytest.approx(risk_free)
+    assert table.loc["Negative Beta", "Position vs SML"] == "Below"
+
+
+def test_assumption_based_factor_decomposition_reconciles_and_validates():
+    exposures = pd.Series({"Market": 1.2, "SMB": -.3, "HML": .5, "Momentum": .2})
+    premia = pd.Series({"Market": .06, "SMB": .02, "HML": .03, "Momentum": .04})
+    expected, contributions = factor_expected_return(.03, exposures, premia)
+    assert expected == pytest.approx(.03 + 1.2 * .06 - .3 * .02 + .5 * .03 + .2 * .04)
+    assert contributions["Expected Return Contribution"].sum() == pytest.approx(expected - .03)
+    with pytest.raises(ValueError, match="matching nonempty"):
+        factor_expected_return(.03, exposures, premia.drop("Momentum"))
+    with pytest.raises(ValueError, match="unique"):
+        factor_expected_return(.03, pd.Series([1, 2], index=["M", "M"]), pd.Series({"M": .04}))
 
 
 def test_benchmark_metrics_include_regression_and_capm_outputs():

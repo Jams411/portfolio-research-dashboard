@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from portfolio_dashboard.asset_pricing import capm_security_table, security_market_line
 from portfolio_dashboard.construction import (
     constrained_portfolio_weights, constraint_validation_summary, efficient_frontier,
     optimizer_statistics, target_return_weights,
@@ -37,7 +38,7 @@ def test_complete_four_etf_research_workflow():
         "GLD": .00012 + .10 * market + .0025 * np.cos(x / 23),
     }, index=index)
     prices = 100 * (1 + return_frame).cumprod()
-    benchmark_returns = pd.Series(.00020 + .95 * market, index=index, name="VTI")
+    benchmark_returns = pd.Series(.00020 + .95 * market, index=index, name="SPX")
     benchmark_prices = 100 * (1 + benchmark_returns).cumprod()
 
     analysis = run_analysis(prices, benchmark_prices, weights, .04)
@@ -105,7 +106,7 @@ def test_complete_four_etf_research_workflow():
         allocations=analysis.allocations,
         rebalancing=rebalancing_plan(weights, analysis.allocations["Equal Weight"], 100_000),
         rebalancing_method="Equal Weight", strategy=metric_frame(strategy_metrics), stress=shock_table,
-        benchmark_ticker="VTI", risk_free_rate=.04, initial_value=100_000,
+        benchmark_ticker="SPX", risk_free_rate=.04, initial_value=100_000,
         health_score=score, health_coverage=coverage, health_components=health,
         comparison=comparisons, insights=insights, efficient_frontier=frontier,
         optimized_allocations=frontier_weights, rebalancing_policies=policy_summary,
@@ -115,6 +116,12 @@ def test_complete_four_etf_research_workflow():
         rebalancing_threshold=.05, selected_rebalancing_policy="Quarterly",
         strategy_short_window=20, strategy_long_window=60,
     )
+
+    capm_table = capm_security_table(analysis.asset_returns, benchmark_returns, risk_free_rate=.04)
+    sml = security_market_line([-0.5, 0.0, 1.0, 1.5], .04, benchmark_returns.mean() * 252)
+    assert capm_table.index.tolist() == ["SPY", "QQQ", "TLT", "GLD"]
+    assert capm_table["Observations"].eq(len(analysis.asset_returns)).all()
+    assert sml.loc[sml["Beta"].eq(0), "CAPM Required Return"].iloc[0] == pytest.approx(.04)
     html = report.decode()
     assert len(report) > 10_000
     for section in (

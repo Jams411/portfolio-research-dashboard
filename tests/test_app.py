@@ -64,8 +64,8 @@ def test_app_renders_helpful_initial_state():
     assert any("No market data are downloaded" in item.value for item in app.info)
     assert [tab.label for tab in app.tabs] == [
         "Overview", "Performance", "Risk", "Benchmark & Attribution", "Security Analysis",
-        "Portfolio Optimization", "Momentum Strategy", "Stress Testing", "Research Workspace",
-        "Research Report", "Methodology & Limitations",
+        "Asset Pricing", "Portfolio Optimization", "Momentum Strategy", "Stress Testing",
+        "Research Workspace", "Research Report", "Methodology & Limitations",
     ]
     assert any("Application build:" in item.value for item in app.caption)
     assert not app.metric
@@ -138,6 +138,30 @@ def test_security_analysis_is_visible_with_offline_data(offline_app):
     labels = {item.label for item in offline_app.get("download_button")}
     assert "Download security comparison CSV" in labels
     assert "Download selected regression observations CSV" in labels
+
+
+def test_asset_pricing_tab_exposes_capm_and_security_market_line(offline_app):
+    run_analysis(offline_app)
+    offline_app.session_state["analysis_tab"] = "Asset Pricing"
+    offline_app.run(timeout=30)
+    assert not offline_app.exception
+    assert any(tab.label == "Asset Pricing" for tab in offline_app.tabs)
+    assert any(item.value == "Asset Pricing" for item in offline_app.subheader)
+    assert any(item.label == "Security for CAPM review" for item in offline_app.selectbox)
+    metric_labels = {item.label for item in offline_app.metric}
+    assert {"Beta", "Historical arithmetic return", "CAPM required return", "Jensen's alpha"} <= metric_labels
+    assert any("Benchmark: SPX" in item.value for item in offline_app.caption)
+    assert any(
+        {"Beta", "Historical Arithmetic Return", "CAPM Required Return", "Jensen's Alpha", "Position vs SML"}
+        <= set(item.value.columns)
+        for item in offline_app.dataframe
+    )
+    titles = " ".join(
+        json.loads(item.proto.spec).get("layout", {}).get("title", {}).get("text", "")
+        for item in offline_app.get("plotly_chart")
+    )
+    assert "Security Market Line" in titles
+    assert any(item.label == "Download CAPM analysis CSV" for item in offline_app.get("download_button"))
 
 
 def test_nondefault_benchmark_alias_shows_mapping_banner(offline_app):
