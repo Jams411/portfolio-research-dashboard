@@ -153,7 +153,7 @@ The project is separate from the frozen Portfolio Intelligence Platform. That pl
 
 ### Benchmark symbols
 
-The benchmark field accepts Yahoo Finance symbols directly and a small explicit alias set. `SPX`, `S&P500`, and `SP500` resolve to `^GSPC`; `DJIA` and `DOW` to `^DJI`; `NASDAQ` to `^IXIC`; `VIX` to `^VIX`; and `RUT` to `^RUT`. PortfolioLens discloses every mapping and retains the entered alias in charts and reports. Aliases apply only to the benchmark field so ordinary portfolio equity tickers are never silently rewritten.
+The benchmark defaults to the professional display label `SPX`, which resolves internally to Yahoo Finance symbol `^GSPC` for retrieval only. The default mapping does not produce a redundant notice; charts, tables, reports and exports continue to display `SPX`. Other explicit aliases remain disclosed: `S&P500` and `SP500` resolve to `^GSPC`; `DJIA` and `DOW` to `^DJI`; `NASDAQ` to `^IXIC`; `VIX` to `^VIX`; and `RUT` to `^RUT`. Aliases apply only to the benchmark field so ordinary portfolio equity tickers are never silently rewritten.
 
 ## Interview-ready explanation
 

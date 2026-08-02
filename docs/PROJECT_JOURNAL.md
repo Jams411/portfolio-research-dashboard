@@ -260,3 +260,4 @@ Interview explainability and financial correctness were prioritized over feature
 - **Tradeoff:** `DOW` maps to `^DJI` only in the benchmark field because it is also an equity ticker. Portfolio holdings are never remapped automatically.
 - **Lesson:** Symbol normalization requires field context; a global alias rewrite can silently change the security being analyzed.
 - **Related decision:** D026.
+- **Follow-up:** Made `SPX` the default user-facing benchmark and suppressed only that default mapping banner. The provider symbol remains isolated from all presentation outputs.

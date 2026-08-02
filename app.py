@@ -120,7 +120,7 @@ with st.sidebar:
     start_input = st.date_input("Start date", date(2018, 1, 1), on_change=clear_analysis_state)
     end_input = st.date_input("End date", date.today(), on_change=clear_analysis_state)
     benchmark_ticker = st.text_input(
-        "Benchmark", "SPY",
+        "Benchmark", "SPX",
         help="Enter one ticker or supported index alias, such as SPX, DJIA, NASDAQ, VIX, or RUT.",
         on_change=clear_analysis_state,
     )

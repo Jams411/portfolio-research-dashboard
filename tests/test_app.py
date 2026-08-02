@@ -60,6 +60,7 @@ def test_app_renders_helpful_initial_state():
     assert any(item.label == "Example portfolio" for item in app.selectbox)
     assert any(item.label == "Use equal weights" for item in app.checkbox)
     assert any(item.label == "Run analysis" for item in app.button)
+    assert widget(app.text_input, "Benchmark").value == "SPX"
     assert any("No market data are downloaded" in item.value for item in app.info)
     assert [tab.label for tab in app.tabs] == [
         "Overview", "Performance", "Risk", "Benchmark & Attribution", "Portfolio Optimization",
@@ -90,16 +91,31 @@ def test_app_rejects_multiple_benchmark_tickers_before_download():
     assert any("exactly one benchmark ticker" in item.value for item in app.error)
 
 
-def test_benchmark_alias_uses_provider_symbol_and_preserves_display_label(offline_app):
-    widget(offline_app.text_input, "Benchmark").set_value("spx")
+def test_default_spx_uses_provider_symbol_without_mapping_banner(offline_app):
     run_analysis(offline_app)
     assert not offline_app.exception and not offline_app.error
     result = offline_app.session_state["result"]
     assert result["benchmark_ticker"] == "SPX"
     assert result["benchmark_provider_ticker"] == "^GSPC"
     assert result["analysis"].benchmark_prices.name == "Benchmark"
+    assert result["benchmark_alias_notice"] is None
+    assert not any("mapped to Yahoo Finance symbol" in item.value for item in offline_app.info)
+    assert any("benchmark: SPX" in item.value for item in offline_app.caption)
+    offline_app.session_state["analysis_tab"] = "Benchmark & Attribution"
+    offline_app.run(timeout=30)
+    chart_payload = " ".join(item.proto.spec for item in offline_app.get("plotly_chart"))
+    assert "SPX" in chart_payload
+    assert "^GSPC" not in chart_payload
+
+
+def test_nondefault_benchmark_alias_shows_mapping_banner(offline_app):
+    widget(offline_app.text_input, "Benchmark").set_value("sp500")
+    run_analysis(offline_app)
+    result = offline_app.session_state["result"]
+    assert result["benchmark_ticker"] == "SP500"
+    assert result["benchmark_provider_ticker"] == "^GSPC"
     assert any(
-        "SPX was mapped to Yahoo Finance symbol ^GSPC." in item.value
+        "SP500 was mapped to Yahoo Finance symbol ^GSPC." in item.value
         for item in offline_app.info
     )
 

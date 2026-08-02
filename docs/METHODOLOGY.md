@@ -4,7 +4,7 @@
 
 ### Benchmark ticker resolution
 
-Benchmark input is normalized to uppercase and checked against the explicit `BENCHMARK_TICKER_ALIASES` mapping in `portfolio_dashboard/config.py` before the Yahoo Finance request. The provider-native symbol is used only for download and storage; the normalized user alias remains the benchmark label in charts and reports. Direct Yahoo symbols and unknown tickers pass through unchanged. Alias resolution is intentionally limited to the benchmark input: PortfolioLens does not infer or rewrite portfolio holdings, including ambiguous equity symbols such as `DOW`.
+Benchmark input defaults to `SPX`, is normalized to uppercase, and is checked against the explicit `BENCHMARK_TICKER_ALIASES` mapping in `portfolio_dashboard/config.py` before the Yahoo Finance request. The provider-native `^GSPC` symbol is used only for download and internal retrieval state; `SPX` remains the label in charts, tables, reports and exports. Because this is the documented default, its routine mapping notice is suppressed. Other mapped aliases receive an explicit notice. Direct Yahoo symbols and unknown tickers pass through unchanged. Alias resolution is intentionally limited to the benchmark input: PortfolioLens does not infer or rewrite portfolio holdings, including ambiguous equity symbols such as `DOW`.
 
 Supported mappings are `SPX`, `S&P500`, and `SP500` → `^GSPC`; `DJIA` and `DOW` → `^DJI`; `NASDAQ` → `^IXIC`; `VIX` → `^VIX`; and `RUT` → `^RUT`. This changes symbol interoperability only and does not alter returns, alignment, benchmark regression, or any financial formula.
 

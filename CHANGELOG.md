@@ -4,6 +4,7 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Changed the default benchmark from SPY to the user-facing `SPX` label, with silent internal retrieval through `^GSPC`; alternate alias mappings remain visibly disclosed.
 - Added transparent benchmark ticker aliases for SPX/S&P500/SP500, DJIA/DOW, NASDAQ, VIX and RUT, preserving friendly display labels while downloading provider-native Yahoo Finance symbols.
 - Improved empty market-data errors with an actionable `^GSPC` example and added guards for case handling, native symbols, unknown symbols and ambiguous portfolio holdings.
 - Re-audited the efficient frontier independently against two-asset closed forms and a dense three-asset simplex search. The curve now guarantees the feasible upper branch from GMV, includes the tangency target, removes duplicate/dominated points, and skips failed solves instead of connecting them.

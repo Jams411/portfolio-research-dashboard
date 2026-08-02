@@ -273,7 +273,7 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 ## D026 — Resolve only explicit benchmark aliases
 
 - **Date:** 2026-08-02
-- **Decision:** Maintain one small alias dictionary for common benchmark indices, resolve it before Yahoo Finance download, disclose mappings, and retain the normalized user label in presentation. Do not apply aliases to portfolio holdings.
+- **Decision:** Default the benchmark display label to `SPX`, resolve it to `^GSPC` only for Yahoo Finance retrieval, suppress the redundant default notice, disclose other alias mappings, and retain normalized user labels in presentation. Do not apply aliases to portfolio holdings.
 - **Context:** Users commonly enter `SPX`, while Yahoo Finance requires `^GSPC`. Some requested aliases, particularly `DOW`, can also be valid equity symbols outside benchmark context.
 - **Rationale:** Field-scoped resolution improves usability without silently changing an investment holding. A centralized allowlist is auditable and avoids fuzzy symbol guessing.
 - **Consequences:** Unknown and provider-native symbols pass through unchanged. Portfolio holdings still require their exact Yahoo Finance symbols. Financial calculations are unaffected.

@@ -205,3 +205,4 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - **Why:** Common index notation such as `SPX` is natural to users but is not the Yahoo Finance symbol expected by yfinance.
 - **Boundary:** Aliases apply only to the benchmark field. Portfolio holdings are never silently remapped, preserving the meaning of ambiguous equity symbols.
 - **Evidence:** Alias unit tests, non-socket AppTest, Decision D026 and CI.
+- **Follow-up:** `SPX` became the default benchmark label. Its expected `^GSPC` retrieval mapping is silent, while all alternate aliases continue to produce a notice; presentation and reports retain `SPX`.

@@ -80,7 +80,8 @@ def test_benchmark_aliases_resolve_explicitly(alias, provider):
     resolution = resolve_benchmark_ticker(alias)
     assert resolution.display_symbol == alias
     assert resolution.provider_symbol == provider
-    assert resolution.notice == f"{alias} was mapped to Yahoo Finance symbol {provider}."
+    expected_notice = None if alias == "SPX" else f"{alias} was mapped to Yahoo Finance symbol {provider}."
+    assert resolution.notice == expected_notice
 
 
 def test_benchmark_alias_resolution_handles_case_native_and_unknown_symbols():
@@ -827,7 +828,7 @@ def test_report_uses_metric_units_and_selected_rebalancing_method():
         attribution=percentage_frame, allocations=pd.DataFrame({"Current": [1.0]}, index=["A"]),
         rebalancing=plan, rebalancing_method="Current", strategy=metric_frame,
         stress=pd.DataFrame({"Portfolio Impact": [-.1]}, index=["A"]),
-        benchmark_ticker="SPY", risk_free_rate=.04, initial_value=1_000,
+        benchmark_ticker="SPX", risk_free_rate=.04, initial_value=1_000,
         health_score=75.0, health_coverage=1.0,
         health_components=pd.DataFrame({
             "Weight": [.25], "Metric Value": [1.0], "Normalized Result": [.75],
@@ -865,7 +866,8 @@ def test_report_uses_metric_units_and_selected_rebalancing_method():
     assert "Portfolio inputs" in html and "Transaction-cost rate" in html
     assert "Threshold-policy absolute weight-drift trigger: 5.00%" in html
     assert "50/200 trading days" in html
-    assert "Benchmark: SPY" in html and "Annual risk-free assumption: 4.00%" in html
+    assert "Benchmark: SPX" in html and "Annual risk-free assumption: 4.00%" in html
+    assert "^GSPC" not in html
 
 
 def test_research_summary_does_not_emit_nan_text():

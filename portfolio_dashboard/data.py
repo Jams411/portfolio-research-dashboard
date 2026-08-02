@@ -34,7 +34,7 @@ class TickerResolution:
 
     @property
     def notice(self) -> str | None:
-        if not self.was_mapped:
+        if not self.was_mapped or self.display_symbol == "SPX":
             return None
         return f"{self.display_symbol} was mapped to Yahoo Finance symbol {self.provider_symbol}."
 
