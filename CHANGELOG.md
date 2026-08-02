@@ -6,6 +6,8 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ### Added
 
+- Added Workbook 2 complete-portfolio analysis: a user-selected 0–100% allocation between the long-only tangency portfolio and risk-free asset, plotted on the CAL with reconciled expected return, volatility, weights, and direct CSV exports.
+- Added deterministic Workbook 2 tests for CAL/complete-portfolio reconciliation, zero risky allocation, negative excess return, leverage rejection, singular covariance, and optimizer non-convergence.
 - Added Workbook 1 foundations: explicit price-plus-income holding-period return, periodic arithmetic and geometric mean helpers, asset-level return/risk tables, coefficient of variation, and a covariance-based diversification-reduction summary with CSV export.
 - Added deterministic Workbook 1 reconciliation tests for compounding, sample risk, correlation/covariance, two-asset and matrix portfolio variance, unit consistency, and invalid inputs.
 - Added GitHub Actions CI for full pytest, compilation/import, Streamlit configuration, non-socket AppTest, dependency, Markdown-link, and repository-diff verification.

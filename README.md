@@ -34,7 +34,7 @@ This application demonstrates:
 - Excess-return single-index alpha/beta/R², residual and systematic/idiosyncratic risk, CAPM required return, Jensen’s alpha, Treynor, correlation, covariance, transparent diversification reduction, VaR/CVaR, concentration, effective holdings, and reconciled return/volatility attribution
 - Benchmark excess return, tracking error, information ratio, relative drawdown and relative wealth
 - Current, equal-weight, inverse-volatility, minimum-variance and maximum-Sharpe long-only allocations
-- Long-only efficient frontier, GMV, constrained tangency, target-return portfolios, and a non-leveraged Capital Allocation Line
+- Long-only efficient frontier, GMV, constrained tangency, target-return portfolios, a non-leveraged Capital Allocation Line, and user-selected complete portfolios combining the tangency portfolio with the risk-free asset
 - Explicit asset bands, exclusions, user-defined groups/caps, feasibility checks, and compliance summaries
 - Buy-and-hold, monthly, quarterly, annual, and threshold rebalancing simulations with drift, turnover, costs, dates, and trade-history exports
 - Like-for-like portfolio comparison, a fully disclosed historical Health Score, validated hypothetical weights/shocks, and metric-traceable deterministic insights

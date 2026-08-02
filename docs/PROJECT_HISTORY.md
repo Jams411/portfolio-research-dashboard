@@ -159,3 +159,12 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - **Course or career connection:** Portfolio mathematics, financial-methodology governance, market-risk estimation, and interview explanation.
 - **Tradeoffs:** Probability games and the identical-correlation limit remain educational-only; no generic scenario editor or duplicate population-risk dashboard was added.
 - **Evidence:** Workbook 1 tests, `COURSE_TRACEABILITY.md`, Decision D022, and commits created for this milestone.
+
+## 2026-08-01 — Workbook 2 construction and CML trace
+
+- **What changed:** Directly audited all seven worksheets in `2026S_FIN5745 PM_Workbook 2. MW Efficient Frontier & Capital Market Line_A.xlsx`, recovered both material Solver configurations, reconciled the course models against PortfolioLens, and added non-leveraged complete-portfolio composition and exports.
+- **Why it changed:** The prior course trace did not distinguish the workbook's long-only target-return frontier from its separate unconstrained short-selling tangency model.
+- **Problem solved:** Users can now inspect any lending-only point between the risk-free asset and constrained tangency portfolio, while methodology labels prevent false equivalence with the workbook's unconstrained outputs.
+- **Course or career connection:** Mean-variance construction, Solver translation, two-fund separation, CAL/CML interpretation, and model-risk governance.
+- **Tradeoffs:** Borrowing, leverage, short sales, IPS authoring, and invented risk-aversion utility remain outside the production application.
+- **Evidence:** Workbook 2 tests, permanent traceability, Decision D023, and commits created for this milestone.

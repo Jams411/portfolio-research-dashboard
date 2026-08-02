@@ -140,10 +140,10 @@ pytest.ini                          local pytest configuration
 ### `construction.py` — allocation comparisons
 
 - **Why it exists:** Separates investment-weight construction from current holdings and rebalancing execution.
-- **Owns:** Equal weight, inverse volatility, GMV, maximum Sharpe, target-return portfolios, efficient frontier, non-leveraged CAL, explicit asset/group constraints, linear feasibility checks, SLSQP optimization, convergence checks, and per-method warning isolation.
+- **Owns:** Equal weight, inverse volatility, GMV, maximum Sharpe, target-return portfolios, efficient frontier, non-leveraged CAL and complete-portfolio composition, explicit asset/group constraints, linear feasibility checks, SLSQP optimization, convergence checks, and per-method warning isolation.
 - **Does not own:** Forecast models, risk-parity/ERC, trade execution, inferred classifications, or recommendations.
 - **Key inputs:** Complete asset-return DataFrames, risk-free rate, targets, explicit bounds, user-entered group labels, and group caps.
-- **Key outputs:** Labeled weights, optimizer statistics, frontier/CAL tables, constraint validation, allocation comparisons, and warnings.
+- **Key outputs:** Labeled weights, optimizer statistics, frontier/CAL tables, risk-free/tangency complete-portfolio weights, constraint validation, allocation comparisons, and warnings.
 - **Important dependencies:** pandas, NumPy, SciPy `linprog`/SLSQP, and `TRADING_DAYS`.
 - **Financial concepts:** Inverse volatility, sample covariance, arithmetic expected return, GMV, target-return construction, constrained tangency, efficient frontier, CAL, and policy constraints.
 - **Common failure modes:** Zero volatility, nonfinite estimates, insufficient observations, degenerate covariance, infeasible constraints, or solver nonconvergence.

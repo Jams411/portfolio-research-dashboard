@@ -231,3 +231,13 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Alternatives considered:** Replace PortfolioLens sample risk with population risk, display both conventions for all market series, or treat similarly named existing metrics as complete workbook coverage.
 - **Consequences:** Exact workbook examples reconcile under their documented population convention; live historical estimates retain `n-1` denominators. Users receive explicit arithmetic/geometric and variance/covariance labels, while probability games and common-correlation limits remain educational-only.
 - **Status:** Accepted.
+
+## D023 — Implement lending-only complete portfolios while preserving long-only construction
+
+- **Date:** 2026-08-01
+- **Decision:** Add a user-selected complete portfolio with 0–100% in PortfolioLens's long-only tangency portfolio and the remainder in the risk-free asset. Keep short selling and borrowing/leverage educational-only even though Workbook 2's unconstrained tangency Solver and CML illustration support them.
+- **Context:** Workbook 2 contains a recoverable long-only target-return Solver, a separate unconstrained maximum-Sharpe Solver with negative weights, and a CML diagram extending through lending and borrowing. It mentions utility but provides no coefficient or computational selection rule.
+- **Rationale:** The lending segment is financially correct, testable, explainable, and consistent with the existing non-leveraged CAL. Enabling the workbook's unconstrained or borrowing cases would conflict with PortfolioLens's focused product boundary and materially increase user and model risk.
+- **Alternatives considered:** Reproduce the unconstrained tangency weights, enable `y>1` behind a checkbox, or infer a quadratic utility function and risk-aversion coefficient.
+- **Consequences:** Complete-portfolio points reconcile exactly with the displayed CAL. They are historical scenarios rather than recommendations. Workbook tangency outputs are documented as methodologically different, and no claim of exact reproduction is made.
+- **Status:** Accepted.

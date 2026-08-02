@@ -206,3 +206,17 @@ Interview explainability and financial correctness were prioritized over feature
 - **Open questions:** None requiring a product decision; the unrecoverable historical Solver bounds are documented rather than inferred.
 - **Next step:** Run full repository and deployment verification and preserve commit/CI evidence.
 - **Related commit hashes:** Commits created with this milestone; verify final hashes from Git history.
+
+## 2026-08-01 — Workbook 2 Solver and complete-portfolio reconciliation
+
+- **Date:** 2026-08-01
+- **Goal:** Determine exactly which frontier, tangency, and CML conventions survive in Workbook 2 and implement only the focused product gap.
+- **Context:** The workbook contains two materially different Solver designs plus screenshots, drawings, fixed output matrices, course exhibits, and extensive stale add-in names.
+- **What changed:** Recovered objective cells, changing cells, constraint relations and methods; added a lending-only complete portfolio and UI/export reconciliation with the CAL.
+- **Why it changed:** “Tangency portfolio” was not enough to establish equivalence: the workbook tangency solution permits negative weights, while PortfolioLens deliberately does not.
+- **Relevant career or course connection:** Optimization audit, constraint interpretation, model translation, investment-research communication, and testing of numerical invariants.
+- **Tradeoffs:** Borrowing and shorting remain educational-only. Expected-return and covariance assumption sensitivity is proposed rather than added automatically.
+- **Lessons learned:** Solver metadata, screenshots, saved negative weights, and chart coordinates must be reviewed together; any one source alone can conceal the actual constraint set.
+- **Open questions:** None requiring a methodology decision. The source period for the workbook's assumed moments is not identified and is documented as unknown.
+- **Next step:** Complete repository verification, CI, deployment health, and synchronization evidence.
+- **Related commit hashes:** Commits created with this milestone; verify final hashes from Git history.
