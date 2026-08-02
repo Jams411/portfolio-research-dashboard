@@ -64,7 +64,7 @@ def test_app_renders_helpful_initial_state():
     assert any("No market data are downloaded" in item.value for item in app.info)
     assert [tab.label for tab in app.tabs] == [
         "Overview", "Performance", "Performance Evaluation", "Risk", "Benchmark & Attribution", "Security Analysis",
-        "Asset Pricing", "Portfolio Optimization", "Portfolio Strategies", "Stress Testing",
+        "Asset Pricing", "Portfolio Optimization", "Asset Allocation", "Portfolio Strategies", "Stress Testing",
         "Research Workspace", "Research Report", "ETF Research", "Methodology & Limitations",
     ]
     assert any("Application build:" in item.value for item in app.caption)
@@ -202,6 +202,20 @@ def test_portfolio_strategies_tab_exposes_policy_and_benchmark_comparison(offlin
     )
     labels = {item.label for item in offline_app.get("download_button")}
     assert {"Download strategy history", "Download strategy trade log"} <= labels
+
+
+def test_asset_allocation_tab_exposes_comparison_contributions_and_trades(offline_app):
+    run_analysis(offline_app)
+    offline_app.session_state["analysis_tab"] = "Asset Allocation"
+    offline_app.run(timeout=30)
+    assert not offline_app.exception
+    assert any(tab.label == "Asset Allocation" for tab in offline_app.tabs)
+    assert any(item.value == "Asset Allocation" for item in offline_app.subheader)
+    headings = {item.value for item in offline_app.markdown}
+    assert {"### Current and model allocations", "### Risk and return comparison", "### Current allocation contributions", "### Implementation trades"} <= headings
+    assert any(item.label == "Allocation for implementation review" for item in offline_app.selectbox)
+    labels = {item.label for item in offline_app.get("download_button")}
+    assert {"Download allocation comparison CSV", "Download allocation contributions CSV", "Download implementation trades CSV"} <= labels
 
 
 def test_etf_research_tab_exposes_screening_and_holdings_workflow(offline_app):

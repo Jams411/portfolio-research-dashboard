@@ -10,13 +10,14 @@ from portfolio_dashboard.construction import (
     optimizer_statistics, target_return_weights,
 )
 from portfolio_dashboard.performance import portfolio_returns
+from portfolio_dashboard.etf_research import etf_research_metrics, rank_security_candidates
 from portfolio_dashboard.pipeline import run_analysis
 from portfolio_dashboard.rebalancing import compare_rebalancing_policies, rebalancing_plan
 from portfolio_dashboard.reporting import generate_html_report, research_summary
 from portfolio_dashboard.research import (
     deterministic_insights, portfolio_comparison, portfolio_health_score,
 )
-from portfolio_dashboard.risk import historical_cvar, historical_var
+from portfolio_dashboard.risk import historical_cvar, historical_var, security_single_index_table
 from portfolio_dashboard.strategy import momentum_backtest
 from portfolio_dashboard.stress import custom_shock
 
@@ -27,7 +28,7 @@ def metric_frame(values: dict[str, float]) -> pd.DataFrame:
 
 def test_complete_four_etf_research_workflow():
     tickers = ["SPY", "QQQ", "TLT", "GLD"]
-    weights = pd.Series({"SPY": .35, "QQQ": .30, "TLT": .20, "GLD": .15})
+    weights = pd.Series({"SPY": .40, "QQQ": .25, "TLT": .20, "GLD": .15})
     index = pd.bdate_range("2020-01-02", periods=900)
     x = np.arange(len(index), dtype=float)
     market = .00035 + .006 * np.sin(x / 17) + .002 * np.cos(x / 43)
@@ -99,6 +100,11 @@ def test_complete_four_etf_research_workflow():
         analysis.performance, analysis.benchmark, weights, analysis.return_contributions,
         analysis.volatility_contributions, strategy_metrics, shock_summary,
     )
+    security_table = security_single_index_table(analysis.asset_returns, benchmark_returns, .04)
+    capm_table = capm_security_table(analysis.asset_returns, benchmark_returns, risk_free_rate=.04)
+    etf_table = etf_research_metrics(analysis.asset_returns, .04)
+    security_screen = rank_security_candidates(security_table)
+    evaluation_table = pd.DataFrame({"Portfolio": analysis.performance, "Benchmark-relative": analysis.benchmark})
     report = generate_html_report(
         title="PortfolioLens Investment Research Report", tickers=tickers, weights=weights,
         start=analysis.prices.index.min().date(), end=analysis.prices.index.max().date(),
@@ -119,9 +125,11 @@ def test_complete_four_etf_research_workflow():
         constraint_validation=validation, transaction_cost_rate=.001,
         rebalancing_threshold=.05, selected_rebalancing_policy="Quarterly",
         strategy_short_window=20, strategy_long_window=60,
+        security_analysis=security_table, asset_pricing=capm_table,
+        performance_evaluation=evaluation_table, etf_research=etf_table,
+        security_screen=security_screen,
     )
 
-    capm_table = capm_security_table(analysis.asset_returns, benchmark_returns, risk_free_rate=.04)
     sml = security_market_line([-0.5, 0.0, 1.0, 1.5], .04, benchmark_returns.mean() * 252)
     assert capm_table.index.tolist() == ["SPY", "QQQ", "TLT", "GLD"]
     assert capm_table["Observations"].eq(len(analysis.asset_returns)).all()
@@ -132,5 +140,7 @@ def test_complete_four_etf_research_workflow():
         "Portfolio inputs", "Benchmark comparison", "Efficient frontier",
         "Optimized allocations", "Rebalancing policy comparison",
         "Momentum-strategy results", "Stress-test results", "Limitations and disclaimer",
+        "Performance evaluation", "Single-index security analysis", "CAPM and asset pricing",
+        "ETF universe research", "Security candidate screen",
     ):
         assert section in html

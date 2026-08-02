@@ -237,7 +237,7 @@ if run:
 
 tab_names = [
     "Overview", "Performance", "Performance Evaluation", "Risk", "Benchmark & Attribution", "Security Analysis",
-    "Asset Pricing", "Portfolio Optimization", "Portfolio Strategies", "Stress Testing",
+    "Asset Pricing", "Portfolio Optimization", "Asset Allocation", "Portfolio Strategies", "Stress Testing",
     "Research Workspace", "Research Report", "ETF Research", "Methodology & Limitations",
 ]
 tabs = st.tabs(tab_names, key="analysis_tab", on_change="rerun")
@@ -301,7 +301,10 @@ if "result" not in st.session_state:
                 "Long-only weights sum to 100%; short selling and leverage are disabled. Users may select "
                 "risky-asset exposure directly or provide an explicit risk-aversion coefficient."
             )
-        elif open_tab == 12:
+        elif open_tab == 8:
+            st.subheader("Asset Allocation")
+            st.info("Run an analysis to compare current and model allocations, contribution profiles, and implementation trades.")
+        elif open_tab == 13:
             st.subheader("ETF Research")
             st.info("Run an analysis to screen the selected universe and open holdings look-through tools.")
             st.markdown("""
@@ -312,7 +315,7 @@ if "result" not in st.session_state:
 - Optional holdings normalization, consolidated exposure, and ETF overlap analysis
 - Downloadable research, screening, and look-through tables
 """)
-        elif open_tab == 13:
+        elif open_tab == 14:
             st.subheader("Methodology and limitations")
             st.write(f"Application build: `{build_identifier()}`")
             st.info("Run an analysis to view the complete methodology alongside calculated results.")
@@ -1219,6 +1222,51 @@ if tabs[7].open:
 
 if tabs[8].open:
     with tabs[8]:
+        st.subheader("Asset Allocation")
+        st.caption(
+            "Compare the current security allocation with transparent long-only model portfolios. Ticker-to-asset-class labels are not inferred; "
+            "group constraints require explicit user classifications in Portfolio Optimization."
+        )
+        st.markdown("### Current and model allocations")
+        st.dataframe(a.allocations, width="stretch", column_config={
+            column: st.column_config.NumberColumn(format="percent") for column in a.allocations.columns
+        })
+        st.markdown("### Risk and return comparison")
+        st.dataframe(allocation_comparison, width="stretch", column_config={
+            column: st.column_config.NumberColumn(format="percent")
+            for column in ["Arithmetic Return", "CAGR", "Annualized Volatility", "Maximum Drawdown", "Largest Weight", "Weight Distance from Current"]
+            if column in allocation_comparison.columns
+        })
+        st.markdown("### Current allocation contributions")
+        allocation_contributions = pd.concat([a.return_contributions, a.volatility_contributions], axis=1)
+        st.dataframe(allocation_contributions, width="stretch", column_config={
+            column: st.column_config.NumberColumn(format="percent") for column in allocation_contributions.columns
+        })
+        selected_allocation = st.selectbox(
+            "Allocation for implementation review", list(r["plans"]), key="asset_allocation_target"
+        )
+        st.markdown("### Implementation trades")
+        st.dataframe(r["plans"][selected_allocation], width="stretch")
+        st.caption(
+            "Model allocations use historical arithmetic means and sample covariance. Implementation trades compare current holdings with the selected target at the entered portfolio value; "
+            "they are not recommendations, strategic policy weights, or inferred suitability guidance."
+        )
+        with st.container(horizontal=True):
+            st.download_button(
+                "Download allocation comparison CSV", a.allocations.to_csv().encode("utf-8"),
+                "portfoliolens_allocation_comparison.csv", "text/csv",
+            )
+            st.download_button(
+                "Download allocation contributions CSV", allocation_contributions.to_csv().encode("utf-8"),
+                "portfoliolens_allocation_contributions.csv", "text/csv",
+            )
+            st.download_button(
+                "Download implementation trades CSV", r["plans"][selected_allocation].to_csv().encode("utf-8"),
+                "portfoliolens_allocation_trades.csv", "text/csv",
+            )
+
+if tabs[9].open:
+    with tabs[9]:
         st.subheader("Portfolio Strategies")
         st.caption(
             f"Compare buy-and-hold and explicit rebalancing policies against {r['benchmark_ticker']} on one aligned history. "
@@ -1305,8 +1353,8 @@ if tabs[8].open:
         st.dataframe(display_metric_frame(stats), width="stretch")
         st.download_button("Download strategy results CSV", r["strategy_data"].to_csv(), "strategy_results.csv", "text/csv")
 
-if tabs[9].open:
-    with tabs[9]:
+if tabs[10].open:
+    with tabs[10]:
         st.subheader("Custom shock test")
         st.caption("No asset classes are inferred. Enter a direct shock for every holding.")
         shock_seed = st.session_state["current_shocks"]
@@ -1338,8 +1386,8 @@ if tabs[9].open:
                 "Benchmark Return": st.column_config.NumberColumn(format="percent"),
             })
 
-if tabs[10].open:
-    with tabs[10]:
+if tabs[11].open:
+    with tabs[11]:
         st.subheader("Investment research workspace")
         with st.container(horizontal=True):
             st.metric("Portfolio Health Score", f"{health_score:.0f}/100", border=True)
@@ -1431,8 +1479,8 @@ if tabs[10].open:
                 "Dollar Impact": st.column_config.NumberColumn(format="dollar"),
             })
 
-if tabs[11].open:
-    with tabs[11]:
+if tabs[12].open:
+    with tabs[12]:
         st.subheader("Deterministic investment-research report")
         current_shocks = st.session_state["current_shocks"]
         shock_table, shock_summary = custom_shock(r["weights"], current_shocks, r["initial_value"])
@@ -1455,6 +1503,14 @@ if tabs[11].open:
         if report_policy not in r["policy_histories"]:
             report_policy = "Quarterly"
         constrained_report = st.session_state.get("constrained_result")
+        report_security = security_single_index_table(a.asset_returns, a.benchmark_returns, r["risk_free"])
+        report_capm = capm_security_table(a.asset_returns, a.benchmark_returns, r["risk_free"])
+        report_etf = etf_research_metrics(a.asset_returns, r["risk_free"])
+        report_screen = rank_security_candidates(report_security)
+        report_evaluation = pd.DataFrame({
+            "Portfolio": a.performance,
+            "Benchmark-relative": a.benchmark,
+        })
         report = generate_html_report(
             title="PortfolioLens Investment Research Report", tickers=r["tickers"], weights=r["weights"],
             start=a.prices.index.min().date(), end=a.prices.index.max().date(), summary=summary,
@@ -1480,6 +1536,11 @@ if tabs[11].open:
             rebalancing_threshold=r["rebalancing_threshold"],
             selected_rebalancing_policy=report_policy,
             strategy_short_window=r["short_window"], strategy_long_window=r["long_window"],
+            security_analysis=report_security,
+            asset_pricing=report_capm,
+            performance_evaluation=report_evaluation,
+            etf_research=report_etf,
+            security_screen=report_screen,
         )
         downloads = {
             "Performance metrics": metric_frame(a.performance).to_csv(),
@@ -1490,14 +1551,19 @@ if tabs[11].open:
             "Frontier weights": r["frontier_weights"].to_csv(),
             "Rebalancing policies": r["policy_summary"].to_csv(),
             "Deterministic insights": insights.to_csv(index=False),
+            "Security analysis": report_security.to_csv(),
+            "CAPM analysis": report_capm.to_csv(),
+            "Performance evaluation": report_evaluation.to_csv(),
+            "ETF research": report_etf.to_csv(),
+            "Security screen": report_screen.to_csv(),
         }
         with st.container(horizontal=True):
             st.download_button("Download HTML report", report, "portfoliolens_research_report.html", "text/html")
             for label, payload in downloads.items():
                 st.download_button(label + " CSV", payload, label.lower().replace(" ", "_") + ".csv", "text/csv")
 
-if tabs[12].open:
-    with tabs[12]:
+if tabs[13].open:
+    with tabs[13]:
         st.subheader("ETF Research")
         st.caption(
             "Research the user-selected universe using aligned historical returns, then optionally upload disclosed holdings "
@@ -1619,8 +1685,8 @@ if tabs[12].open:
             "issuer classifications, or undisclosed exposures. Weight overlap is the sum of pairwise minimum disclosed weights."
         )
 
-if tabs[13].open:
-    with tabs[13]:
+if tabs[14].open:
+    with tabs[14]:
         st.subheader("Methodology and limitations")
         st.caption(f"Application build: `{build_identifier()}`")
         st.markdown("""

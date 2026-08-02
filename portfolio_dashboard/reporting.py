@@ -71,13 +71,20 @@ def _comparison_table(frame: pd.DataFrame) -> str:
         "Largest Weight", "Weight Distance from Current", "Target Return",
         "Optimizer Expected Return", "Optimizer Volatility",
         "Total Turnover", "Ending Maximum Drift",
+        "Historical Arithmetic Return", "Volatility", "Cumulative Return",
+        "Regression Alpha", "R-Squared", "Residual Volatility", "Systematic Volatility",
+        "Systematic Risk Share", "Idiosyncratic Risk Share", "Jensen's Alpha",
+        "CAPM Required Return", "Annualized Active Return", "Tracking Error",
     }
     for column in formatted.columns:
         if column in percent_columns:
             formatted[column] = frame[column].map(_pct)
         else:
             formatted[column] = frame[column].map(
-                lambda value: f"{float(value):.2f}" if pd.notna(value) else "N/A"
+                lambda value: (
+                    f"{float(value):.2f}" if pd.notna(value) and pd.api.types.is_number(value)
+                    else (str(value) if pd.notna(value) else "N/A")
+                )
             )
     return _table(formatted)
 
@@ -120,7 +127,12 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
                          rebalancing_threshold: float | None = None,
                          selected_rebalancing_policy: str | None = None,
                          strategy_short_window: int | None = None,
-                         strategy_long_window: int | None = None) -> bytes:
+                         strategy_long_window: int | None = None,
+                         security_analysis: pd.DataFrame | None = None,
+                         asset_pricing: pd.DataFrame | None = None,
+                         performance_evaluation: pd.DataFrame | None = None,
+                         etf_research: pd.DataFrame | None = None,
+                         security_screen: pd.DataFrame | None = None) -> bytes:
     """Generate a self-contained, deterministic investment research report."""
     assumptions = [
         "Daily simple returns and a 252-trading-day annualization convention.",
@@ -166,6 +178,9 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
                 ("Holdings and weights", _percentage_table(weights.rename("Weight").to_frame())),
                 ("Performance metrics", _metric_table(performance)), ("Risk metrics", _metric_table(risk)),
                 ("Benchmark comparison", _metric_table(benchmark)), ("Attribution", _percentage_table(attribution)),
+                ("Performance evaluation", _comparison_table(performance_evaluation) if performance_evaluation is not None else "<p>Performance evaluation unavailable.</p>"),
+                ("Single-index security analysis", _comparison_table(security_analysis) if security_analysis is not None else "<p>Security analysis unavailable.</p>"),
+                ("CAPM and asset pricing", _comparison_table(asset_pricing) if asset_pricing is not None else "<p>Asset-pricing analysis unavailable.</p>"),
                 ("Portfolio comparison", _comparison_table(comparison) if comparison is not None else "<p>Comparison unavailable.</p>"),
                 ("Deterministic research insights", _table(insights) if insights is not None else "<p>Insights unavailable.</p>"),
                 ("What-if comparison", _comparison_table(what_if) if what_if is not None else "<p>No hypothetical scenario was included.</p>"),
@@ -178,6 +193,8 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
                 ("Rebalancing policy comparison", _comparison_table(rebalancing_policies) if rebalancing_policies is not None else "<p>Policy comparison unavailable.</p>"),
                 ("Selected rebalancing history", _financial_table(rebalancing_history) if rebalancing_history is not None else "<p>Policy history unavailable.</p>"),
                 ("Momentum-strategy results", _metric_table(strategy)), ("Stress-test results", _financial_table(stress)),
+                ("ETF universe research", _comparison_table(etf_research) if etf_research is not None else "<p>ETF research unavailable.</p>"),
+                ("Security candidate screen", _comparison_table(security_screen) if security_screen is not None else "<p>Security screen unavailable.</p>"),
                 ("Methodology", "<p>Simple daily returns; arithmetic annualized return for Sharpe, Sortino, CAPM evaluation, and optimization; CAGR for realized compound growth; annualized sample variance and volatility; 252-day annualization; constant weights for baseline analytics; empirical 95% VaR/CVaR; excess-return single-index OLS with annualized alpha and residual volatility; CAPM required return, Jensen's alpha, and Treynor ratio; systematic/idiosyncratic variance decomposition; Euler volatility attribution; long-only efficient-frontier, minimum-variance, maximum-Sharpe, target-return, and explicit-constraint optimization; analytical nonleveraged Capital Allocation Line and lending-only complete portfolios; separate holdings-level buy-and-hold, periodic, and threshold rebalancing simulations with costs only on trade dates; one-day-lagged dual-moving-average signal; proportional transaction costs. Regression, CAPM, and optimization outputs are historical sample estimates, not forecasts, recommendations, or evidence of skill.</p>"),
                 ("Limitations and disclaimer", "<p>Historical adjusted prices may contain provider errors and do not predict future results. Excludes taxes, liquidity constraints, market impact and slippage beyond configured cost. Optimization uses historical estimates. Historical investment research only; not personalized financial advice.</p>")]
     body = "".join(f"<section><h2>{escape(name)}</h2>{content}</section>" for name, content in sections)

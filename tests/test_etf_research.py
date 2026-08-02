@@ -8,6 +8,7 @@ from portfolio_dashboard.etf_research import (
     filter_etf_research, holdings_coverage, normalize_holdings,
     parse_holdings_csv, rank_security_candidates,
 )
+from portfolio_dashboard.construction import maximum_sharpe_weights, optimizer_statistics
 
 
 def test_etf_metrics_and_explicit_filter_rules():
@@ -111,3 +112,9 @@ def test_end_to_end_research_pipeline_with_fixed_local_data():
     }, index=["A", "B"])
     ranked = rank_security_candidates(regression)
     assert ranked.index[0] == "A" and ranked.loc["A", "Passes Screen"]
+    candidate_returns = returns.rename(columns={"ETF1": "A", "ETF2": "B"})
+    optimized = maximum_sharpe_weights(candidate_returns, risk_free_rate=0.0)
+    stats = optimizer_statistics(candidate_returns, optimized, 0.0)
+    assert optimized.sum() == pytest.approx(1.0)
+    assert (optimized >= 0).all() and (optimized <= 1).all()
+    assert np.isfinite(stats["Optimizer Expected Return"])
