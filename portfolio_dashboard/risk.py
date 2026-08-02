@@ -257,6 +257,7 @@ def benchmark_metrics(
         "Portfolio Return": float(p_total), "Benchmark Return": float(b_total),
         "Excess Return": float(p_total - b_total),
         "Annualized Active Return": annualized_active_return,
+        "Mean Absolute Periodic Difference": float((p - b).abs().mean()),
         "Tracking Error": tracking_error(p, b),
         "Information Ratio": information_ratio(p, b), "Beta": beta(p, b),
         "Correlation": float(p.corr(b)),

@@ -433,6 +433,9 @@ def test_benchmark_metrics_include_regression_and_capm_outputs():
     assert metrics["R-Squared"] == pytest.approx(1.0)
     active = (portfolio - benchmark).mean() * 252
     assert metrics["Annualized Active Return"] == pytest.approx(active)
+    assert metrics["Mean Absolute Periodic Difference"] == pytest.approx(
+        (portfolio - benchmark).abs().mean()
+    )
     assert metrics["Information Ratio"] == pytest.approx(active / metrics["Tracking Error"])
 
 
@@ -862,6 +865,28 @@ def test_rebalancing_policy_comparison_uses_common_history():
     assert summary.loc["Buy and Hold", "Total Turnover"] == 0
     assert len({len(history) for history in histories.values()}) == 1
     assert set(trades) == set(summary.index)
+
+
+def test_rebalancing_policy_comparison_reconciles_benchmark_relative_metrics():
+    index = pd.bdate_range("2024-01-02", periods=80)
+    returns = pd.DataFrame({
+        "A": np.sin(np.arange(len(index)) / 9) * .006 + .0004,
+        "B": np.cos(np.arange(len(index)) / 11) * .004 + .0001,
+    }, index=index)
+    benchmark = pd.Series(np.sin(np.arange(len(index)) / 10) * .005 + .0002, index=index)
+    summary, histories, _ = compare_rebalancing_policies(
+        returns, pd.Series({"A": .6, "B": .4}), 10_000, .001, .05, .02, benchmark,
+    )
+    policy = "Buy and Hold"
+    active = histories[policy]["Daily Return"] - benchmark
+    expected_active = active.mean() * 252
+    expected_tracking_error = active.std(ddof=1) * np.sqrt(252)
+    assert summary.loc[policy, "Annualized Active Return"] == pytest.approx(expected_active)
+    assert summary.loc[policy, "Mean Absolute Periodic Difference"] == pytest.approx(active.abs().mean())
+    assert summary.loc[policy, "Tracking Error"] == pytest.approx(expected_tracking_error)
+    assert summary.loc[policy, "Information Ratio"] == pytest.approx(
+        expected_active / expected_tracking_error
+    )
 
 def test_strategy_signal_lag_and_transaction_costs():
     prices = pd.Series([10, 11, 12, 13, 12, 11, 14, 15], index=pd.bdate_range("2024-01-01", periods=8))

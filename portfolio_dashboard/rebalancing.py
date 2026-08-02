@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from .performance import performance_metrics
+from .risk import benchmark_metrics
 
 
 def rebalancing_plan(current: pd.Series, target: pd.Series, portfolio_value: float, hold_threshold: float = 0.0) -> pd.DataFrame:
@@ -112,6 +113,7 @@ def compare_rebalancing_policies(
     transaction_cost_rate: float = 0.0,
     threshold: float = 0.05,
     risk_free_rate: float = 0.0,
+    benchmark_returns: pd.Series | None = None,
 ) -> tuple[pd.DataFrame, dict[str, pd.DataFrame], dict[str, pd.DataFrame]]:
     """Evaluate supported policies on a common path and assumptions."""
     histories: dict[str, pd.DataFrame] = {}
@@ -132,4 +134,14 @@ def compare_rebalancing_policies(
             "Rebalancing Dates": float(daily["Rebalanced"].sum()),
             "Ending Maximum Drift": float(daily["Maximum Drift"].iloc[-1]),
         }
+        if benchmark_returns is not None:
+            relative = benchmark_metrics(
+                daily["Daily Return"], benchmark_returns, risk_free_rate,
+            )
+            rows[policy].update({
+                "Annualized Active Return": relative["Annualized Active Return"],
+                "Mean Absolute Periodic Difference": relative["Mean Absolute Periodic Difference"],
+                "Tracking Error": relative["Tracking Error"],
+                "Information Ratio": relative["Information Ratio"],
+            })
     return pd.DataFrame.from_dict(rows, orient="index").rename_axis("Policy"), histories, trades

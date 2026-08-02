@@ -64,7 +64,7 @@ def test_app_renders_helpful_initial_state():
     assert any("No market data are downloaded" in item.value for item in app.info)
     assert [tab.label for tab in app.tabs] == [
         "Overview", "Performance", "Risk", "Benchmark & Attribution", "Security Analysis",
-        "Asset Pricing", "Portfolio Optimization", "Momentum Strategy", "Stress Testing",
+        "Asset Pricing", "Portfolio Optimization", "Portfolio Strategies", "Stress Testing",
         "Research Workspace", "Research Report", "Methodology & Limitations",
     ]
     assert any("Application build:" in item.value for item in app.caption)
@@ -162,6 +162,26 @@ def test_asset_pricing_tab_exposes_capm_and_security_market_line(offline_app):
     )
     assert "Security Market Line" in titles
     assert any(item.label == "Download CAPM analysis CSV" for item in offline_app.get("download_button"))
+
+
+def test_portfolio_strategies_tab_exposes_policy_and_benchmark_comparison(offline_app):
+    run_analysis(offline_app)
+    offline_app.session_state["analysis_tab"] = "Portfolio Strategies"
+    offline_app.run(timeout=30)
+    assert not offline_app.exception
+    assert any(tab.label == "Portfolio Strategies" for tab in offline_app.tabs)
+    assert any(item.value == "Portfolio Strategies" for item in offline_app.subheader)
+    assert any(item.label == "Strategy policy" for item in offline_app.selectbox)
+    assert {"Active return", "Tracking error", "Information ratio", "Total turnover"} <= {
+        item.label for item in offline_app.metric
+    }
+    assert any(
+        {"Annualized Active Return", "Mean Absolute Periodic Difference", "Tracking Error", "Information Ratio"}
+        <= set(item.value.columns)
+        for item in offline_app.dataframe
+    )
+    labels = {item.label for item in offline_app.get("download_button")}
+    assert {"Download strategy history", "Download strategy trade log"} <= labels
 
 
 def test_nondefault_benchmark_alias_shows_mapping_banner(offline_app):

@@ -68,11 +68,15 @@ def test_complete_four_etf_research_workflow():
     assert validation["Pass"].all()
 
     policy_summary, policy_histories, policy_trades = compare_rebalancing_policies(
-        analysis.asset_returns, weights, 100_000, .001, .05, .04,
+        analysis.asset_returns, weights, 100_000, .001, .05, .04, benchmark_returns,
     )
     assert policy_summary.loc["Buy and Hold", "Rebalancing Dates"] == 0
     assert policy_summary.loc["Monthly", "Transaction Costs"] > 0
     assert not policy_trades["Quarterly"].empty
+    assert {
+        "Annualized Active Return", "Mean Absolute Periodic Difference",
+        "Tracking Error", "Information Ratio",
+    } <= set(policy_summary.columns)
 
     strategy_data, strategy_metrics = momentum_backtest(
         analysis.prices["SPY"], 20, 60, .001, .04,

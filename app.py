@@ -185,7 +185,7 @@ if run:
             }
             policy_summary, policy_histories, policy_trades = compare_rebalancing_policies(
                 analysis.asset_returns, weights, initial_value, transaction_cost,
-                rebalancing_threshold, risk_free,
+                rebalancing_threshold, risk_free, analysis.benchmark_returns,
             )
             try:
                 frontier, frontier_weights = efficient_frontier(analysis.asset_returns, risk_free, points=50)
@@ -229,7 +229,7 @@ if run:
 
 tab_names = [
     "Overview", "Performance", "Risk", "Benchmark & Attribution", "Security Analysis",
-    "Asset Pricing", "Portfolio Optimization", "Momentum Strategy", "Stress Testing",
+    "Asset Pricing", "Portfolio Optimization", "Portfolio Strategies", "Stress Testing",
     "Research Workspace", "Research Report", "Methodology & Limitations",
 ]
 tabs = st.tabs(tab_names, key="analysis_tab", on_change="rerun")
@@ -1097,6 +1097,70 @@ if tabs[6].open:
 
 if tabs[7].open:
     with tabs[7]:
+        st.subheader("Portfolio Strategies")
+        st.caption(
+            f"Compare buy-and-hold and explicit rebalancing policies against {r['benchmark_ticker']} on one aligned history. "
+            f"Initial value: {money(r['initial_value'])} · transaction-cost rate: {r['transaction_cost']:.2%} · "
+            f"threshold band: {r['rebalancing_threshold']:.2%}."
+        )
+        st.markdown("### Rebalancing-policy comparison")
+        st.dataframe(
+            r["policy_summary"], width="stretch",
+            column_config={
+                column: st.column_config.NumberColumn(format="percent")
+                for column in [
+                    "Total Return", "CAGR", "Annualized Volatility", "Maximum Drawdown",
+                    "Total Turnover", "Ending Maximum Drift", "Annualized Active Return",
+                    "Mean Absolute Periodic Difference", "Tracking Error",
+                ]
+            } | {
+                "Sharpe Ratio": st.column_config.NumberColumn(format="%.2f"),
+                "Information Ratio": st.column_config.NumberColumn(format="%.2f"),
+                "Transaction Costs": st.column_config.NumberColumn(format="dollar"),
+                "Rebalancing Dates": st.column_config.NumberColumn(format="%d"),
+            },
+        )
+        strategy_policies = list(r["policy_summary"].index)
+        selected_strategy_policy = st.selectbox(
+            "Strategy policy", strategy_policies, index=strategy_policies.index("Quarterly"),
+            key="strategy_policy_detail",
+        )
+        strategy_history = r["policy_histories"][selected_strategy_policy]
+        strategy_trades = r["policy_trades"][selected_strategy_policy]
+        aligned_strategy = pd.concat([
+            strategy_history["Daily Return"].rename(selected_strategy_policy),
+            a.benchmark_returns.rename(r["benchmark_ticker"]),
+        ], axis=1).dropna()
+        strategy_growth = (1 + aligned_strategy).cumprod() * r["initial_value"]
+        line_chart(strategy_growth, f"{selected_strategy_policy} versus {r['benchmark_ticker']}", "Portfolio value ($)")
+        strategy_drawdowns = pd.concat([
+            drawdown_series(aligned_strategy[selected_strategy_policy]).rename(selected_strategy_policy),
+            drawdown_series(aligned_strategy[r["benchmark_ticker"]]).rename(r["benchmark_ticker"]),
+        ], axis=1)
+        line_chart(strategy_drawdowns, "Strategy drawdown comparison", "Drawdown")
+        selected_policy_stats = r["policy_summary"].loc[selected_strategy_policy]
+        with st.container(horizontal=True):
+            st.metric("Active return", pct(selected_policy_stats["Annualized Active Return"]), border=True)
+            st.metric("Tracking error", pct(selected_policy_stats["Tracking Error"]), border=True)
+            st.metric("Information ratio", ratio(selected_policy_stats["Information Ratio"]), border=True)
+            st.metric("Total turnover", pct(selected_policy_stats["Total Turnover"]), border=True)
+        st.caption(
+            "Buy and hold permits natural weight drift. Periodic policies trade only at completed month, quarter, or year ends; "
+            "threshold rebalancing trades only after the configured absolute weight band is breached. Costs apply only on trade dates. "
+            "Tracking error uses annualized sample standard deviation of daily active returns."
+        )
+        with st.container(horizontal=True):
+            st.download_button(
+                "Download strategy history", strategy_history.to_csv(),
+                f"{selected_strategy_policy.lower().replace(' ', '_')}_strategy_history.csv", "text/csv",
+            )
+            st.download_button(
+                "Download strategy trade log", strategy_trades.to_csv(index=False),
+                f"{selected_strategy_policy.lower().replace(' ', '_')}_strategy_trades.csv", "text/csv",
+            )
+
+        st.divider()
+        st.markdown("### Tactical momentum research")
         st.subheader(f"Dual-moving-average momentum · {r['strategy_asset']}")
         first_evaluation = r["strategy_data"]["Strategy Growth"].first_valid_index()
         st.caption(
