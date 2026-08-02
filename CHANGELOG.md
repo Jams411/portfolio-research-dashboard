@@ -134,3 +134,9 @@ Commit: `3b7ed4d`
 - Portfolio performance, risk, benchmark, attribution, construction, optimization, rebalancing, strategy, stress, reporting, and formatting modules.
 - Deterministic synthetic unit and integration tests.
 - Bounded Python dependencies and pytest configuration.
+
+## 2026-08-02 — ETF research and holdings look-through
+
+- Added a top-level ETF Research workspace with explicit historical return/risk filters and security-screening diagnostics.
+- Added validated holdings CSV ingestion, duplicate consolidation, disclosure coverage, underlying exposure aggregation and pairwise ETF overlap.
+- Added deterministic unit and offline Streamlit tests; no financial methodology or live-data dependency was added to CI.

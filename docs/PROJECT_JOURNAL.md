@@ -296,3 +296,10 @@ Interview explainability and financial correctness were prioritized over feature
 - **Methodology judgment:** Source population tracking error is documented, but PortfolioLens preserves its established sample tracking-error convention. Existing policy and momentum rules are labeled as product methodology rather than source-derived logic.
 - **Validation:** Deterministic policy reconciliation, no-trade/calendar/threshold/cost tests, four-ETF SPX workflow, AppTest navigation and export assertions, and internal traceability review.
 - **Next step:** Complete full verification, commit in logical milestones, push, and confirm CI and deployment health.
+
+## 2026-08-02 — ETF screening and optimization package
+
+- Located all five exact sources in the Portfolio Management `Assignment` directory and preserved them unchanged.
+- Confirmed that no named file imports another: selection, ticker lists, candidate lists and final weights move through manual edits or transcription. The notebook contains no execution counts or stored outputs and uses a different universe/benchmark from the final spreadsheet.
+- Rejected direct reuse of import-time Yahoo downloads, hard-coded output paths, approximate p-values, mutable fundamentals, the inconsistent CAPM-alpha branch and the incomplete Treynor–Black mix.
+- Added deterministic research modules and UI for explicit return/risk filters, exact regression screening, holdings coverage, look-through exposure and overlap. Full evidence and worksheet detail are in `FINAL_ASSIGNMENT_AUDIT.md`.

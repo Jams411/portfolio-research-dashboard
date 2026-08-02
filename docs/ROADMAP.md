@@ -88,3 +88,10 @@ Why: subperiod evidence is more informative than a single full-period result and
 - **Personalized recommendations, risk scoring, or investment-policy generation:** Outside the educational research scope and risks implying individualized advice.
 - **Live trading and brokerage integration:** Introduces execution, security, compliance, and operational responsibilities beyond the product goal.
 - **Fragile PDF tooling:** HTML provides a more reliable deployment-safe report.
+
+## ETF research pipeline status
+
+- **Completed:** selected-universe return/risk metrics and filters; exact regression candidate screen; holdings schema validation; duplicate consolidation; disclosure coverage; consolidated exposure; pairwise overlap; CSV exports; offline tests.
+- **Deferred:** governed broad-universe data, dated authoritative holdings feeds, issuer/sector concentration, ranking robustness, optimizer sensitivity and walk-forward evaluation.
+- **Educational-only:** incomplete source Treynor–Black active/passive construction and bond duration/convexity ranking example.
+- **Intentionally excluded:** analyst-target trade gates, automatic recommendations, undated hard-coded bond composites and silent ticker/classification inference.

@@ -29,6 +29,14 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Consequences:** Application branding, report titles, documentation, repository identity, screenshots, and deployment presentation change. Product scope, architecture, financial calculations, methodology, and educational-use limitations do not change. The internal `portfolio_dashboard` Python package remains stable to avoid an unnecessary import migration.
 - **Status:** Accepted.
 
+## D030 — Refactor the research chain; do not reproduce its manual automation gaps
+
+- **Decision:** Implement transparent historical screening, weighted holdings look-through and regression candidate ranking as pure PortfolioLens functions. Keep incomplete Treynor–Black active/passive mixing and ungoverned live fundamentals out of the public construction workflow.
+- **Context:** The five-source package is connected by manual copy/paste and code edits; its notebook and final spreadsheet use different universes and benchmarks, and several formulas/labels are inconsistent.
+- **Rationale:** The selected functions are testable, explainable and useful. Automatic recommendations, hard-coded analyst targets and undated holdings would create false precision and data-governance risk.
+- **Consequences:** The ETF Research tab requires explicit holdings disclosures and states coverage limitations. Existing Security Analysis and Portfolio Optimization remain the authoritative regression and construction workspaces.
+- **Status:** Accepted.
+
 ## D028 — Separate CAPM/SML production analysis from assumption-based multifactor pricing
 
 - **Date:** 2026-08-02

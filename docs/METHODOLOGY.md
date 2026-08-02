@@ -216,4 +216,10 @@ The separate moving-average strategy remains a PortfolioLens product feature, no
 
 ## General limitations and disclaimer
 
+## ETF research and holdings look-through
+
+Universe metrics use aligned simple returns: arithmetic annualized return is `mean(r) × 252`, sample volatility is `std(r, ddof=1) × sqrt(252)`, Sharpe is `(arithmetic return − annual risk-free rate) / volatility`, cumulative return compounds the observed path, and maximum drawdown includes initial wealth. Filters apply explicit observation, Sharpe and volatility thresholds; they are not ratings.
+
+Security screening reuses the exact excess-return single-index regression documented above and requires a positive annualized intercept, a user-visible p-value threshold and a minimum observation count. It does not use current analyst targets or imply alpha persistence. Holdings analysis accepts explicit ETF/security/weight disclosures, consolidates duplicate rows, and permits totals below 100% to represent omitted cash or minor holdings. Portfolio exposure is `ETF portfolio weight × disclosed holding weight`; weighted overlap is `sum(min(weight_i, weight_j))` across the union of constituents. No security, issuer, sector or stale-date inference is made.
+
 Historical data may contain provider errors and do not predict future performance. The system excludes taxes, liquidity and position-size limits, financing, corporate-action edge cases, market impact, and slippage beyond the configured proportional cost. It has no live execution, authentication, persistence, or intraday data. For research and educational use only; not personalized financial advice.

@@ -235,3 +235,10 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - **Why it changed:** The source supports passive tracking and active-manager comparison, while the application previously split policy simulation and momentum across different locations without one professional strategy-comparison surface.
 - **Boundary:** Periodic/threshold rebalancing and momentum are existing PortfolioLens choices, not attributed to this workbook. CPPI is absent. Tax, index-construction and fixed-income exercises remain educational-only because required instrument, constituent and after-tax data are unavailable.
 - **Evidence:** Independent active-return/tracking-error reconciliation, policy-path tests, offline AppTest, Decision D029, and the Workbook 6 traceability section.
+
+## 2026-08-02 — Final research-chain audit and ETF Research workspace
+
+- **What changed:** Audited the five final-project artifacts and every nonempty worksheet, established that their handoffs were manual, and added pure ETF screening, holdings look-through, overlap and candidate-ranking functions plus a public ETF Research tab.
+- **Why it changed:** The source material contained useful screening logic but brittle import-time downloads, absolute paths, hard-coded universes and an incomplete active/passive optimizer.
+- **Boundary:** PortfolioLens does not claim live broad-universe scanning, authoritative holdings extraction, analyst-target signals or a production Treynor–Black implementation.
+- **Evidence:** `docs/FINAL_ASSIGNMENT_AUDIT.md`, deterministic module tests and offline AppTest.

@@ -180,3 +180,7 @@ Add an optional user-uploaded local price CSV path using the same validation bou
 - Externally sourced financial methods must identify their provenance and be independently implemented and verified; source formulas are not assumed correct.
 - Decisions must not be reconstructed from memory when repository evidence is unavailable. Label development-session context explicitly until it is independently confirmed.
 - Codex or any coding agent must inspect the documentation system and current code before making a major change.
+
+### ETF research workflow
+
+The top-level **ETF Research** workspace adds transparent historical universe filters, security-level alpha screening, optional user-supplied holdings look-through, consolidated underlying exposure, pairwise ETF overlap, and downloadable research tables. PortfolioLens does not scrape holdings or infer missing classifications; disclosures and weights remain explicit user inputs.
