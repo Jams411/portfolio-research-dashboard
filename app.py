@@ -24,8 +24,12 @@ from portfolio_dashboard.data import (
     resolve_benchmark_ticker, validate_dates,
 )
 from portfolio_dashboard.formatting import metric_value, money, pct, ratio
+from portfolio_dashboard.evaluation import (
+    fama_selectivity_decomposition, rolling_performance_evaluation,
+)
 from portfolio_dashboard.performance import (
-    asset_risk_return_table, diversification_effect, drawdown_series, monthly_returns,
+    annualized_volatility, asset_risk_return_table, diversification_effect,
+    drawdown_series, monthly_returns,
 )
 from portfolio_dashboard.pipeline import run_analysis
 from portfolio_dashboard.rebalancing import compare_rebalancing_policies, rebalancing_plan
@@ -228,7 +232,7 @@ if run:
         st.error(f"Analysis could not run: {exc}")
 
 tab_names = [
-    "Overview", "Performance", "Risk", "Benchmark & Attribution", "Security Analysis",
+    "Overview", "Performance", "Performance Evaluation", "Risk", "Benchmark & Attribution", "Security Analysis",
     "Asset Pricing", "Portfolio Optimization", "Portfolio Strategies", "Stress Testing",
     "Research Workspace", "Research Report", "Methodology & Limitations",
 ]
@@ -237,7 +241,19 @@ tabs = st.tabs(tab_names, key="analysis_tab", on_change="rerun")
 if "result" not in st.session_state:
     open_tab = next((index for index, tab in enumerate(tabs) if tab.open), 0)
     with tabs[open_tab]:
-        if open_tab == 4:
+        if open_tab == 2:
+            st.subheader("Performance Evaluation")
+            st.info("Run an analysis from the sidebar to open the performance-evaluation scorecard.")
+            st.markdown("""
+**This top-level workspace displays:**
+
+- Return, risk, drawdown, and risk-adjusted performance
+- Benchmark-relative active return, tracking error, and Information Ratio
+- CAPM required return, Jensen's alpha, and Treynor ratio
+- Fama selectivity, diversification effect, and net selectivity
+- Rolling historical diagnostics and downloadable evaluation results
+""")
+        elif open_tab == 5:
             st.subheader("Security Analysis")
             st.info("Run an analysis from the sidebar to compare security-level single-index results.")
             st.markdown("""
@@ -250,7 +266,7 @@ if "result" not in st.session_state:
 - Residual diagnostics and cross-security comparison
 - Methodology, limitations, and downloadable results
 """)
-        elif open_tab == 5:
+        elif open_tab == 6:
             st.subheader("Asset Pricing")
             st.info("Run an analysis from the sidebar to compare realized security returns with CAPM required returns.")
             st.markdown("""
@@ -262,7 +278,7 @@ if "result" not in st.session_state:
 - Above/on/below-line classification without trade recommendations
 - Factor-pricing scope, assumptions, and limitations
 """)
-        elif open_tab == 6:
+        elif open_tab == 7:
             st.subheader("Portfolio Optimization")
             st.info("Run an analysis from the sidebar to calculate the efficient frontier and optimized portfolios.")
             st.markdown("""
@@ -281,7 +297,7 @@ if "result" not in st.session_state:
                 "Long-only weights sum to 100%; short selling and leverage are disabled. Users may select "
                 "risky-asset exposure directly or provide an explicit risk-aversion coefficient."
             )
-        elif open_tab == 11:
+        elif open_tab == 12:
             st.subheader("Methodology and limitations")
             st.write(f"Application build: `{build_identifier()}`")
             st.info("Run an analysis to view the complete methodology alongside calculated results.")
@@ -358,6 +374,97 @@ if tabs[1].open:
 
 if tabs[2].open:
     with tabs[2]:
+        st.subheader("Performance Evaluation")
+        st.caption(
+            "A consolidated historical evaluation of return, total risk, systematic risk, benchmark-relative risk, "
+            "and manager-performance diagnostics. Results are descriptive and are not evidence that past skill will persist."
+        )
+        summary = {
+            "Historical Arithmetic Annualized Return": a.performance["Historical Arithmetic Annualized Return"],
+            "CAGR": a.performance["CAGR"],
+            "Annualized Volatility": a.performance["Annualized Volatility"],
+            "Maximum Drawdown": a.performance["Maximum Drawdown"],
+        }
+        risk_adjusted = {
+            "Sharpe Ratio": a.performance["Sharpe Ratio"],
+            "Sortino Ratio": a.performance["Sortino Ratio"],
+            "Calmar Ratio": a.performance["Calmar Ratio"],
+            "Treynor Ratio": a.benchmark["Treynor Ratio"],
+            "Jensen's Alpha": a.benchmark["Jensen's Alpha"],
+        }
+        benchmark_evaluation = {
+            "Benchmark Return": a.benchmark["Benchmark Return"],
+            "Annualized Active Return": a.benchmark["Annualized Active Return"],
+            "Tracking Error": a.benchmark["Tracking Error"],
+            "Information Ratio": a.benchmark["Information Ratio"],
+            "Beta": a.benchmark["Beta"],
+            "R-Squared": a.benchmark["R-Squared"],
+        }
+        fama = fama_selectivity_decomposition(
+            a.performance["Historical Arithmetic Annualized Return"],
+            a.benchmark["Benchmark Return"], r["risk_free"],
+            a.performance["Annualized Volatility"], annualized_volatility(a.benchmark_returns),
+            a.benchmark["Beta"],
+        )
+        with st.container(horizontal=True):
+            st.metric("Arithmetic annualized return", pct(summary["Historical Arithmetic Annualized Return"]), border=True)
+            st.metric("Sharpe ratio", ratio(risk_adjusted["Sharpe Ratio"]), border=True)
+            st.metric("Jensen's alpha", pct(risk_adjusted["Jensen's Alpha"]), border=True)
+            st.metric("Information ratio", ratio(benchmark_evaluation["Information Ratio"]), border=True)
+            st.metric("Net selectivity", pct(fama["Net Selectivity"]), border=True)
+        left, right = st.columns(2)
+        with left:
+            st.markdown("### Performance Summary")
+            st.dataframe(display_metric_frame(summary), width="stretch")
+            st.markdown("### Risk-Adjusted Performance")
+            st.dataframe(display_metric_frame(risk_adjusted), width="stretch")
+        with right:
+            st.markdown("### Benchmark Evaluation")
+            st.dataframe(display_metric_frame(benchmark_evaluation), width="stretch")
+            st.markdown("### Manager Evaluation")
+            st.dataframe(display_metric_frame(fama), width="stretch")
+        st.caption(
+            "Fama selectivity compares realized arithmetic return with the CAPM required return. The diversification effect "
+            "is the return difference between the CML- and CAPM-required returns at the portfolio's observed total risk; "
+            "net selectivity removes that diversification effect. All inputs are annualized once and use the same aligned sample."
+        )
+        rolling = rolling_performance_evaluation(
+            a.portfolio_returns, a.benchmark_returns, r["risk_free"], window=63,
+        )
+        st.markdown("### Historical Rolling Metrics")
+        line_chart(rolling, "63-day rolling performance diagnostics", "Metric value")
+        st.caption(
+            "Rolling metrics are professional stability diagnostics, not source-derived manager-ranking rules. "
+            "The 63-observation window uses annualized arithmetic means and sample standard deviations."
+        )
+        evaluation_export = pd.concat({
+            "Performance Summary": metric_frame(summary),
+            "Risk-Adjusted Performance": metric_frame(risk_adjusted),
+            "Benchmark Evaluation": metric_frame(benchmark_evaluation),
+            "Fama Evaluation": metric_frame(fama),
+        })
+        st.download_button(
+            "Download performance evaluation CSV", evaluation_export.to_csv().encode("utf-8"),
+            "portfoliolens_performance_evaluation.csv", "text/csv",
+        )
+        st.download_button(
+            "Download rolling evaluation CSV", rolling.to_csv().encode("utf-8"),
+            "portfoliolens_rolling_performance_evaluation.csv", "text/csv",
+        )
+        methodology = st.expander("Methodology and limitations", on_change="rerun")
+        if methodology.open:
+            with methodology:
+                st.markdown("""
+- Sharpe uses annual arithmetic excess return divided by annualized sample volatility; Sortino uses target downside deviation.
+- Treynor divides annual arithmetic excess return by beta. Jensen's alpha is realized arithmetic return less CAPM required return.
+- Tracking error is annualized sample volatility of aligned daily active returns; Information Ratio uses annualized arithmetic active return.
+- Fama evaluation uses the benchmark as the market proxy. Its selectivity labels are historical diagnostics, not forecasts of manager skill.
+- Category allocation and selection effects require explicit portfolio and benchmark category weights and returns. PortfolioLens does not infer those inputs from ticker names.
+- Calmar, drawdown, tracking error, Information Ratio, and rolling diagnostics are professional product measures; they are not attributed to the source model reviewed for this integration.
+""")
+
+if tabs[3].open:
+    with tabs[3]:
         st.subheader("Risk and diversification")
         var95, cvar95 = historical_var(a.portfolio_returns), historical_cvar(a.portfolio_returns)
         effective = 1 / float((r["weights"] ** 2).sum())
@@ -415,8 +522,8 @@ if tabs[2].open:
         })
         st.caption("Volatility contribution uses Euler decomposition: wᵢ(Σw)ᵢ / √(w′Σw); contributions reconcile to annualized portfolio volatility.")
 
-if tabs[3].open:
-    with tabs[3]:
+if tabs[4].open:
+    with tabs[4]:
         st.subheader("Benchmark-relative results and attribution")
         relative_names = [
             "Portfolio Return", "Benchmark Return", "Excess Return", "Tracking Error",
@@ -446,8 +553,8 @@ if tabs[3].open:
             "CAPM required return is the risk-free rate plus beta times the benchmark risk premium. "
             "Jensen’s alpha is realized arithmetic return minus that required return; Treynor is excess return per unit of beta."
         )
-if tabs[4].open:
-    with tabs[4]:
+if tabs[5].open:
+    with tabs[5]:
         st.subheader("Security Analysis")
         st.markdown("### Single-Index Security Analysis")
         st.caption(
@@ -551,8 +658,8 @@ if tabs[4].open:
             f"portfoliolens_{str(selected_security).lower()}_single_index.csv", "text/csv",
         )
 
-if tabs[5].open:
-    with tabs[5]:
+if tabs[6].open:
+    with tabs[6]:
         st.subheader("Asset Pricing")
         st.caption(
             "CAPM compares each security's historical arithmetic return with the return implied by its estimated beta, "
@@ -649,8 +756,8 @@ if tabs[5].open:
                     "are required before multifactor estimates can be presented as live research outputs."
                 )
 
-if tabs[3].open:
-    with tabs[3]:
+if tabs[4].open:
+    with tabs[4]:
         comparison = pd.concat([
             (1 + a.portfolio_returns).cumprod().rename("Portfolio"),
             (1 + a.benchmark_returns).cumprod().rename(r["benchmark_ticker"]),
@@ -664,8 +771,8 @@ if tabs[3].open:
         })
         st.caption(f"Return contributions sum to {a.return_contributions.sum():.2%}; portfolio total return is {a.performance['Total Return']:.2%}.")
 
-if tabs[6].open:
-    with tabs[6]:
+if tabs[7].open:
+    with tabs[7]:
         st.subheader("Portfolio Optimization")
         st.caption(
             "Modern portfolio construction tools: long-only efficient frontier, global minimum-variance portfolio, "
@@ -1095,8 +1202,8 @@ if tabs[6].open:
                 f"{selected_policy.lower().replace(' ', '_')}_trades.csv", "text/csv",
             )
 
-if tabs[7].open:
-    with tabs[7]:
+if tabs[8].open:
+    with tabs[8]:
         st.subheader("Portfolio Strategies")
         st.caption(
             f"Compare buy-and-hold and explicit rebalancing policies against {r['benchmark_ticker']} on one aligned history. "
@@ -1183,8 +1290,8 @@ if tabs[7].open:
         st.dataframe(display_metric_frame(stats), width="stretch")
         st.download_button("Download strategy results CSV", r["strategy_data"].to_csv(), "strategy_results.csv", "text/csv")
 
-if tabs[8].open:
-    with tabs[8]:
+if tabs[9].open:
+    with tabs[9]:
         st.subheader("Custom shock test")
         st.caption("No asset classes are inferred. Enter a direct shock for every holding.")
         shock_seed = st.session_state["current_shocks"]
@@ -1216,8 +1323,8 @@ if tabs[8].open:
                 "Benchmark Return": st.column_config.NumberColumn(format="percent"),
             })
 
-if tabs[9].open:
-    with tabs[9]:
+if tabs[10].open:
+    with tabs[10]:
         st.subheader("Investment research workspace")
         with st.container(horizontal=True):
             st.metric("Portfolio Health Score", f"{health_score:.0f}/100", border=True)
@@ -1309,8 +1416,8 @@ if tabs[9].open:
                 "Dollar Impact": st.column_config.NumberColumn(format="dollar"),
             })
 
-if tabs[10].open:
-    with tabs[10]:
+if tabs[11].open:
+    with tabs[11]:
         st.subheader("Deterministic investment-research report")
         current_shocks = st.session_state["current_shocks"]
         shock_table, shock_summary = custom_shock(r["weights"], current_shocks, r["initial_value"])
@@ -1374,8 +1481,8 @@ if tabs[10].open:
             for label, payload in downloads.items():
                 st.download_button(label + " CSV", payload, label.lower().replace(" ", "_") + ".csv", "text/csv")
 
-if tabs[11].open:
-    with tabs[11]:
+if tabs[12].open:
+    with tabs[12]:
         st.subheader("Methodology and limitations")
         st.caption(f"Application build: `{build_identifier()}`")
         st.markdown("""

@@ -63,12 +63,32 @@ def test_app_renders_helpful_initial_state():
     assert widget(app.text_input, "Benchmark").value == "SPX"
     assert any("No market data are downloaded" in item.value for item in app.info)
     assert [tab.label for tab in app.tabs] == [
-        "Overview", "Performance", "Risk", "Benchmark & Attribution", "Security Analysis",
+        "Overview", "Performance", "Performance Evaluation", "Risk", "Benchmark & Attribution", "Security Analysis",
         "Asset Pricing", "Portfolio Optimization", "Portfolio Strategies", "Stress Testing",
         "Research Workspace", "Research Report", "Methodology & Limitations",
     ]
     assert any("Application build:" in item.value for item in app.caption)
     assert not app.metric
+
+
+def test_performance_evaluation_tab_exposes_scorecard_and_fama_diagnostics(offline_app):
+    run_analysis(offline_app)
+    offline_app.session_state["analysis_tab"] = "Performance Evaluation"
+    offline_app.run(timeout=30)
+    assert not offline_app.exception
+    assert any(tab.label == "Performance Evaluation" for tab in offline_app.tabs)
+    assert any(item.value == "Performance Evaluation" for item in offline_app.subheader)
+    headings = {item.value for item in offline_app.markdown}
+    assert {"### Performance Summary", "### Risk-Adjusted Performance", "### Benchmark Evaluation", "### Manager Evaluation"} <= headings
+    assert {"Sharpe ratio", "Jensen's alpha", "Information ratio", "Net selectivity"} <= {
+        item.label for item in offline_app.metric
+    }
+    assert any(
+        {"Selectivity", "Diversification Effect", "Net Selectivity"} <= set(item.value.index)
+        for item in offline_app.dataframe
+    )
+    labels = {item.label for item in offline_app.get("download_button")}
+    assert {"Download performance evaluation CSV", "Download rolling evaluation CSV"} <= labels
 
 
 def test_portfolio_optimization_is_visible_before_analysis():

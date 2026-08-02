@@ -20,6 +20,10 @@ from portfolio_dashboard.data import (
     InputError, MarketDataError, align_prices, extract_adjusted_prices, parse_tickers,
     parse_weight_input, resolve_benchmark_ticker, validate_weights,
 )
+from portfolio_dashboard.evaluation import (
+    allocation_selection_attribution, fama_selectivity_decomposition,
+    modified_dietz_return, rolling_performance_evaluation, time_weighted_return,
+)
 from portfolio_dashboard.performance import (
     annualized_arithmetic_return, annualized_variance, annualized_volatility,
     arithmetic_mean_return, asset_risk_return_table, cagr, coefficient_of_variation,
@@ -251,6 +255,76 @@ def test_performance_scorecard_separates_arithmetic_return_cagr_and_variance():
     assert metrics["Historical Arithmetic Annualized Return"] == pytest.approx(0.0)
     assert metrics["CAGR"] < 0
     assert metrics["Annualized Variance"] == pytest.approx(values.var(ddof=1) * 252)
+
+
+def test_fama_selectivity_decomposition_reconciles_source_example():
+    result = fama_selectivity_decomposition(
+        portfolio_return=.264, benchmark_return=.1571, risk_free_rate=.062,
+        portfolio_volatility=.2067, benchmark_volatility=.1325, portfolio_beta=1.351,
+    )
+    assert result["Overall Performance"] == pytest.approx(.202)
+    assert result["CAPM Required Return"] == pytest.approx(.1904801)
+    assert result["CML Required Return at Portfolio Risk"] == pytest.approx(.210356)
+    assert result["Selectivity"] == pytest.approx(.0735199)
+    assert result["Diversification Effect"] == pytest.approx(.0198759)
+    assert result["Net Selectivity"] == pytest.approx(.053644)
+    assert result["Selectivity"] - result["Diversification Effect"] == pytest.approx(
+        result["Net Selectivity"]
+    )
+    with pytest.raises(ValueError, match="benchmark volatility"):
+        fama_selectivity_decomposition(.1, .1, .02, .1, 0, 1)
+
+
+def test_source_allocation_selection_effects_reconcile_active_return():
+    labels = pd.Index(["Stock", "Bonds", "Cash"])
+    benchmark_weights = pd.Series([.6, .3, .1], index=labels)
+    benchmark_returns = pd.Series([-.05, -.035, .003], index=labels)
+    portfolio_weights = pd.Series([.5, .2, .3], index=labels)
+    portfolio_returns = pd.Series([-.04, -.025, .003], index=labels)
+    result = allocation_selection_attribution(
+        benchmark_weights, benchmark_returns, portfolio_weights, portfolio_returns,
+    )
+    assert result["Benchmark Return"] == pytest.approx(-.0402)
+    assert result["Portfolio Return"] == pytest.approx(-.0241)
+    assert result["Active Return"] == pytest.approx(.0161)
+    assert result["Allocation Effect"] == pytest.approx(.0091)
+    assert result["Selection Effect Including Interaction"] == pytest.approx(.007)
+    assert result["Reconciliation Residual"] == pytest.approx(0, abs=1e-15)
+    with pytest.raises(ValueError, match="identical ordered labels"):
+        allocation_selection_attribution(
+            benchmark_weights, benchmark_returns.sort_index(), portfolio_weights, portfolio_returns,
+        )
+
+
+def test_modified_dietz_and_time_weighted_return_match_fixed_cash_flow_case():
+    cash_flows = pd.Series({"midpoint": 12_000.0})
+    timings = pd.Series({"midpoint": .5})
+    assert modified_dietz_return(500_000, 527_000, cash_flows, timings) == pytest.approx(
+        (527_000 - 500_000 - 12_000) / (500_000 + .5 * 12_000)
+    )
+    returns = pd.Series([.03, -.008538899430740038, .02169811320754717])
+    assert time_weighted_return(returns) == pytest.approx((1 + returns).prod() - 1)
+    assert np.isnan(time_weighted_return(pd.Series([-1.0])))
+    with pytest.raises(ValueError, match="between zero and one"):
+        modified_dietz_return(100, 110, cash_flows, pd.Series({"midpoint": 1.2}))
+
+
+def test_rolling_performance_evaluation_uses_aligned_sample_formulas():
+    index = pd.bdate_range("2024-01-01", periods=8)
+    portfolio = pd.Series([.01, -.005, .008, .002, -.003, .006, .004, -.002], index=index)
+    benchmark = pd.Series([.008, -.004, .006, .001, -.002, .004, .003, -.001], index=index)
+    result = rolling_performance_evaluation(portfolio, benchmark, .02, window=5, periods_per_year=12)
+    last_portfolio = portfolio.iloc[-5:]
+    last_active = (portfolio - benchmark).iloc[-5:]
+    expected_sharpe = (last_portfolio.mean() * 12 - .02) / (last_portfolio.std(ddof=1) * np.sqrt(12))
+    expected_tracking = last_active.std(ddof=1) * np.sqrt(12)
+    assert result.iloc[-1]["Rolling Sharpe Ratio"] == pytest.approx(expected_sharpe)
+    assert result.iloc[-1]["Rolling Tracking Error"] == pytest.approx(expected_tracking)
+    assert result.iloc[-1]["Rolling Information Ratio"] == pytest.approx(
+        last_active.mean() * 12 / expected_tracking
+    )
+    with pytest.raises(ValueError, match="at least three"):
+        rolling_performance_evaluation(portfolio, benchmark, window=2)
 
 def test_var_cvar_beta_and_relative_metrics():
     benchmark = pd.Series([-.03, -.02, -.01, 0, .01, .02])

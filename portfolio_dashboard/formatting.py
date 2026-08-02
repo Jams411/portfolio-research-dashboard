@@ -10,6 +10,8 @@ PERCENT_METRICS = {
     "Annualized Active Return",
     "Regression Alpha", "Residual Volatility", "Systematic Risk Share",
     "Idiosyncratic Risk Share", "CAPM Required Return", "Jensen's Alpha", "Treynor Ratio",
+    "CML Required Return at Portfolio Risk", "Selectivity", "Diversification Effect",
+    "Net Selectivity", "Overall Performance",
     "Time in Market", "Turnover", "Historical VaR (95%)", "Historical CVaR (95%)",
 }
 COUNT_METRICS = {
