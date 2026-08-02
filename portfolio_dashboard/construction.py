@@ -279,6 +279,49 @@ def complete_portfolio_statistics(
     }
 
 
+def quadratic_utility(expected_return: float, volatility: float, risk_aversion: float) -> float:
+    """Return mean-variance utility ``U = E[r] - 0.5 A sigma^2``."""
+    if not np.isfinite([expected_return, volatility, risk_aversion]).all():
+        raise ValueError("Utility inputs must be finite.")
+    if volatility < 0:
+        raise ValueError("Volatility cannot be negative.")
+    if risk_aversion <= 0:
+        raise ValueError("Risk aversion must be positive.")
+    return float(expected_return - 0.5 * risk_aversion * volatility ** 2)
+
+
+def utility_optimal_complete_portfolio(
+    tangency_statistics: dict[str, float], risk_free_rate: float, risk_aversion: float,
+) -> dict[str, float | bool]:
+    """Select a lending-only complete portfolio using Workbook 3 utility.
+
+    The unconstrained classroom solution is
+    ``y* = (E[r_T] - r_f) / (A sigma_T^2)``. PortfolioLens applies its
+    existing non-leveraged product boundary by clipping ``y*`` to ``[0, 1]``
+    and reports whether that boundary changed the classroom solution.
+    """
+    expected = tangency_statistics.get("Optimizer Expected Return", float("nan"))
+    volatility = tangency_statistics.get("Optimizer Volatility", float("nan"))
+    if not np.isfinite([expected, volatility, risk_free_rate, risk_aversion]).all():
+        raise ValueError("Utility-allocation inputs must be finite.")
+    if volatility <= 0:
+        raise ValueError("The risky portfolio must have positive volatility.")
+    if risk_aversion <= 0:
+        raise ValueError("Risk aversion must be positive.")
+    unconstrained_weight = (expected - risk_free_rate) / (risk_aversion * volatility ** 2)
+    applied_weight = float(np.clip(unconstrained_weight, 0.0, 1.0))
+    complete = complete_portfolio_statistics(tangency_statistics, risk_free_rate, applied_weight)
+    return {
+        **complete,
+        "Risk Aversion": float(risk_aversion),
+        "Unconstrained Risky Portfolio Weight": float(unconstrained_weight),
+        "Allocation Constraint Binding": not np.isclose(unconstrained_weight, applied_weight),
+        "Quadratic Utility": quadratic_utility(
+            complete["Optimizer Expected Return"], complete["Optimizer Volatility"], risk_aversion,
+        ),
+    }
+
+
 def complete_portfolio_weights(tangency_weights: pd.Series, risky_weight: float) -> pd.Series:
     """Return risky-asset and risk-free weights for a non-leveraged complete portfolio."""
     if tangency_weights.empty or not np.isfinite(tangency_weights.to_numpy()).all():

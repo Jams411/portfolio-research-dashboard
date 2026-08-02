@@ -122,7 +122,9 @@ def test_portfolio_optimization_view_exposes_workbook_two_tools_offline(offline_
         item.label == "Risk preference — allocation to the tangency portfolio (%)"
         for item in offline_app.slider
     )
-    assert any("Workbook 2 tools" in item.value for item in offline_app.caption)
+    assert any(item.label == "Risk aversion coefficient (A)" for item in offline_app.number_input)
+    assert any(item.label == "Complete portfolio selection method" for item in offline_app.get("button_group"))
+    assert any("Workbook 2–3 tools" in item.value for item in offline_app.caption)
     assert any("Current and optimized portfolio statistics" in item.value for item in offline_app.markdown)
     assert any("Optimized weights" in item.value for item in offline_app.markdown)
     assert any(item.label == "Download complete-portfolio weights" for item in offline_app.get("download_button"))

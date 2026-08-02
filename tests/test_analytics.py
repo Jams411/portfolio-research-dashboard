@@ -8,7 +8,7 @@ from portfolio_dashboard.construction import (
     efficient_frontier, inverse_volatility_weights,
     maximum_sharpe_weights, minimum_variance_weights, optimizer_statistics,
     target_return_weights, constrained_portfolio_weights, constraint_validation_summary,
-    parse_group_caps,
+    parse_group_caps, quadratic_utility, utility_optimal_complete_portfolio,
 )
 from portfolio_dashboard.data import (
     InputError, MarketDataError, align_prices, extract_adjusted_prices, parse_tickers,
@@ -382,6 +382,50 @@ def test_workbook_two_complete_portfolio_handles_nonpositive_excess_return():
     assert complete["Optimizer Expected Return"] == pytest.approx(.015)
     assert complete["Optimizer Volatility"] == pytest.approx(.05)
     assert complete["Optimizer Sharpe"] == pytest.approx(-.10)
+
+
+def test_workbook_three_quadratic_utility_and_optimal_complete_portfolio():
+    tangency = {
+        "Optimizer Expected Return": 0.10765426647647026,
+        "Optimizer Volatility": 0.15807465678127394,
+        "Optimizer Sharpe": 0.3647280826062194,
+    }
+    result = utility_optimal_complete_portfolio(tangency, 0.05, 3.0)
+    assert result["Unconstrained Risky Portfolio Weight"] == pytest.approx(0.7691051178661094)
+    assert result["Risky Portfolio Weight"] == pytest.approx(0.7691051178661094)
+    assert result["Risk-Free Asset Weight"] == pytest.approx(0.2308948821338906)
+    assert result["Optimizer Expected Return"] == pytest.approx(0.09434219141386974)
+    assert result["Optimizer Volatility"] == pytest.approx(0.12157602753540647)
+    assert result["Quadratic Utility"] == pytest.approx(
+        quadratic_utility(
+            result["Optimizer Expected Return"], result["Optimizer Volatility"], 3.0,
+        )
+    )
+    assert result["Allocation Constraint Binding"] is False
+
+
+def test_workbook_three_utility_allocation_respects_nonleveraged_boundary():
+    tangency = {
+        "Optimizer Expected Return": 0.15,
+        "Optimizer Volatility": 0.10,
+        "Optimizer Sharpe": 1.3,
+    }
+    capped = utility_optimal_complete_portfolio(tangency, 0.02, 1.0)
+    assert capped["Unconstrained Risky Portfolio Weight"] == pytest.approx(13.0)
+    assert capped["Risky Portfolio Weight"] == 1.0
+    assert capped["Allocation Constraint Binding"] is True
+
+    defensive = utility_optimal_complete_portfolio(
+        {**tangency, "Optimizer Expected Return": 0.01, "Optimizer Sharpe": -0.1},
+        0.02, 3.0,
+    )
+    assert defensive["Unconstrained Risky Portfolio Weight"] < 0
+    assert defensive["Risky Portfolio Weight"] == 0
+    assert defensive["Allocation Constraint Binding"] is True
+    with pytest.raises(ValueError, match="positive"):
+        utility_optimal_complete_portfolio(tangency, 0.02, 0.0)
+    with pytest.raises(ValueError, match="positive"):
+        quadratic_utility(0.08, 0.10, -1.0)
 
 
 def test_workbook_two_singular_covariance_is_handled_deterministically():

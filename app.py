@@ -15,6 +15,7 @@ from portfolio_dashboard.construction import (
     capital_allocation_line, constrained_portfolio_weights, constraint_validation_summary,
     complete_portfolio_statistics, complete_portfolio_weights, efficient_frontier,
     optimizer_statistics, parse_group_caps, target_return_weights,
+    utility_optimal_complete_portfolio,
 )
 from portfolio_dashboard.data import MarketDataError, download_prices, parse_tickers, parse_weight_input, validate_dates
 from portfolio_dashboard.formatting import metric_value, money, pct, ratio
@@ -419,9 +420,9 @@ if tabs[4].open:
     with tabs[4]:
         st.subheader("Portfolio Optimization")
         st.caption(
-            "Workbook 2 tools: long-only efficient frontier, global minimum-variance portfolio, "
+            "Workbook 2–3 tools: long-only efficient frontier, global minimum-variance portfolio, "
             "constrained tangency portfolio, target-return portfolio, non-leveraged Capital Allocation Line, "
-            "complete portfolio, and exportable optimized weights."
+            "utility-based complete portfolio, and exportable optimized weights."
         )
         if r["construction_error"]:
             st.warning(f"Efficient frontier unavailable: {r['construction_error']}")
@@ -432,14 +433,36 @@ if tabs[4].open:
                 "These differ from realized CAGR and are historical estimates, not forecasts or recommendations."
             )
             tangency_stats = r["construction_stats"].loc["Maximum Sharpe"].to_dict()
-            risky_allocation = st.slider(
+            complete_method = st.segmented_control(
+                "Complete portfolio selection method",
+                ["Direct risky allocation", "Workbook 3 risk aversion"],
+                default="Direct risky allocation",
+                help="Choose a direct capital allocation or the workbook's quadratic-utility solution.",
+            )
+            direct_risky_allocation = st.slider(
                 "Risk preference — allocation to the tangency portfolio (%)", 0, 100, 100, 5,
+                disabled=complete_method != "Direct risky allocation",
                 help=(
-                    "The remainder is held in the risk-free asset. This directly selects the complete portfolio; it is not a "
-                    "risk-aversion coefficient. Workbook 2 supplies no numerical utility function from which to derive one. "
+                    "The remainder is held in the risk-free asset. This directly selects the complete portfolio. "
                     "PortfolioLens models lending from 0% to 100% risky allocation; borrowing and leverage are not enabled."
                 ),
             ) / 100
+            risk_aversion = st.number_input(
+                "Risk aversion coefficient (A)", min_value=0.1, max_value=30.0, value=3.0, step=0.1,
+                disabled=complete_method != "Workbook 3 risk aversion",
+                help=(
+                    "Workbook 3 uses U = E[r] − ½Aσ² and y* = (E[rT] − rf)/(AσT²). "
+                    "Higher A implies lower risky allocation. This is a model input, not a personal risk assessment."
+                ),
+            )
+            utility_result = utility_optimal_complete_portfolio(
+                tangency_stats, r["risk_free"], risk_aversion,
+            )
+            risky_allocation = (
+                direct_risky_allocation
+                if complete_method == "Direct risky allocation"
+                else float(utility_result["Risky Portfolio Weight"])
+            )
             complete_stats = complete_portfolio_statistics(tangency_stats, r["risk_free"], risky_allocation)
             complete_weights = complete_portfolio_weights(
                 a.allocations["Maximum Sharpe"], risky_allocation,
@@ -506,14 +529,27 @@ if tabs[4].open:
             st.caption(
                 "This is a point on the non-leveraged CAL, not a recommendation. With zero risky allocation, expected return equals the entered risk-free rate and volatility is zero."
             )
-            risk_aversion = st.expander("Risk aversion and utility: Workbook 2 boundary")
-            if risk_aversion.open:
-                with risk_aversion:
+            if complete_method == "Workbook 3 risk aversion":
+                with st.container(horizontal=True):
+                    st.metric(
+                        "Unconstrained utility allocation",
+                        pct(float(utility_result["Unconstrained Risky Portfolio Weight"])),
+                        border=True,
+                    )
+                    st.metric("Applied non-leveraged allocation", pct(risky_allocation), border=True)
+                    st.metric("Quadratic utility", ratio(float(utility_result["Quadratic Utility"]), 4), border=True)
+                if utility_result["Allocation Constraint Binding"]:
+                    st.warning(
+                        "The classroom utility solution falls outside 0%–100%. PortfolioLens applies its explicit "
+                        "non-leveraged boundary; it does not borrow, leverage, or short sell."
+                    )
+            utility_methodology = st.expander("Risk aversion and utility methodology")
+            if utility_methodology.open:
+                with utility_methodology:
                     st.write(
-                        "Workbook 2 discusses risk aversion, diminishing marginal utility, and complete portfolios, "
-                        "but it does not provide a risk-aversion coefficient, quadratic utility equation, indifference-curve "
-                        "calculation, or Solver rule for choosing an optimal complete portfolio. PortfolioLens therefore exposes "
-                        "the complete-portfolio allocation directly above and does not label it as a numerical risk-aversion model."
+                        "Workbook 3 supplies U = E[rC] − ½AσC² and y* = (E[rT] − rf)/(AσT²). PortfolioLens applies "
+                        "that model to its historical long-only tangency estimate, while retaining 0≤y≤1. The workbook's "
+                        "third-party questionnaire and score-to-A mapping are educational evidence, not a production suitability tool."
                     )
             with st.container(horizontal=True):
                 st.download_button(
