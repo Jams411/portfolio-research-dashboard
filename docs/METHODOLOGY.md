@@ -115,6 +115,12 @@ The workbook's inputs are classroom assumptions, while PortfolioLens estimates `
 
 Workbook cell `Optimal Complete Pf!C32` double-weights components that are already weighted in `D32` and `F32`. PortfolioLens uses the financially consistent identity `E[r_C]=r_f+y(E[r_T]−r_f)` and documents, rather than reproduces, that source inconsistency.
 
+### Security-level single-index analysis
+
+For each security, PortfolioLens aligns daily simple returns with the benchmark and fits `R_i−R_f/252 = α_i + β_i(R_M−R_f/252) + ε_i`. The slope is `Cov(i,M)/Var(M)` and the intercept is mean security excess return less beta times mean benchmark excess return. Annual alpha is `252α_i`. Systematic variance is `β_i²Var(R_M−R_f)×252`; idiosyncratic variance is `Var(ε_i)×252`; their sum is model total variance.
+
+Residual volatility uses the sample residual variance (`n−1`). Separately labeled regression standard error uses `SSE/(n−2)`. `R²=1−SSE/SST`; coefficient standard errors, t statistics, two-sided p values, and 95% intervals use `n−2` residual degrees of freedom. The characteristic line overlays fitted excess returns on actual observations; the residual chart retains dates. Alpha and alpha-to-residual-variance are historical diagnostics, not forecasts or security recommendations. Results depend on benchmark choice, alignment, frequency, outliers, parameter stability, and cross-security residual correlation.
+
 ### Portfolio Management Workbook 2 — Mean-Variance Efficient Frontier & Capital Market Line
 
 Workbook 2 separates two optimization conventions. Its global-frontier worksheet minimizes portfolio standard deviation for a specified target mean using weights bounded from 0 to 1, weights summing to one, and an exact target-return equality. Its optimal-risky-portfolio worksheet instead maximizes an excess-return Sharpe ratio with only a sum-to-one constraint; saved negative weights confirm that this classroom tangency model permits short sales. PortfolioLens intentionally uses the first worksheet's long-only convention for GMV, target-return, frontier, and maximum-Sharpe construction. Therefore its tangency estimate will not reproduce the workbook's unconstrained country-index weights.

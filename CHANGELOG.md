@@ -4,6 +4,8 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Added security-level single-index comparison, characteristic-line and residual charts, coefficient confidence diagnostics, risk decomposition and CSV exports; historical alpha screens are explicitly non-forecast.
+- Completed a direct six-worksheet Workbook 4 trace and kept forecast-alpha active/passive construction educational-only because it requires short positions and additional model governance.
 - Changed the default benchmark from SPY to the user-facing `SPX` label, with silent internal retrieval through `^GSPC`; alternate alias mappings remain visibly disclosed.
 - Added transparent benchmark ticker aliases for SPX/S&P500/SP500, DJIA/DOW, NASDAQ, VIX and RUT, preserving friendly display labels while downloading provider-native Yahoo Finance symbols.
 - Improved empty market-data errors with an actionable `^GSPC` example and added guards for case handling, native symbols, unknown symbols and ambiguous portfolio holdings.

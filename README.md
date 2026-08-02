@@ -32,7 +32,7 @@ This application demonstrates:
 - Transparent benchmark aliases for common index names such as SPX, DJIA, NASDAQ, VIX and RUT, with provider-symbol disclosure and friendly report labels
 - Explicit holding-period-return logic; asset-level periodic arithmetic/geometric returns, annualized arithmetic return/CAGR, sample variance/volatility, coefficient of variation, and downloadable foundation tables
 - Total return, consistently defined Sharpe, Sortino, drawdown, Calmar, tail risk, monthly returns and wealth charts
-- Excess-return single-index alpha/beta/R², residual and systematic/idiosyncratic risk, CAPM required return, Jensen’s alpha, Treynor, correlation, covariance, transparent diversification reduction, VaR/CVaR, concentration, effective holdings, and reconciled return/volatility attribution
+- Portfolio- and security-level excess-return single-index analysis with alpha/beta/R², coefficient inference, characteristic lines, residual plots, systematic/idiosyncratic risk, CAPM required return, Jensen’s alpha, Treynor and downloadable comparison diagnostics
 - Benchmark excess return, tracking error, information ratio, relative drawdown and relative wealth
 - Current, equal-weight, inverse-volatility, minimum-variance and maximum-Sharpe long-only allocations
 - Audited long-only efficient upper frontier, GMV, constrained tangency, target-return portfolios, a reconciled non-leveraged Capital Allocation Line, and direct or quadratic-utility complete portfolios

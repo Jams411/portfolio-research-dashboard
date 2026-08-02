@@ -261,3 +261,11 @@ Interview explainability and financial correctness were prioritized over feature
 - **Lesson:** Symbol normalization requires field context; a global alias rewrite can silently change the security being analyzed.
 - **Related decision:** D026.
 - **Follow-up:** Made `SPX` the default user-facing benchmark and suppressed only that default mapping banner. The provider symbol remains isolated from all presentation outputs.
+
+## 2026-08-02 — Security-level single-index implementation
+
+- **Goal:** Trace the exact securities-selection workbook without conflating its formulas with existing portfolio-level regression.
+- **Workbook evidence:** Six visible sheets; two 60-month excess-return security regressions, a raw-return characteristic-line example, an active/passive index model, a conceptual image sheet, and a separate utility example. No hidden sheets or recoverable Solver/VBA; external links and Capital IQ/@RISK names are residue.
+- **Implementation:** Added aligned security-level OLS with fitted/residual observations, annualized risk decomposition, t-based coefficient diagnostics, a sortable comparison table, professional charts, and deterministic exports.
+- **Methodology judgment:** Retained the workbook's sample-residual-risk convention while labeling OLS regression standard error separately. Excluded active-position construction because historical alpha is not a governed forecast and source weights include shorts.
+- **Validation:** Synthetic alpha/beta recovery, variance and Jensen reconciliation, perfect-fit and invalid-input cases, offline UI exposure, and public-language guard.

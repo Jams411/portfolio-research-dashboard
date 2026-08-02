@@ -206,3 +206,10 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - **Boundary:** Aliases apply only to the benchmark field. Portfolio holdings are never silently remapped, preserving the meaning of ambiguous equity symbols.
 - **Evidence:** Alias unit tests, non-socket AppTest, Decision D026 and CI.
 - **Follow-up:** `SPX` became the default benchmark label. Its expected `^GSPC` retrieval mapping is silent, while all alternate aliases continue to produce a notice; presentation and reports retain `SPX`.
+
+## 2026-08-02 — Workbook 4 security-analysis trace
+
+- **What changed:** Audited all six nonempty worksheets in the exact securities-selection workbook and added reusable per-security excess-return OLS, coefficient inference, systematic/idiosyncratic decomposition, characteristic-line and residual charts, comparison tables and CSV exports.
+- **Why:** The application already had portfolio-level regression, but similarly named metrics did not cover the workbook's security-level fitted values, residuals, inference or cross-security comparison.
+- **Boundary:** Historical alpha is labeled as a diagnostic, not a forecast or recommendation. The active/passive model is preserved as educational traceability because its supplied alpha forecasts and negative active weights conflict with the long-only product boundary.
+- **Evidence:** Deterministic coefficient and variance-reconciliation tests, offline Streamlit AppTest, Decision D027, and the Workbook 4 section in course traceability.

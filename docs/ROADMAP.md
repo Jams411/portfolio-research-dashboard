@@ -50,6 +50,7 @@ Why: subperiod evidence is more informative than a single full-period result and
 - Split Streamlit views into modules without behavior changes if the entrypoint continues to grow.
 - Refine domain-specific error types.
 - Add an optional validated local CSV input for outage-resistant demonstrations.
+- Add rolling-window, outlier and benchmark-sensitivity diagnostics to security regressions only after a separate methodology review.
 
 ## Deferred
 

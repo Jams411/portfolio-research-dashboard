@@ -278,3 +278,12 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Rationale:** Field-scoped resolution improves usability without silently changing an investment holding. A centralized allowlist is auditable and avoids fuzzy symbol guessing.
 - **Consequences:** Unknown and provider-native symbols pass through unchanged. Portfolio holdings still require their exact Yahoo Finance symbols. Financial calculations are unaffected.
 - **Status:** Accepted.
+
+## D027 — Expose security-level single-index diagnostics without automating active bets
+
+- **Date:** 2026-08-02
+- **Decision:** Generalize excess-return OLS to each selected security and expose characteristic lines, residuals, coefficient inference, risk decomposition, comparison tables and exports. Do not implement the workbook's active/passive portfolio construction.
+- **Context:** Workbook 4 contains two detailed security regressions and an index-portfolio model whose active weights depend on supplied alpha forecasts divided by residual variance. Saved active weights include negative positions.
+- **Rationale:** Security diagnostics are supported, testable and relevant to research and market-risk roles. Converting historical alpha into unconstrained positions would violate the long-only boundary and imply persistence without forecast governance.
+- **Consequences:** Historical alpha screens carry non-forecast warnings and no Buy/Sell labels. Treynor–Black-style allocation stays educational-only; rolling stability and outlier diagnostics remain possible enhancements.
+- **Status:** Accepted.
