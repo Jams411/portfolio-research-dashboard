@@ -140,3 +140,10 @@ Commit: `3b7ed4d`
 - Added a top-level ETF Research workspace with explicit historical return/risk filters and security-screening diagnostics.
 - Added validated holdings CSV ingestion, duplicate consolidation, disclosure coverage, underlying exposure aggregation and pairwise ETF overlap.
 - Added deterministic unit and offline Streamlit tests; no financial methodology or live-data dependency was added to CI.
+
+## 2026-08-02 — Portfolio-management integration audit
+
+- Inventoried all 49 files in the Portfolio Management folder and accounted for every nonempty worksheet in 12 Excel workbooks.
+- Added a top-level Asset Allocation workspace for allocation comparison, contributions, implementation trades and CSV exports.
+- Completed HTML-report and export coverage for performance evaluation, security regression, CAPM/asset pricing and ETF research.
+- Added the permanent master inventory, concept matrix, canonical formula registry, exclusions and unresolved ambiguities.

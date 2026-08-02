@@ -95,3 +95,10 @@ Why: subperiod evidence is more informative than a single full-period result and
 - **Deferred:** governed broad-universe data, dated authoritative holdings feeds, issuer/sector concentration, ranking robustness, optimizer sensitivity and walk-forward evaluation.
 - **Educational-only:** incomplete source Treynor–Black active/passive construction and bond duration/convexity ranking example.
 - **Intentionally excluded:** analyst-target trade gates, automatic recommendations, undated hard-coded bond composites and silent ticker/classification inference.
+
+## Integration-audit disposition
+
+- **Completed:** complete source inventory, canonical formula registry, Asset Allocation discoverability, comprehensive report/CSV stitching, formula-to-test map and two end-to-end fixed-data workflows.
+- **Medium / deferred:** migrate fifteen peer tabs to grouped native `st.navigation` pages after state and deep-link design is specified.
+- **Educational-only:** IPS examples, risk questionnaires, fixed-income exercises, incomplete Treynor–Black examples and textbook/class-note supplements.
+- **Intentionally excluded:** personalized policy/suitability, automatic classifications, live factor claims, fragile source scripts and unsupported trading workflows.

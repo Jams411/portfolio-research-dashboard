@@ -242,3 +242,10 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - **Why it changed:** The source material contained useful screening logic but brittle import-time downloads, absolute paths, hard-coded universes and an incomplete active/passive optimizer.
 - **Boundary:** PortfolioLens does not claim live broad-universe scanning, authoritative holdings extraction, analyst-target signals or a production Treynor–Black implementation.
 - **Evidence:** `docs/FINAL_ASSIGNMENT_AUDIT.md`, deterministic module tests and offline AppTest.
+
+## 2026-08-02 — Complete portfolio-management integration audit
+
+- Inventoried 49 source files, including supplementary slides, IPS references, datasets, example models, images and supporting scripts.
+- Verified that shared formulas remain owned by pure domain modules and added a canonical registry rather than another calculation layer.
+- Exposed Asset Allocation publicly and completed HTML/CSV coverage for security analysis, asset pricing, evaluation and ETF research.
+- Classified unresolved photographs, weakly labeled material, IPS workflows, fixed-income models and factor models without inflating the product scope.

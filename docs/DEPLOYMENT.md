@@ -107,3 +107,6 @@ Only after this check should the verified hosted URL be added to the README and 
 ## 11. Browser-test limitation
 
 A Playwright deployment test is intentionally not installed. The current endpoint can redirect anonymous clients through Streamlit authentication, which makes a title assertion dependent on external account and visibility state. The lightweight health workflow records that redirect without credentials; the signed-out checklist above remains the authoritative UI-level deployment test until the endpoint consistently serves the public page directly.
+# Post-integration deployment check
+
+After an analytics integration, confirm the deployed build identifier and visibly open **Asset Allocation**, **Security Analysis**, **Asset Pricing**, **ETF Research**, and **Research Report**. The unauthenticated health workflow can prove DNS/host response or an authentication redirect, but it cannot prove that Streamlit Cloud rendered the final commit behind authentication.

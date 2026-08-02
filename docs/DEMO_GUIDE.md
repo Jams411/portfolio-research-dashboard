@@ -70,3 +70,6 @@ Close with: “The design favors transparent financial conventions and determini
 - Historical optimizers are estimation-sensitive and do not imply forecast certainty.
 - Strategy results exclude taxes, liquidity, market impact, and slippage beyond the configured proportional cost.
 - The application is educational research, not personalized financial advice.
+# Integrated workflow checkpoint
+
+For the standard SPY/QQQ/TLT/GLD demonstration, visit **Asset Allocation** after **Portfolio Optimization** to compare current/model weights, contribution profiles and implementation trades. Then open **Research Report** and confirm the HTML/CSV package includes performance evaluation, security analysis, CAPM and ETF research in addition to construction, rebalancing, strategies and stress testing.

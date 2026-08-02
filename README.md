@@ -184,3 +184,7 @@ Add an optional user-uploaded local price CSV path using the same validation bou
 ### ETF research workflow
 
 The top-level **ETF Research** workspace adds transparent historical universe filters, security-level alpha screening, optional user-supplied holdings look-through, consolidated underlying exposure, pairwise ETF overlap, and downloadable research tables. PortfolioLens does not scrape holdings or infer missing classifications; disclosures and weights remain explicit user inputs.
+
+### Integrated research coverage
+
+PortfolioLens connects return/risk analytics, benchmark and security diagnostics, CAPM, long-only construction, asset-allocation comparison, rebalancing, strategies, evaluation, ETF research and deterministic reporting through one aligned-return pipeline. The **Asset Allocation** workspace makes model weights, contribution profiles and implementation trades discoverable. The HTML report and CSV package include the major public analytics while preserving explicit limitations.

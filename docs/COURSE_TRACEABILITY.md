@@ -309,3 +309,7 @@ Source inspected directly and read-only: `2026S_FIN5745 PM_Workbook 7. Evaluatio
 ## Portfolio Management Final Assignment — ETF Screening, Alpha Selection, and Portfolio Optimization
 
 All five requested artifacts and all seven nonempty spreadsheet worksheets are permanently inventoried in [FINAL_ASSIGNMENT_AUDIT.md](FINAL_ASSIGNMENT_AUDIT.md). The verified chain is manual rather than executable: scanner choice → pasted constituent list → manually edited alpha screen → separately configured notebook → spreadsheet transcription. Production mappings are `portfolio_dashboard/etf_research.py`, existing `risk.py` single-index diagnostics and existing `construction.py` optimization. Deterministic evidence is in `tests/test_etf_research.py`, `tests/test_analytics.py`, and `tests/test_app.py`. Incomplete Treynor–Black mixing, current analyst-target gates, hard-coded bond rankings and inconsistent CAPM-alpha formulas are documented but intentionally excluded.
+
+## Complete folder integration audit
+
+The master 49-file inventory, supplementary-source classification, consolidated concept matrix, code/UI/report/test mapping and canonical formula registry are maintained in [PORTFOLIO_MANAGEMENT_COVERAGE.md](PORTFOLIO_MANAGEMENT_COVERAGE.md). This audit added report coverage and a public Asset Allocation workspace but did not reinterpret educational-only or ambiguous sources as production requirements.

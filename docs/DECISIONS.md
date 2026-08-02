@@ -37,6 +37,14 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Consequences:** The ETF Research tab requires explicit holdings disclosures and states coverage limitations. Existing Security Analysis and Portfolio Optimization remain the authoritative regression and construction workspaces.
 - **Status:** Accepted.
 
+## D031 — Complete product stitching without expanding methodology
+
+- **Decision:** Add a dedicated Asset Allocation workspace and include all major public analytics in the deterministic report/export package. Retain the existing pure-function formula owners and defer a full multipage navigation migration.
+- **Context:** Allocation results were scattered, and reports omitted security, CAPM, evaluation and ETF tables. Fifteen tabs are crowded, but restructuring the entire stateful app during a methodology audit carries disproportionate regression risk.
+- **Rationale:** Discoverability and report completeness are High-priority integration requirements; no new investment model is needed.
+- **Consequences:** Public allocation and report coverage are complete. Navigation architecture remains a documented Medium UX debt.
+- **Status:** Accepted.
+
 ## D028 — Separate CAPM/SML production analysis from assumption-based multifactor pricing
 
 - **Date:** 2026-08-02

@@ -303,3 +303,9 @@ Interview explainability and financial correctness were prioritized over feature
 - Confirmed that no named file imports another: selection, ticker lists, candidate lists and final weights move through manual edits or transcription. The notebook contains no execution counts or stored outputs and uses a different universe/benchmark from the final spreadsheet.
 - Rejected direct reuse of import-time Yahoo downloads, hard-coded output paths, approximate p-values, mutable fundamentals, the inconsistent CAPM-alpha branch and the incomplete Treynor–Black mix.
 - Added deterministic research modules and UI for explicit return/risk filters, exact regression screening, holdings coverage, look-through exposure and overlap. Full evidence and worksheet detail are in `FINAL_ASSIGNMENT_AUDIT.md`.
+
+## 2026-08-02 — Final stitching pass
+
+- Read-only inventory found 49 files and 12 workbooks; every nonempty worksheet was enumerated with formula/chart/visibility metadata.
+- Critical/High findings were limited to missing Asset Allocation discoverability and incomplete report/export stitching. Both were fixed without changing formulas.
+- The final classification is “substantially covered,” not “fully covered,” because specialized educational sources, five photographs and one weakly labeled workbook cannot support production claims.
