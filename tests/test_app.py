@@ -108,6 +108,25 @@ def test_default_spx_uses_provider_symbol_without_mapping_banner(offline_app):
     assert "^GSPC" not in chart_payload
 
 
+def test_security_analysis_is_visible_with_offline_data(offline_app):
+    run_analysis(offline_app)
+    offline_app.session_state["analysis_tab"] = "Benchmark & Attribution"
+    offline_app.run(timeout=30)
+    assert not offline_app.exception
+    assert any("Single-Index Security Analysis" in item.value for item in offline_app.markdown)
+    assert any(item.label == "Security to inspect" for item in offline_app.selectbox)
+    assert any(item.label == "Annualized regression alpha" for item in offline_app.metric)
+    titles = " ".join(
+        json.loads(item.proto.spec).get("layout", {}).get("title", {}).get("text", "")
+        for item in offline_app.get("plotly_chart")
+    )
+    assert "Security Characteristic Line" in titles
+    assert "Single-index residuals" in titles
+    labels = {item.label for item in offline_app.get("download_button")}
+    assert "Download security comparison CSV" in labels
+    assert "Download selected regression observations CSV" in labels
+
+
 def test_nondefault_benchmark_alias_shows_mapping_banner(offline_app):
     widget(offline_app.text_input, "Benchmark").set_value("sp500")
     run_analysis(offline_app)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 from .config import TRADING_DAYS
 from .performance import annualized_arithmetic_return
@@ -89,6 +90,124 @@ def single_index_regression(
         "Treynor Ratio": treynor,
         "Regression Observations": float(len(joined)),
     }
+
+
+def single_index_regression_diagnostics(
+    security: pd.Series,
+    benchmark: pd.Series,
+    risk_free_rate: float = 0.0,
+    periods_per_year: int = TRADING_DAYS,
+    confidence: float = 0.95,
+) -> tuple[dict[str, float], pd.DataFrame]:
+    """Return security-level single-index metrics and observation diagnostics.
+
+    OLS is fitted to aligned periodic simple excess returns. Annual alpha is
+    the periodic intercept multiplied by ``periods_per_year``. Variances are
+    annualized once by the same factor. The residual sample volatility is the
+    workbook-style sample standard deviation; regression standard error uses
+    the OLS residual degrees of freedom (n - 2).
+    """
+    if not 0 < confidence < 1:
+        raise ValueError("Confidence must be between 0 and 1.")
+    joined = pd.concat(
+        [security.rename("Security Return"), benchmark.rename("Benchmark Return")], axis=1
+    ).dropna()
+    if len(joined) < 3:
+        raise ValueError("Single-index regression requires at least three aligned observations.")
+    if periods_per_year <= 0:
+        raise ValueError("Periods per year must be positive.")
+
+    periodic_rf = risk_free_rate / periods_per_year
+    y = joined["Security Return"] - periodic_rf
+    x = joined["Benchmark Return"] - periodic_rf
+    x_centered = x - x.mean()
+    sxx = float(x_centered.pow(2).sum())
+    if not np.isfinite(sxx) or sxx <= 0:
+        raise ValueError("Benchmark excess returns must have positive sample variance.")
+
+    beta_value = float((x_centered * (y - y.mean())).sum() / sxx)
+    periodic_alpha = float(y.mean() - beta_value * x.mean())
+    fitted = periodic_alpha + beta_value * x
+    residual = y - fitted
+    degrees_freedom = len(joined) - 2
+    residual_sum_squares = float(residual.pow(2).sum())
+    residual_mse = residual_sum_squares / degrees_freedom
+    regression_standard_error = float(np.sqrt(residual_mse))
+    alpha_standard_error = float(
+        np.sqrt(residual_mse * (1 / len(joined) + float(x.mean()) ** 2 / sxx))
+    )
+    beta_standard_error = float(np.sqrt(residual_mse / sxx))
+    alpha_t = periodic_alpha / alpha_standard_error if alpha_standard_error > 0 else float("nan")
+    beta_t = beta_value / beta_standard_error if beta_standard_error > 0 else float("nan")
+    alpha_p = float(2 * stats.t.sf(abs(alpha_t), degrees_freedom)) if np.isfinite(alpha_t) else float("nan")
+    beta_p = float(2 * stats.t.sf(abs(beta_t), degrees_freedom)) if np.isfinite(beta_t) else float("nan")
+    critical_t = float(stats.t.ppf((1 + confidence) / 2, degrees_freedom))
+
+    x_variance = float(x.var(ddof=1))
+    residual_variance = float(residual.var(ddof=1))
+    systematic_variance = beta_value**2 * x_variance * periods_per_year
+    idiosyncratic_variance = residual_variance * periods_per_year
+    total_model_variance = systematic_variance + idiosyncratic_variance
+    annual_alpha = periodic_alpha * periods_per_year
+    security_return = annualized_arithmetic_return(joined["Security Return"], periods_per_year)
+    benchmark_return = annualized_arithmetic_return(joined["Benchmark Return"], periods_per_year)
+    capm_required = risk_free_rate + beta_value * (benchmark_return - risk_free_rate)
+
+    total_sum_squares = float((y - y.mean()).pow(2).sum())
+    r_squared = 1 - residual_sum_squares / total_sum_squares if total_sum_squares > 0 else float("nan")
+    metrics = {
+        "Regression Alpha": annual_alpha,
+        "Beta": beta_value,
+        "R-Squared": float(r_squared),
+        "Residual Volatility": float(np.sqrt(idiosyncratic_variance)),
+        "Regression Standard Error": regression_standard_error * np.sqrt(periods_per_year),
+        "Systematic Volatility": float(np.sqrt(systematic_variance)),
+        "Total Model Volatility": float(np.sqrt(total_model_variance)),
+        "Systematic Variance": systematic_variance,
+        "Idiosyncratic Variance": idiosyncratic_variance,
+        "Systematic Risk Share": systematic_variance / total_model_variance if total_model_variance > 0 else float("nan"),
+        "Idiosyncratic Risk Share": idiosyncratic_variance / total_model_variance if total_model_variance > 0 else float("nan"),
+        "CAPM Required Return": capm_required,
+        "Jensen's Alpha": security_return - capm_required,
+        "Treynor Ratio": (security_return - risk_free_rate) / beta_value if not np.isclose(beta_value, 0) else float("nan"),
+        "Alpha / Residual Variance": annual_alpha / idiosyncratic_variance if idiosyncratic_variance > 0 else float("nan"),
+        "Alpha Standard Error": alpha_standard_error * periods_per_year,
+        "Alpha t-Statistic": alpha_t,
+        "Alpha p-Value": alpha_p,
+        "Alpha 95% Lower": (periodic_alpha - critical_t * alpha_standard_error) * periods_per_year,
+        "Alpha 95% Upper": (periodic_alpha + critical_t * alpha_standard_error) * periods_per_year,
+        "Beta Standard Error": beta_standard_error,
+        "Beta t-Statistic": beta_t,
+        "Beta p-Value": beta_p,
+        "Beta 95% Lower": beta_value - critical_t * beta_standard_error,
+        "Beta 95% Upper": beta_value + critical_t * beta_standard_error,
+        "Regression Observations": float(len(joined)),
+    }
+    observations = joined.assign(
+        **{
+            "Security Excess Return": y,
+            "Benchmark Excess Return": x,
+            "Fitted Excess Return": fitted,
+            "Residual": residual,
+        }
+    )
+    return metrics, observations
+
+
+def security_single_index_table(
+    asset_returns: pd.DataFrame,
+    benchmark: pd.Series,
+    risk_free_rate: float = 0.0,
+    periods_per_year: int = TRADING_DAYS,
+) -> pd.DataFrame:
+    """Compare independently fitted single-index models for each security."""
+    rows: dict[str, dict[str, float]] = {}
+    for security in asset_returns.columns:
+        metrics, _ = single_index_regression_diagnostics(
+            asset_returns[security], benchmark, risk_free_rate, periods_per_year
+        )
+        rows[str(security)] = metrics
+    return pd.DataFrame.from_dict(rows, orient="index").rename_axis("Security")
 
 
 def tracking_error(portfolio: pd.Series, benchmark: pd.Series) -> float:

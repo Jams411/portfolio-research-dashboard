@@ -30,7 +30,8 @@ from portfolio_dashboard.rebalancing import (
 )
 from portfolio_dashboard.risk import (
     benchmark_metrics, beta, historical_cvar, historical_var, information_ratio,
-    single_index_regression, tracking_error, volatility_contributions,
+    security_single_index_table, single_index_regression,
+    single_index_regression_diagnostics, tracking_error, volatility_contributions,
 )
 from portfolio_dashboard.strategy import momentum_backtest
 from portfolio_dashboard.stress import custom_shock, historical_stress
@@ -299,6 +300,68 @@ def test_single_index_regression_validates_sample_and_benchmark_variance():
         single_index_regression(pd.Series([.01, .02]), pd.Series([.01, .02]))
     with pytest.raises(ValueError, match="positive sample variance"):
         single_index_regression(pd.Series([.01, .02, .03]), pd.Series([.01, .01, .01]))
+
+
+def test_security_single_index_diagnostics_recover_known_ols_and_reconcile_variance():
+    periods = 12
+    risk_free_rate = .024
+    index = pd.date_range("2020-01-31", periods=60, freq="ME")
+    market_excess = pd.Series(np.linspace(-.06, .07, 60), index=index)
+    raw_residual = pd.Series(np.sin(np.arange(60) * 1.7), index=index)
+    residual = raw_residual - raw_residual.mean()
+    residual -= residual.cov(market_excess) / market_excess.var(ddof=1) * (market_excess - market_excess.mean())
+    residual *= .004
+    periodic_alpha, known_beta = .0015, 1.25
+    benchmark = market_excess + risk_free_rate / periods
+    security = risk_free_rate / periods + periodic_alpha + known_beta * market_excess + residual
+
+    metrics, observations = single_index_regression_diagnostics(
+        security, benchmark, risk_free_rate, periods
+    )
+
+    assert metrics["Regression Alpha"] == pytest.approx(periodic_alpha * periods)
+    assert metrics["Beta"] == pytest.approx(known_beta)
+    assert observations["Residual"].mean() == pytest.approx(0, abs=1e-14)
+    np.testing.assert_allclose(
+        observations["Fitted Excess Return"] + observations["Residual"],
+        observations["Security Excess Return"], atol=1e-14,
+    )
+    modeled_variance = metrics["Systematic Variance"] + metrics["Idiosyncratic Variance"]
+    assert modeled_variance == pytest.approx((security - risk_free_rate / periods).var(ddof=1) * periods)
+    assert metrics["Total Model Volatility"] == pytest.approx(np.sqrt(modeled_variance))
+    assert metrics["R-Squared"] == pytest.approx(metrics["Systematic Risk Share"])
+    assert metrics["Jensen's Alpha"] == pytest.approx(metrics["Regression Alpha"])
+    assert metrics["Alpha 95% Lower"] < metrics["Regression Alpha"] < metrics["Alpha 95% Upper"]
+    assert metrics["Beta 95% Lower"] < known_beta < metrics["Beta 95% Upper"]
+
+
+def test_security_single_index_table_ranks_and_aligns_each_security():
+    index = pd.bdate_range("2024-01-01", periods=30)
+    benchmark = pd.Series(np.linspace(-.02, .025, 30), index=index)
+    assets = pd.DataFrame({
+        "Higher Alpha": .0005 + 1.1 * benchmark,
+        "Lower Alpha": -.0002 + .7 * benchmark,
+    }, index=index)
+    table = security_single_index_table(assets, benchmark)
+    assert table.index.tolist() == ["Higher Alpha", "Lower Alpha"]
+    assert table.loc["Higher Alpha", "Regression Alpha"] > table.loc["Lower Alpha", "Regression Alpha"]
+    assert table.loc["Higher Alpha", "Beta"] == pytest.approx(1.1)
+    assert table.loc["Lower Alpha", "Beta"] == pytest.approx(.7)
+
+
+def test_security_single_index_diagnostics_handles_perfect_and_invalid_inputs():
+    benchmark = pd.Series([-.02, -.01, 0, .01, .02])
+    security = .001 + .8 * benchmark
+    metrics, observations = single_index_regression_diagnostics(security, benchmark)
+    assert metrics["R-Squared"] == pytest.approx(1)
+    assert metrics["Residual Volatility"] == pytest.approx(0, abs=1e-12)
+    assert observations["Residual"].abs().max() < 1e-12
+    with pytest.raises(ValueError, match="positive sample variance"):
+        single_index_regression_diagnostics(pd.Series([.01, .02, .03]), pd.Series([.01, .01, .01]))
+    with pytest.raises(ValueError, match="three aligned"):
+        single_index_regression_diagnostics(pd.Series([.01, np.nan, .02]), pd.Series([.01, .02, .03]))
+    with pytest.raises(ValueError, match="Confidence"):
+        single_index_regression_diagnostics(security, benchmark, confidence=1)
 
 
 def test_benchmark_metrics_include_regression_and_capm_outputs():

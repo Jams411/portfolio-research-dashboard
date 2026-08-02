@@ -8,6 +8,7 @@ import subprocess
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 from portfolio_dashboard.config import PRESETS, TRADING_DAYS
@@ -31,7 +32,10 @@ from portfolio_dashboard.reporting import generate_html_report, research_summary
 from portfolio_dashboard.research import (
     deterministic_insights, portfolio_comparison, portfolio_health_score, what_if_analysis,
 )
-from portfolio_dashboard.risk import historical_cvar, historical_var
+from portfolio_dashboard.risk import (
+    historical_cvar, historical_var, security_single_index_table,
+    single_index_regression_diagnostics,
+)
 from portfolio_dashboard.strategy import momentum_backtest
 from portfolio_dashboard.stress import custom_shock, historical_stress
 
@@ -414,6 +418,102 @@ if tabs[3].open:
         st.caption(
             "CAPM required return is the risk-free rate plus beta times the benchmark risk premium. "
             "Jensen’s alpha is realized arithmetic return minus that required return; Treynor is excess return per unit of beta."
+        )
+        st.markdown("### Single-Index Security Analysis")
+        st.caption(
+            "Each portfolio security is fitted independently against the selected benchmark using aligned daily simple excess returns. "
+            "Results are historical diagnostics, not forecasts, ratings, or investment recommendations."
+        )
+        security_table = security_single_index_table(
+            a.asset_returns, a.benchmark_returns, r["risk_free"]
+        )
+        comparison_columns = [
+            "Regression Alpha", "Beta", "R-Squared", "Residual Volatility",
+            "Systematic Volatility", "Systematic Risk Share", "Jensen's Alpha",
+            "Treynor Ratio", "Alpha / Residual Variance", "Regression Observations",
+        ]
+        st.dataframe(
+            security_table[comparison_columns], width="stretch",
+            column_config={
+                "Regression Alpha": st.column_config.NumberColumn(format="percent"),
+                "R-Squared": st.column_config.NumberColumn(format="percent"),
+                "Residual Volatility": st.column_config.NumberColumn(format="percent"),
+                "Systematic Volatility": st.column_config.NumberColumn(format="percent"),
+                "Systematic Risk Share": st.column_config.NumberColumn(format="percent"),
+                "Jensen's Alpha": st.column_config.NumberColumn(format="percent"),
+            },
+        )
+        st.caption(
+            "Alpha / Residual Variance is a historical screening diagnostic. A positive value does not imply that alpha will persist. "
+            "Statistical significance and economic magnitude should be assessed separately."
+        )
+        selected_security = st.selectbox(
+            "Security to inspect", list(a.asset_returns.columns), key="single_index_security"
+        )
+        security_metrics, security_observations = single_index_regression_diagnostics(
+            a.asset_returns[selected_security], a.benchmark_returns, r["risk_free"]
+        )
+        with st.container(horizontal=True):
+            st.metric("Annualized regression alpha", pct(security_metrics["Regression Alpha"]), border=True)
+            st.metric("Beta", ratio(security_metrics["Beta"]), border=True)
+            st.metric("R-squared", pct(security_metrics["R-Squared"]), border=True)
+            st.metric("Residual volatility", pct(security_metrics["Residual Volatility"]), border=True)
+            st.metric("Observations", f"{security_metrics['Regression Observations']:.0f}", border=True)
+
+        ordered = security_observations.sort_values("Benchmark Excess Return")
+        characteristic = go.Figure()
+        characteristic.add_trace(go.Scatter(
+            x=security_observations["Benchmark Excess Return"],
+            y=security_observations["Security Excess Return"],
+            mode="markers", name="Actual excess return",
+            customdata=security_observations.index.astype(str),
+            hovertemplate="Date: %{customdata}<br>Benchmark excess return: %{x:.2%}<br>Security excess return: %{y:.2%}<extra></extra>",
+        ))
+        characteristic.add_trace(go.Scatter(
+            x=ordered["Benchmark Excess Return"], y=ordered["Fitted Excess Return"],
+            mode="lines", name="Fitted characteristic line",
+            hovertemplate="Benchmark excess return: %{x:.2%}<br>Fitted security excess return: %{y:.2%}<extra></extra>",
+        ))
+        characteristic.update_layout(
+            title=f"Security Characteristic Line — {selected_security} vs {r['benchmark_ticker']}",
+            xaxis_title="Benchmark excess return (daily)", yaxis_title="Security excess return (daily)",
+            legend_title_text="", margin=dict(l=10, r=10, t=50, b=10),
+        )
+        st.plotly_chart(characteristic, width="stretch", theme="streamlit")
+
+        residual_chart = px.scatter(
+            security_observations, x=security_observations.index, y="Residual",
+            title=f"Single-index residuals — {selected_security}",
+            labels={"x": "Date", "Residual": "Residual excess return (daily)"},
+        )
+        residual_chart.add_hline(y=0, line_dash="dash", line_color="gray")
+        residual_chart.update_layout(margin=dict(l=10, r=10, t=50, b=10))
+        st.plotly_chart(residual_chart, width="stretch", theme="streamlit")
+
+        regression_details = st.expander("Regression Diagnostics", on_change="rerun")
+        if regression_details.open:
+            with regression_details:
+                diagnostic_names = [
+                    "Regression Standard Error", "Systematic Variance", "Idiosyncratic Variance",
+                    "Idiosyncratic Risk Share", "Alpha Standard Error", "Alpha t-Statistic",
+                    "Alpha p-Value", "Alpha 95% Lower", "Alpha 95% Upper", "Beta Standard Error",
+                    "Beta t-Statistic", "Beta p-Value", "Beta 95% Lower", "Beta 95% Upper",
+                ]
+                st.dataframe(
+                    display_metric_frame({name: security_metrics[name] for name in diagnostic_names}),
+                    width="stretch",
+                )
+                st.caption(
+                    "Alpha and beta confidence intervals use a t distribution with n−2 residual degrees of freedom. "
+                    "Residual volatility is the annualized sample standard deviation of residuals; regression standard error uses n−2."
+                )
+        st.download_button(
+            "Download security comparison CSV", security_table.to_csv().encode("utf-8"),
+            "portfoliolens_security_analysis.csv", "text/csv",
+        )
+        st.download_button(
+            "Download selected regression observations CSV", security_observations.to_csv().encode("utf-8"),
+            f"portfoliolens_{str(selected_security).lower()}_single_index.csv", "text/csv",
         )
         comparison = pd.concat([
             (1 + a.portfolio_returns).cumprod().rename("Portfolio"),
