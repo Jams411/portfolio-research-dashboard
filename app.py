@@ -237,8 +237,8 @@ if "result" not in st.session_state:
 """)
             st.caption(
                 "Historical arithmetic returns and sample covariance are estimation inputs, not forecasts. "
-                "Long-only weights sum to 100%; short selling and leverage are disabled. Workbook 2 does not "
-                "supply a numerical risk-aversion utility function, so risk preference is selected directly."
+                "Long-only weights sum to 100%; short selling and leverage are disabled. Users may select "
+                "risky-asset exposure directly or provide an explicit risk-aversion coefficient."
             )
         elif open_tab == 9:
             st.subheader("Methodology and limitations")
@@ -420,7 +420,7 @@ if tabs[4].open:
     with tabs[4]:
         st.subheader("Portfolio Optimization")
         st.caption(
-            "Workbook 2–3 tools: long-only efficient frontier, global minimum-variance portfolio, "
+            "Modern portfolio construction tools: long-only efficient frontier, global minimum-variance portfolio, "
             "constrained tangency portfolio, target-return portfolio, non-leveraged Capital Allocation Line, "
             "utility-based complete portfolio, and exportable optimized weights."
         )
@@ -435,9 +435,9 @@ if tabs[4].open:
             tangency_stats = r["construction_stats"].loc["Maximum Sharpe"].to_dict()
             complete_method = st.segmented_control(
                 "Complete portfolio selection method",
-                ["Direct risky allocation", "Workbook 3 risk aversion"],
+                ["Direct risky allocation", "Utility-Based Allocation"],
                 default="Direct risky allocation",
-                help="Choose a direct capital allocation or the workbook's quadratic-utility solution.",
+                help="Choose a direct capital allocation or an explicit quadratic-utility model.",
             )
             direct_risky_allocation = st.slider(
                 "Risk preference — allocation to the tangency portfolio (%)", 0, 100, 100, 5,
@@ -449,9 +449,9 @@ if tabs[4].open:
             ) / 100
             risk_aversion = st.number_input(
                 "Risk aversion coefficient (A)", min_value=0.1, max_value=30.0, value=3.0, step=0.1,
-                disabled=complete_method != "Workbook 3 risk aversion",
+                disabled=complete_method != "Utility-Based Allocation",
                 help=(
-                    "Workbook 3 uses U = E[r] − ½Aσ² and y* = (E[rT] − rf)/(AσT²). "
+                    "The utility model uses U = E[r] − ½Aσ² and y* = (E[rT] − rf)/(AσT²). "
                     "Higher A implies lower risky allocation. This is a model input, not a personal risk assessment."
                 ),
             )
@@ -529,7 +529,7 @@ if tabs[4].open:
             st.caption(
                 "This is a point on the non-leveraged CAL, not a recommendation. With zero risky allocation, expected return equals the entered risk-free rate and volatility is zero."
             )
-            if complete_method == "Workbook 3 risk aversion":
+            if complete_method == "Utility-Based Allocation":
                 with st.container(horizontal=True):
                     st.metric(
                         "Unconstrained utility allocation",
@@ -540,16 +540,17 @@ if tabs[4].open:
                     st.metric("Quadratic utility", ratio(float(utility_result["Quadratic Utility"]), 4), border=True)
                 if utility_result["Allocation Constraint Binding"]:
                     st.warning(
-                        "The classroom utility solution falls outside 0%–100%. PortfolioLens applies its explicit "
-                        "non-leveraged boundary; it does not borrow, leverage, or short sell."
+                        "The unconstrained utility solution falls outside the permitted 0%–100% risky-allocation range. "
+                        "PortfolioLens applies the selected long-only, non-leveraged constraint; it does not borrow, "
+                        "use leverage, or short sell."
                     )
             utility_methodology = st.expander("Risk aversion and utility methodology")
             if utility_methodology.open:
                 with utility_methodology:
                     st.write(
-                        "Workbook 3 supplies U = E[rC] − ½AσC² and y* = (E[rT] − rf)/(AσT²). PortfolioLens applies "
-                        "that model to its historical long-only tangency estimate, while retaining 0≤y≤1. The workbook's "
-                        "third-party questionnaire and score-to-A mapping are educational evidence, not a production suitability tool."
+                        "The utility model uses U = E[rC] − ½AσC² and y* = (E[rT] − rf)/(AσT²). PortfolioLens applies "
+                        "it to the historical long-only tangency estimate while retaining 0≤y≤1. The methodology does "
+                        "not infer risk tolerance or suitability; the coefficient is an explicit user assumption."
                     )
             with st.container(horizontal=True):
                 st.download_button(
@@ -1012,5 +1013,5 @@ if tabs[9].open:
 
 **Strategy.** The first requested holding is the explicit strategy instrument. It is long when its short moving average exceeds its long moving average, otherwise cash. Positions lag signals by one full day. Strategy and buy-and-hold statistics use the same post-warm-up period. Proportional transaction costs apply to every position change; no automatic parameter search is performed.
 
-**Limitations.** yfinance can be delayed, revised, incomplete, or unavailable. Results exclude taxes, liquidity constraints, market impact, and slippage beyond the configured cost. Historical stress results appear only when full configured windows are covered. This application is for research and educational use only and is not personalized financial advice.
+**Limitations.** yfinance can be delayed, revised, incomplete, or unavailable. Results exclude taxes, liquidity constraints, market impact, and slippage beyond the configured cost. Historical stress results appear only when full configured windows are covered. This application is for historical investment research only and is not personalized financial advice.
 """)
