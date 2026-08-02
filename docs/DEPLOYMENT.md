@@ -62,6 +62,8 @@ Expected: a clean status, `0 0`, and a passing test suite.
 - Repository: `Jams411/portfoliolens`
 - Branch: `main`
 
+These settings belong to the Streamlit Cloud application itself and cannot be changed by Python imports. If deployment logs mention an older repository name, open **Manage app → Settings** and reconnect this exact repository and branch before debugging application modules.
+
 ## 5. Entry file
 
 Set the main file path to `app.py`. Do not use a local absolute path.
@@ -77,6 +79,7 @@ The landing page loads without downloading market data. It explains the workflow
 ## 8. Common failures
 
 - **Module not found:** Confirm the deployment root is the repository root and `requirements.txt` is present.
+- **`KeyError` or missing `portfolio_dashboard.*` module while an older repository is shown in the build log:** The current `main` branch tracks `portfolio_dashboard/__init__.py` and every package module, including `formatting.py`. Reconnect the Cloud app to `Jams411/portfoliolens`, branch `main`, entrypoint `app.py`, then reboot. Repository or branch selection is deployment metadata, not an import alias that application code can override.
 - **Unsupported Streamlit API:** Reboot the app so the current bounded requirements are installed.
 - **Ticker download failure:** Retry later or use liquid ETF tickers; yfinance availability is external to the app.
 - **Private or authorization screen:** Confirm the app is public and the Streamlit GitHub application can read the repository.

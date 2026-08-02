@@ -1,5 +1,10 @@
 # Project history
 
+## 2026-08-02 — Deployment package and repository audit
+
+- **What changed:** Audited all Python imports and legacy names, normalized the sole internal absolute import to package-relative form, added a regression test that imports every tracked `portfolio_dashboard` module, and documented the exact Streamlit Cloud repository/branch recovery procedure.
+- **Root cause finding:** Current GitHub `main` contains `portfolio_dashboard/formatting.py`, and a fresh checkout passes the complete suite and AppTest. A build log naming an older repository therefore indicates stale Streamlit Cloud deployment configuration rather than a missing current-repository module.
+
 ## 2026-08-02 — Canonical Streamlit deployment URL
 
 - **What changed:** Replaced current deployment references and the automated health-check target with `https://portfolio-lens.streamlit.app`.

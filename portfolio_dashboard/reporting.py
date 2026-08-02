@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from html import escape
 import pandas as pd
 
-from portfolio_dashboard.formatting import metric_value
+from .formatting import metric_value
 
 def _pct(value: object) -> str:
     try:

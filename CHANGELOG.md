@@ -4,6 +4,7 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Added a deployment-facing package import contract covering every tracked `portfolio_dashboard` module, normalized internal report formatting to a relative import, and documented recovery when Streamlit Cloud is connected to an obsolete repository.
 - Updated the canonical deployment URL and automated health check to `https://portfolio-lens.streamlit.app` after verifying the product-aligned Streamlit deployment.
 - Rendered the complete top-level tab bar before analysis so **Portfolio Optimization** is discoverable on initial load, and added a runtime commit identifier for verifying the revision served by Streamlit Cloud.
 - Promoted Workbook 2 analytics to a dedicated **Portfolio Optimization** application section, with explicit GMV/tangency labels, a consolidated optimized-weights table and export, and an honest risk-preference control that does not imply the workbook supplied a numerical utility model.
