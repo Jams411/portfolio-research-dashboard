@@ -128,6 +128,15 @@ pytest.ini                          local pytest configuration
 - **Financial concepts:** Empirical lower-tail loss, covariance beta, active risk, relative drawdown, Euler decomposition, and contribution reconciliation.
 - **Common failure modes:** Invalid confidence, empty tails, fewer than three aligned regression observations, zero benchmark variance, zero tracking error, nonpositive portfolio variance, or misaligned labels.
 
+### `asset_pricing.py` — CAPM and assumption-based factor pricing
+
+- **Why it exists:** Keeps Security Market Line and linear factor-pricing calculations independent from Streamlit presentation and from regression estimation.
+- **Owns:** CAPM required return, realized-minus-required alpha, sorted SML coordinates, security-level CAPM comparison tables, and supplied-exposure factor contribution arithmetic.
+- **Does not own:** Live factor downloads, rolling regressions, factor selection, security recommendations, or market-data retrieval.
+- **Key inputs:** Annual arithmetic returns and risk-free rate in common decimal units, regression beta, or explicitly supplied factor exposures and premia.
+- **Key outputs:** CAPM comparison tables, SML coordinates, and factor contribution reconciliation tables.
+- **How tested:** Deterministic zero/negative/high-beta cases, risk-free and market sensitivity, aligned synthetic regressions, and factor contribution reconciliation.
+
 ### `research.py` — deterministic investment research diagnostics
 
 - **Why it exists:** Keeps research interpretation and scenario mathematics testable and independent of Streamlit and report rendering.

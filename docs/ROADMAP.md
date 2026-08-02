@@ -29,6 +29,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - Workbook 1 deep trace: HPR, periodic arithmetic/geometric means, asset sample variance/volatility, coefficient of variation, covariance/correlation matrices, portfolio moments, and observed diversification reduction
 - Workbook 2 deep trace: recoverable long-only target-return and unconstrained tangency Solver models, frontier/CML methodology comparison, and non-leveraged complete portfolios combining the tangency portfolio with the risk-free asset
 - Workbook 3 deep trace: two-asset asset-class allocation, correlation-sensitive minimum variance, and quadratic-utility complete-portfolio selection with a disclosed non-leveraged boundary
+- Workbook 5-1 deep trace: CAPM/SML comparison and assumption-based APT/four-factor decomposition, with live multifactor estimation explicitly deferred pending a governed factor dataset
 - Independent frontier/CAL validation: closed-form and brute-force reconciliation, upper-branch filtering, exact tangency inclusion, endpoint reconciliation, numerical diagnostics, and professional public terminology
 - Verified product-aligned Streamlit deployment at `https://portfolio-lens.streamlit.app`, with matching documentation and automated health checks
 
@@ -60,6 +61,7 @@ Why: subperiod evidence is more informative than a single full-period result and
 - **Bond duration and convexity:** Requires explicit coupon, maturity, yield, frequency, and instrument assumptions that yfinance price history does not reliably provide.
 - **Fundamental clustering:** A defensible machine-learning research idea only with reproducible, point-in-time fundamental data. It should begin outside the core dashboard if revisited.
 - **Multifactor or Treynor–Black live models:** Educational companion only unless reliable factor data and a separately approved estimation design become available.
+- **Live SMB/HML/momentum exposure estimation:** The source workbook supplies factor premia and exposures but no recoverable data-acquisition or regression workflow; production estimation requires a governed, frequency-aligned factor dataset.
 
 ## Educational-only
 

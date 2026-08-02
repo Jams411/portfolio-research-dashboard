@@ -173,6 +173,18 @@ Custom shocks are explicit per-asset instantaneous percentage shocks; the applic
 
 The downloadable report uses the actual common-price analysis dates, the currently edited custom shocks, and the rebalancing method currently selected in the application. Percentage, currency, count, and unitless ratio fields are formatted according to their metric definitions.
 
+## Asset pricing and Security Market Line
+
+For each security, PortfolioLens uses the beta from its aligned excess-return regression and compares the security's annualized arithmetic sample return with the CAPM required return:
+
+`E[R_i]CAPM = R_f + β_i(E[R_M] - R_f)`
+
+`Jensen's alpha = arithmetic sample return_i - E[R_i]CAPM`
+
+The benchmark arithmetic return is calculated from the same aligned observations used for that security's regression. The risk-free input, security return, benchmark return, and required return are annual decimals; beta is unitless. The Security Market Line is the straight line through `(β=0, R_f)` and `(β=1, E[R_M])`. A point above or below that historical line is descriptive sample evidence, not proof of persistent mispricing and not a recommendation.
+
+The source-supported APT and four-factor calculations are linear assumption models. For supplied exposures `b_k`, supplied factor premia `λ_k`, and a supplied base return `λ_0`, PortfolioLens can reconcile `E[R_i]=λ_0+Σ b_ik λ_k` and each contribution `b_ik λ_k`. The source identifies market excess, size (SMB), value (HML), and momentum factors, but supplies no recoverable factor-return acquisition or exposure-estimation workflow. The public application therefore labels this as a framework and does not fabricate live multifactor estimates from Yahoo Finance data.
+
 ## General limitations and disclaimer
 
 Historical data may contain provider errors and do not predict future performance. The system excludes taxes, liquidity and position-size limits, financing, corporate-action edge cases, market impact, and slippage beyond the configured proportional cost. It has no live execution, authentication, persistence, or intraday data. For research and educational use only; not personalized financial advice.

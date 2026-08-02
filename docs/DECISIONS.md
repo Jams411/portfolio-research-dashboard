@@ -20,6 +20,15 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Consequences:** Application branding, report titles, documentation, repository identity, screenshots, and deployment presentation change. Product scope, architecture, financial calculations, methodology, and educational-use limitations do not change. The internal `portfolio_dashboard` Python package remains stable to avoid an unnecessary import migration.
 - **Status:** Accepted.
 
+## D028 — Separate CAPM/SML production analysis from assumption-based multifactor pricing
+
+- **Date:** 2026-08-02
+- **Decision:** Add a professional Asset Pricing workspace for CAPM required return, realized-minus-required Jensen's alpha and the Security Market Line. Keep APT and four-factor arithmetic as a reusable supplied-assumption framework, without live factor exposure estimation.
+- **Context:** Workbook 5-1 contains directly recoverable CAPM/SML formulas, an APT two-factor example, and market/SMB/HML/momentum contribution tables. It does not contain a recoverable factor-data pipeline, factor regressions, standard errors, or production classifications.
+- **Rationale:** CAPM uses existing governed benchmark data and tested regression beta. A live multifactor model would require trustworthy aligned factor returns and new estimation governance that the source does not establish.
+- **Consequences:** Users receive a transparent historical CAPM comparison. Multifactor data and exposure estimation remain deferred; historical position above the SML is never labeled a buy signal or persistent mispricing.
+- **Status:** Accepted.
+
 ## D001 — Keep the product focused and educational
 
 - **Date:** 2026-07-31

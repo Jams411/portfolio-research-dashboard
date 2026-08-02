@@ -270,3 +270,12 @@ Interview explainability and financial correctness were prioritized over feature
 - **Methodology judgment:** Retained the workbook's sample-residual-risk convention while labeling OLS regression standard error separately. Excluded active-position construction because historical alpha is not a governed forecast and source weights include shorts.
 - **Validation:** Synthetic alpha/beta recovery, variance and Jensen reconciliation, perfect-fit and invalid-input cases, offline UI exposure, and public-language guard.
 - **Follow-up:** Corrected discoverability by moving the complete security-analysis view out of Benchmark & Attribution and into a top-level `Security Analysis` tab. The initial implementation was analytically complete but navigationally incomplete.
+
+## 2026-08-02 — CAPM, APT and multifactor source integration
+
+- **Goal:** Trace Workbook 5-1 directly and expose only its defensible, product-aligned asset-pricing concepts.
+- **Workbook evidence:** Seven visible nonempty sheets. CAPM and SML formulas are explicit; monthly excess-return regression conventions are recoverable; APT uses two supplied macro-factor sensitivities; the multifactor example uses supplied market, SMB, HML and momentum premia/exposures. No Solver, VBA, hidden ranges, factor-data pipeline or factor-regression output is present.
+- **Implementation:** Added pure CAPM required-return, Jensen comparison, SML and supplied-factor contribution functions plus a top-level `Asset Pricing` tab and CSV export.
+- **Methodology judgment:** Each security's market arithmetic return uses its own aligned regression sample. Live factor estimation is deferred instead of substituting ungoverned ETF proxies or treating static examples as current forecasts.
+- **Validation:** Synthetic zero, negative and high-beta cases; risk-free and benchmark sensitivity; SML coordinates; CAPM table alignment; factor contribution reconciliation; four-ETF offline workflow; public navigation AppTest.
+- **Next step:** Run complete repository verification, push logical commits, and confirm CI and public deployment evidence.

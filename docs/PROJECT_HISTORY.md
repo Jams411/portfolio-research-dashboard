@@ -214,3 +214,10 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - **Boundary:** Historical alpha is labeled as a diagnostic, not a forecast or recommendation. The active/passive model is preserved as educational traceability because its supplied alpha forecasts and negative active weights conflict with the long-only product boundary.
 - **Evidence:** Deterministic coefficient and variance-reconciliation tests, offline Streamlit AppTest, Decision D027, and the Workbook 4 section in course traceability.
 - **UI correction:** The first implementation nested these outputs under Benchmark & Attribution despite describing them as publicly implemented. They are now promoted to an exact top-level `Security Analysis` tab with its own initial state and navigation assertion.
+
+## 2026-08-02 — Workbook 5-1 asset-pricing trace
+
+- **What changed:** Audited all seven nonempty worksheets in the exact CAPM/APT/multifactor workbook and added a top-level Asset Pricing workspace, deterministic CAPM/SML calculations, security comparison/export, and an assumption-based factor contribution primitive.
+- **Why it changed:** Existing benchmark analysis reported CAPM metrics but did not expose the cross-security Security Market Line or distinguish production CAPM analysis from the source's supplied-assumption APT and four-factor examples.
+- **Boundary:** Market, SMB, HML and momentum are traced internally. Live multifactor regression is deferred because the workbook contains no recoverable factor-data or exposure-estimation workflow.
+- **Evidence:** CAPM/SML sensitivity tests, synthetic regression integration, factor contribution reconciliation, offline Streamlit AppTest, Decision D028, and the Workbook 5-1 traceability section.

@@ -4,6 +4,10 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Added a top-level **Asset Pricing** workspace with CAPM required returns, realized-versus-required return comparisons, Jensen’s alpha, a Security Market Line, and downloadable security results.
+- Added deterministic CAPM/SML primitives plus an assumption-based linear factor-return decomposition; live multifactor estimation remains excluded because no governed factor-return source is available.
+- Completed a direct seven-worksheet trace of the CAPM, APT and multifactor source workbook, including its monthly excess-return conventions and four-factor assumption tables.
+
 - Promoted security-level regression from the Benchmark & Attribution view to a clearly visible top-level **Security Analysis** tab, including a pre-analysis empty state and exact-label AppTest coverage.
 - Added security-level single-index comparison, characteristic-line and residual charts, coefficient confidence diagnostics, risk decomposition and CSV exports; historical alpha screens are explicitly non-forecast.
 - Completed a direct six-worksheet Workbook 4 trace and kept forecast-alpha active/passive construction educational-only because it requires short positions and additional model governance.
