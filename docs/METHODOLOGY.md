@@ -85,7 +85,21 @@ Manual UI weights may be entered as percentage points (for example `50,35,15`) o
 
 Equal weights allocate `1/N`. Inverse-volatility weights are proportional to `1/σ_i`. For arithmetic annualized asset-return vector `μ`, annualized sample covariance matrix `Σ`, and weights `w`, portfolio expected return is `w′μ` and portfolio variance is `w′Σw`; volatility is `sqrt(w′Σw)`. Minimum variance minimizes `w′Σw`. Maximum Sharpe maximizes `(w′μ-r_f)/sqrt(w′Σw)`, using the same Sharpe formula as the displayed scorecard. Both optimized methods constrain every weight to `[0,1]` and the sum to one. A failed solver result is never displayed as valid. Historical inputs are estimates, not forecasts, and “maximum Sharpe” names the mathematical objective rather than a recommendation.
 
-The long-only efficient frontier is the upper mean-variance branch from the global minimum-variance portfolio to the highest-return individual asset in the sample. For evenly spaced arithmetic target returns on that branch, PortfolioLens minimizes `w′Σw` subject to `w′μ = μ_target`, `Σw_i = 1`, and `0 ≤ w_i ≤ 1`. Targets outside the minimum-to-maximum individual-asset return range are rejected as infeasible. The displayed constrained tangency portfolio is the long-only maximum-Sharpe solution. The Capital Allocation Line is `E[r_c] = r_f + y(E[r_T]-r_f)` and `σ_c = yσ_T` for risky allocation `0 ≤ y ≤ 1`; it stops at the tangency portfolio and therefore assumes lending but no borrowing or leverage.
+The optimizer first aligns complete daily simple returns. Its annual arithmetic expected-return vector and annual sample covariance matrix are
+
+`μ = 252 × mean(r_daily)` and `Σ = 252 × cov(r_daily, ddof=1)`.
+
+For weights `w`, expected return is `μ_p=w′μ`, variance is `σ_p²=w′Σw`, volatility is `σ_p=sqrt(w′Σw)`, and Sharpe is `(μ_p−r_f)/σ_p`. The annual risk-free rate is therefore in the same units as `μ`; volatility is annualized exactly once through `Σ`. CAGR is a realized compound-growth statistic and is never an optimizer input. The separately downloaded benchmark is inner-aligned for benchmark analysis but is never included in the portfolio asset matrix.
+
+The long-only efficient frontier is only the upper mean-variance branch from the global minimum-variance portfolio to the highest-return individual asset in the sample. PortfolioLens minimizes `w′Σw` at monotonically increasing feasible arithmetic target returns subject to `w′μ=μ_target`, `Σw_i=1`, and `0≤w_i≤1`. It explicitly inserts the constrained tangency target, removes duplicate or numerically dominated points, skips failed target solves, and never connects a failed result. The plotted current portfolio is an independent marker and may lie below the frontier. Fifty base targets provide visual resolution without interpolating or altering calculated values.
+
+The constrained tangency portfolio maximizes `(w′μ−r_f)/sqrt(w′Σw)` under the same bounds and sum constraint. The non-leveraged Capital Allocation Line is
+
+`E[r_C]=r_f+[(E[r_T]−r_f)/σ_T]σ_C = r_f+y(E[r_T]−r_f)`, with `σ_C=yσ_T` and `0≤y≤1`.
+
+The CAL is calculated directly from the same tangency return, volatility, and annual risk-free rate used by the optimizer; it does not trust a separately cached Sharpe value. It begins at `(0,r_f)`, passes through `(σ_T,E[r_T])`, and ends at the tangency portfolio because borrowing/leverage is disabled. Complete-portfolio points use the identical equations and therefore lie on the CAL within floating-point tolerance.
+
+SLSQP uses a 1,000-iteration limit and `ftol=1e-12`; linear feasibility is checked first with HiGHS. Post-solve weight-sum, long-only and target-return residual tolerances are `1e-7`. Covariance matrices are not regularized: their condition number is disclosed, exact or near singularity is handled by the constrained numerical solver where possible, and genuine non-convergence is surfaced. This avoids hiding estimation or identification problems behind an undocumented stabilization rule.
 
 ### Portfolio Management Workbook 3 — Capital & Asset Classes Allocation
 

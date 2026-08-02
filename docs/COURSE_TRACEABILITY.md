@@ -101,6 +101,12 @@ Source inspected directly: `2026S_FIN5745 PM_Workbook 2. MW Efficient Frontier &
 
 Every substantive worksheet is accounted for. Course-derived implementation is limited to recoverable formulas and constraints. PortfolioLens choices—long-only historical estimation and no leverage—are explicitly separate. Suggested sensitivity and instability diagnostics remain professional enhancements rather than retroactively attributed course content.
 
+### Independent frontier and CAL verification
+
+The Workbook 2 Solver trace remains the course-methodology reference, but the production implementation was independently revalidated rather than accepted from the spreadsheet or prior tests. Deterministic two-asset cases reconcile GMV and target-return weights to closed-form solutions. A three-asset case reconciles GMV and maximum Sharpe against a dense long-only simplex search. Diagonal, highly correlated, singular and near-singular covariance cases exercise diversification and numerical policy. The CAL endpoint is recomputed from tangency return and volatility, and chart data are tested separately from optimizer tables.
+
+The previous production formulas were mathematically correct for moments, long-only target optimization and the upper-branch target range. The audit found two partial implementation weaknesses: the finite target grid did not guarantee an exact tangency target, and the CAL generator used a supplied Sharpe field rather than independently reconciling the supplied tangency return, volatility and risk-free rate. Commit-backed corrections now insert the tangency target, reject duplicate/dominated curve points, skip failed solves, and derive CAL slope from the shared primitive inputs. These are professional validation enhancements; they do not change the preserved Workbook 2 evidence or claim exact reproduction of its unconstrained short-selling model.
+
 ## Portfolio Management Workbook 3 — Capital & Asset Classes Allocation
 
 Source inspected directly and read-only: `2026S_FIN5745 PM_Workbook 3. Capital & Asset Classes Allocation_Q.xlsx`. All six visible nonempty worksheets were inspected at cell, formula, drawing, chart, relationship, name, hidden-state, and package-metadata level. There are no hidden sheets, rows, or columns, VBA macros, Excel tables, or data-validation rules. Eight charts and 31 embedded media objects are present. Six external-link parts and roughly 2,400 Capital IQ/`@RISK` or template names are stale residue, not active model methodology. PortfolioLens does not read this workbook at runtime.

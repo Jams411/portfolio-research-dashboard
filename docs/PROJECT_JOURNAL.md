@@ -242,3 +242,13 @@ Interview explainability and financial correctness were prioritized over feature
 - **Open questions:** The period underlying assumed returns/volatilities and the intended short-sale setting in `Optimal Complete Pf` cannot be recovered safely.
 - **Next step:** Complete repository validation, push both logical commits, and verify CI/deployment evidence.
 - **Related commit hashes:** `e67ea01` and the documentation commit created for this milestone.
+
+## 2026-08-02 — Frontier mathematics and presentation audit
+
+- **Date:** 2026-08-02
+- **Goal:** Establish that every plotted frontier/CAL coordinate follows the documented mean-variance model and remove internal development language from public surfaces.
+- **What changed:** Centralized annual optimizer inputs; tightened post-solve residual checks; inserted tangency into the frontier target set; removed duplicate/dominated and failed points; derived CAL slope from return/volatility/risk-free inputs; added diagnostics and distinct chart traces.
+- **Independent evidence:** A two-asset exact-moment case reconciled GMV weights to `71.186441%/28.813559%`, GMV return to `8.728814%`, GMV volatility to `17.379122%`, and the maximum-return endpoint to `13.000000%/30.000000%`. A three-asset case matched dense simplex minima/maxima within test tolerances, produced zero tangency/frontier distance and zero CAL endpoint residual.
+- **Tradeoffs:** No curve interpolation and no covariance regularization were added. Failed targets reduce the number of displayed points rather than being bridged. Condition number and failure counts are disclosed.
+- **Public/internal boundary:** App and exported-report strings use professional portfolio-management terminology. Workbook names, course evidence and audit decisions remain in internal documentation.
+- **Related commit hashes:** `a6a4f23`, `7867f98`, and the documentation commit created for this milestone.

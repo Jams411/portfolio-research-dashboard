@@ -34,8 +34,8 @@ This application demonstrates:
 - Excess-return single-index alpha/beta/R², residual and systematic/idiosyncratic risk, CAPM required return, Jensen’s alpha, Treynor, correlation, covariance, transparent diversification reduction, VaR/CVaR, concentration, effective holdings, and reconciled return/volatility attribution
 - Benchmark excess return, tracking error, information ratio, relative drawdown and relative wealth
 - Current, equal-weight, inverse-volatility, minimum-variance and maximum-Sharpe long-only allocations
-- Long-only efficient frontier, GMV, constrained tangency, target-return portfolios, a non-leveraged Capital Allocation Line, and direct or quadratic-utility complete portfolios combining the tangency portfolio with the risk-free asset
-- A dedicated **Portfolio Optimization** analysis tab with current/optimized statistics, direct allocation or Workbook 3 risk-aversion controls, consolidated optimized weights, and CSV exports
+- Audited long-only efficient upper frontier, GMV, constrained tangency, target-return portfolios, a reconciled non-leveraged Capital Allocation Line, and direct or quadratic-utility complete portfolios
+- A dedicated **Portfolio Optimization** analysis tab with current/optimized statistics, direct or utility-based allocation, numerical diagnostics, consolidated optimized weights, and CSV exports
 - Explicit asset bands, exclusions, user-defined groups/caps, feasibility checks, and compliance summaries
 - Buy-and-hold, monthly, quarterly, annual, and threshold rebalancing simulations with drift, turnover, costs, dates, and trade-history exports
 - Like-for-like portfolio comparison, a fully disclosed historical Health Score, validated hypothetical weights/shocks, and metric-traceable deterministic insights
@@ -76,7 +76,7 @@ docs/images/                        reproducible application screenshot gallery
 CHANGELOG.md                        user-facing milestone changes
 ```
 
-For module ownership, dependencies, state, and end-to-end diagrams, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Course-supported derivations and advanced-model boundaries are in the [Portfolio Management educational companion](docs/education/PORTFOLIO_MANAGEMENT_COMPANION.md).
+For module ownership, dependencies, state, and end-to-end diagrams, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Foundational derivations and advanced-model boundaries are in the [Portfolio Management companion](docs/education/PORTFOLIO_MANAGEMENT_COMPANION.md).
 
 ## Screenshot gallery
 
@@ -142,13 +142,11 @@ For research and educational use only. This application does not provide persona
 
 ## Project Story
 
-**Context from current development session — verify before treating as canonical.**
-
 PortfolioLens was created to demonstrate an end-to-end portfolio-research workflow that is easy to use, test, deploy, and explain in an internship interview. It connects portfolio analytics, market-risk measurement, benchmark-relative investment research, allocation and rebalancing decisions, and one transparent systematic strategy without becoming a collection of unrelated institutional features.
 
 Clarity and financial correctness were prioritized over breadth. That choice led to explicit missing-data handling, reconciled contribution formulas, long-only optimization checks, one-period strategy lag, deterministic reporting, and synthetic offline tests. Advanced machine learning, automatic strategy tuning, live execution, personalized advice, and fragile report tooling were deferred or avoided because their data and model risks would weaken this project’s central story.
 
-University materials reviewed during the current development session informed the roadmap around performance measurement, single-index benchmark research, rebalancing, transaction costs, warm-up periods, and overfitting controls. Course code and formulas were not copied or treated as verified implementation evidence.
+External methodology sources informed the roadmap around performance measurement, single-index benchmark research, rebalancing, transaction costs, warm-up periods, and overfitting controls. Source formulas were independently implemented and validated rather than copied or treated as verified production evidence.
 
 The project is separate from the frozen Portfolio Intelligence Platform. That platform was not inspected or modified during this showcase phase, and no claim is made here about its internal architecture. This repository intentionally remains the smaller, focused, interview-ready application.
 
@@ -169,6 +167,6 @@ Add an optional user-uploaded local price CSV path using the same validation bou
 - Architectural changes must update the living [architecture reference](docs/ARCHITECTURE.md).
 - Commit messages should explain the intent of a change, not merely list changed files.
 - Every financial-formula change must include deterministic tests and a methodology update.
-- Course-derived additions must identify the relevant course source and must be independently implemented and verified; course code is not assumed correct.
+- Externally sourced financial methods must identify their provenance and be independently implemented and verified; source formulas are not assumed correct.
 - Decisions must not be reconstructed from memory when repository evidence is unavailable. Label development-session context explicitly until it is independently confirmed.
 - Codex or any coding agent must inspect the documentation system and current code before making a major change.

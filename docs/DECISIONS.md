@@ -259,3 +259,13 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Alternatives considered:** Recreate the questionnaire, silently cap `y`, enable borrowing/leverage, reproduce the erroneous cell, or infer a full strategic asset-allocation workflow from the workbook title.
 - **Consequences:** The output is a historical mean-variance sensitivity, not advice. Users see when the lending-only boundary binds. Asset classes are not inferred from tickers, and unsupported policy, tactical, liability, and lifecycle features are not attributed to Workbook 3.
 - **Status:** Accepted.
+
+## D025 — Treat the plotted frontier and CAL as reconciled numerical products
+
+- **Date:** 2026-08-02
+- **Decision:** Plot only the feasible long-only efficient upper branch from GMV to maximum return; explicitly include the tangency target; exclude duplicate, dominated and failed points; and construct the CAL directly from the shared tangency return, volatility and risk-free rate. Publish optional numerical diagnostics. Keep academic-development terminology out of public UI/report strings while retaining source provenance in internal records.
+- **Context:** The prior core formulas were correct, but a fixed target grid did not guarantee an exact tangency point and the CAL function accepted a stored Sharpe field that could theoretically disagree with its other inputs.
+- **Rationale:** A financial chart is part of the analytical output, not decoration. Curve membership, ordering, endpoints and line reconciliation require the same controls as optimizer tables. Public product language and internal evidence serve different audiences and should be governed separately.
+- **Alternatives considered:** Smooth/interpolate the curve, plot the full minimum-variance boundary, regularize covariance silently, trust cached Sharpe, or remove course provenance from all documentation.
+- **Consequences:** The curve may have fewer points when a solve fails, rather than drawing through invalid data. Singular matrices are not silently altered. Diagnostics disclose residuals, condition number and stabilization policy. Internal traceability remains intact.
+- **Status:** Accepted.

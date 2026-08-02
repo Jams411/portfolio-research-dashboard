@@ -29,6 +29,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - Workbook 1 deep trace: HPR, periodic arithmetic/geometric means, asset sample variance/volatility, coefficient of variation, covariance/correlation matrices, portfolio moments, and observed diversification reduction
 - Workbook 2 deep trace: recoverable long-only target-return and unconstrained tangency Solver models, frontier/CML methodology comparison, and non-leveraged complete portfolios combining the tangency portfolio with the risk-free asset
 - Workbook 3 deep trace: two-asset asset-class allocation, correlation-sensitive minimum variance, and quadratic-utility complete-portfolio selection with a disclosed non-leveraged boundary
+- Independent frontier/CAL validation: closed-form and brute-force reconciliation, upper-branch filtering, exact tangency inclusion, endpoint reconciliation, numerical diagnostics, and professional public terminology
 - Verified product-aligned Streamlit deployment at `https://portfolio-lens.streamlit.app`, with matching documentation and automated health checks
 
 ## Deferred — separately approved future work only

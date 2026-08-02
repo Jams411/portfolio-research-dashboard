@@ -32,7 +32,7 @@ portfolio_dashboard/
   performance.py                    returns and performance scorecard
   risk.py                           tail, benchmark and contribution analytics
   research.py                       comparison, score, scenario and deterministic insight diagnostics
-  construction.py                   allocation methods, constrained optimizers and quadratic utility
+  construction.py                   annualized inputs, constrained optimizers, frontier/CAL diagnostics and utility
   pipeline.py                       main analytics orchestration and Analysis result
   rebalancing.py                    target-allocation trade plan
   strategy.py                       lagged moving-average backtest
@@ -42,6 +42,7 @@ portfolio_dashboard/
 tests/
   test_analytics.py                 synthetic unit and integration tests
   test_app.py                       offline Streamlit entrypoint smoke tests
+  test_public_language.py           public product-terminology guard
   test_workflow.py                  deterministic four-ETF research workflow
 .github/workflows/
   ci.yml                            offline code and non-socket app verification

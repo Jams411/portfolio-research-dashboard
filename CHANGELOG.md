@@ -4,6 +4,9 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Re-audited the efficient frontier independently against two-asset closed forms and a dense three-asset simplex search. The curve now guarantees the feasible upper branch from GMV, includes the tangency target, removes duplicate/dominated points, and skips failed solves instead of connecting them.
+- Reconciled the Capital Allocation Line directly from the tangency return, volatility, and shared risk-free rate; added explicit endpoint, slope, complete-portfolio, condition-number, constraint-residual, and chart-data tests.
+- Professionalized all public application and HTML-report terminology and added an automated public-string guard while retaining course provenance in internal evidence records.
 - Added Workbook 3 quadratic-utility complete-portfolio selection with an explicit risk-aversion coefficient, the unconstrained classroom allocation, a visible lending-only product boundary, and deterministic reconciliation tests.
 - Completed a six-worksheet Workbook 3 trace. The third-party risk questionnaire, generic policy-allocation features absent from the source, and an erroneous double-weighted complete-return cell are documented rather than reproduced.
 - Added a deployment-facing package import contract covering every tracked `portfolio_dashboard` module, normalized internal report formatting to a relative import, and documented recovery when Streamlit Cloud is connected to an obsolete repository.

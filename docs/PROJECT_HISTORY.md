@@ -191,3 +191,10 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - **Why:** The workbook adds a numerical risk-aversion model that Workbook 2 did not contain, but does not substantiate a broad strategic/tactical asset-class policy workflow.
 - **Boundary:** PortfolioLens uses historical long-only tangency estimates and `0≤y≤1`. It excludes the embedded third-party questionnaire, inferred asset classes, borrowing/leverage, and unsupported policy features. A source formula that double-weights complete-return components is documented and corrected rather than copied.
 - **Evidence:** `construction.py`, the Portfolio Optimization UI, Workbook 3 tests, Decision D024 and the permanent course trace.
+
+## 2026-08-02 — Independent frontier/CAL validation and public-language boundary
+
+- **What changed:** Reconciled the optimizer against closed-form two-asset solutions and dense three-asset simplex searches; guaranteed an upper-branch frontier with tangency inclusion and failed-point filtering; rebuilt CAL slope from primitive inputs; added chart and diagnostic tests; removed development provenance from public application/report strings.
+- **Why:** Passing unit tests did not by itself prove that the plotted curve, tangency marker and CAL were mutually consistent or professionally presented.
+- **Assessment:** The previous frontier was mathematically sound in its core formulas and target range but partially complete as a plotted numerical product. It did not guarantee exact tangency-grid membership, and its CAL accepted a potentially stale Sharpe field.
+- **Evidence:** Decision D025, expanded deterministic optimizer/AppTest coverage, Methodology reconciliation values and commits created for this milestone.
