@@ -4,6 +4,7 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Promoted security-level regression from the Benchmark & Attribution view to a clearly visible top-level **Security Analysis** tab, including a pre-analysis empty state and exact-label AppTest coverage.
 - Added security-level single-index comparison, characteristic-line and residual charts, coefficient confidence diagnostics, risk decomposition and CSV exports; historical alpha screens are explicitly non-forecast.
 - Completed a direct six-worksheet Workbook 4 trace and kept forecast-alpha active/passive construction educational-only because it requires short positions and additional model governance.
 - Changed the default benchmark from SPY to the user-facing `SPX` label, with silent internal retrieval through `^GSPC`; alternate alias mappings remain visibly disclosed.

@@ -227,8 +227,9 @@ if run:
         st.error(f"Analysis could not run: {exc}")
 
 tab_names = [
-    "Overview", "Performance", "Risk", "Benchmark & Attribution", "Portfolio Optimization",
-    "Momentum Strategy", "Stress Testing", "Research Workspace", "Research Report", "Methodology & Limitations",
+    "Overview", "Performance", "Risk", "Benchmark & Attribution", "Security Analysis",
+    "Portfolio Optimization", "Momentum Strategy", "Stress Testing", "Research Workspace",
+    "Research Report", "Methodology & Limitations",
 ]
 tabs = st.tabs(tab_names, key="analysis_tab", on_change="rerun")
 
@@ -236,6 +237,19 @@ if "result" not in st.session_state:
     open_tab = next((index for index, tab in enumerate(tabs) if tab.open), 0)
     with tabs[open_tab]:
         if open_tab == 4:
+            st.subheader("Security Analysis")
+            st.info("Run an analysis from the sidebar to compare security-level single-index results.")
+            st.markdown("""
+**This top-level workspace displays:**
+
+- Security-level alpha, beta, R-squared, and residual volatility
+- Systematic and idiosyncratic risk decomposition
+- Jensen's alpha and Treynor ratio
+- Security Characteristic Line and fitted excess returns
+- Residual diagnostics and cross-security comparison
+- Methodology, limitations, and downloadable results
+""")
+        elif open_tab == 5:
             st.subheader("Portfolio Optimization")
             st.info("Run an analysis from the sidebar to calculate the efficient frontier and optimized portfolios.")
             st.markdown("""
@@ -254,7 +268,7 @@ if "result" not in st.session_state:
                 "Long-only weights sum to 100%; short selling and leverage are disabled. Users may select "
                 "risky-asset exposure directly or provide an explicit risk-aversion coefficient."
             )
-        elif open_tab == 9:
+        elif open_tab == 10:
             st.subheader("Methodology and limitations")
             st.write(f"Application build: `{build_identifier()}`")
             st.info("Run an analysis to view the complete methodology alongside calculated results.")
@@ -419,17 +433,22 @@ if tabs[3].open:
             "CAPM required return is the risk-free rate plus beta times the benchmark risk premium. "
             "Jensen’s alpha is realized arithmetic return minus that required return; Treynor is excess return per unit of beta."
         )
+if tabs[4].open:
+    with tabs[4]:
+        st.subheader("Security Analysis")
         st.markdown("### Single-Index Security Analysis")
         st.caption(
             "Each portfolio security is fitted independently against the selected benchmark using aligned daily simple excess returns. "
             "Results are historical diagnostics, not forecasts, ratings, or investment recommendations."
         )
+        st.caption(f"Benchmark: {r['benchmark_ticker']} · Annual risk-free rate: {r['risk_free']:.2%}")
         security_table = security_single_index_table(
             a.asset_returns, a.benchmark_returns, r["risk_free"]
         )
         comparison_columns = [
             "Regression Alpha", "Beta", "R-Squared", "Residual Volatility",
-            "Systematic Volatility", "Systematic Risk Share", "Jensen's Alpha",
+            "Systematic Volatility", "Systematic Variance", "Idiosyncratic Variance",
+            "Systematic Risk Share", "Idiosyncratic Risk Share", "Jensen's Alpha",
             "Treynor Ratio", "Alpha / Residual Variance", "Regression Observations",
         ]
         st.dataframe(
@@ -439,7 +458,10 @@ if tabs[3].open:
                 "R-Squared": st.column_config.NumberColumn(format="percent"),
                 "Residual Volatility": st.column_config.NumberColumn(format="percent"),
                 "Systematic Volatility": st.column_config.NumberColumn(format="percent"),
+                "Systematic Variance": st.column_config.NumberColumn(format="%.4f"),
+                "Idiosyncratic Variance": st.column_config.NumberColumn(format="%.4f"),
                 "Systematic Risk Share": st.column_config.NumberColumn(format="percent"),
+                "Idiosyncratic Risk Share": st.column_config.NumberColumn(format="percent"),
                 "Jensen's Alpha": st.column_config.NumberColumn(format="percent"),
             },
         )
@@ -515,6 +537,9 @@ if tabs[3].open:
             "Download selected regression observations CSV", security_observations.to_csv().encode("utf-8"),
             f"portfoliolens_{str(selected_security).lower()}_single_index.csv", "text/csv",
         )
+
+if tabs[3].open:
+    with tabs[3]:
         comparison = pd.concat([
             (1 + a.portfolio_returns).cumprod().rename("Portfolio"),
             (1 + a.benchmark_returns).cumprod().rename(r["benchmark_ticker"]),
@@ -528,8 +553,8 @@ if tabs[3].open:
         })
         st.caption(f"Return contributions sum to {a.return_contributions.sum():.2%}; portfolio total return is {a.performance['Total Return']:.2%}.")
 
-if tabs[4].open:
-    with tabs[4]:
+if tabs[5].open:
+    with tabs[5]:
         st.subheader("Portfolio Optimization")
         st.caption(
             "Modern portfolio construction tools: long-only efficient frontier, global minimum-variance portfolio, "
@@ -959,8 +984,8 @@ if tabs[4].open:
                 f"{selected_policy.lower().replace(' ', '_')}_trades.csv", "text/csv",
             )
 
-if tabs[5].open:
-    with tabs[5]:
+if tabs[6].open:
+    with tabs[6]:
         st.subheader(f"Dual-moving-average momentum · {r['strategy_asset']}")
         first_evaluation = r["strategy_data"]["Strategy Growth"].first_valid_index()
         st.caption(
@@ -983,8 +1008,8 @@ if tabs[5].open:
         st.dataframe(display_metric_frame(stats), width="stretch")
         st.download_button("Download strategy results CSV", r["strategy_data"].to_csv(), "strategy_results.csv", "text/csv")
 
-if tabs[6].open:
-    with tabs[6]:
+if tabs[7].open:
+    with tabs[7]:
         st.subheader("Custom shock test")
         st.caption("No asset classes are inferred. Enter a direct shock for every holding.")
         shock_seed = st.session_state["current_shocks"]
@@ -1016,8 +1041,8 @@ if tabs[6].open:
                 "Benchmark Return": st.column_config.NumberColumn(format="percent"),
             })
 
-if tabs[7].open:
-    with tabs[7]:
+if tabs[8].open:
+    with tabs[8]:
         st.subheader("Investment research workspace")
         with st.container(horizontal=True):
             st.metric("Portfolio Health Score", f"{health_score:.0f}/100", border=True)
@@ -1109,8 +1134,8 @@ if tabs[7].open:
                 "Dollar Impact": st.column_config.NumberColumn(format="dollar"),
             })
 
-if tabs[8].open:
-    with tabs[8]:
+if tabs[9].open:
+    with tabs[9]:
         st.subheader("Deterministic investment-research report")
         current_shocks = st.session_state["current_shocks"]
         shock_table, shock_summary = custom_shock(r["weights"], current_shocks, r["initial_value"])
@@ -1174,8 +1199,8 @@ if tabs[8].open:
             for label, payload in downloads.items():
                 st.download_button(label + " CSV", payload, label.lower().replace(" ", "_") + ".csv", "text/csv")
 
-if tabs[9].open:
-    with tabs[9]:
+if tabs[10].open:
+    with tabs[10]:
         st.subheader("Methodology and limitations")
         st.caption(f"Application build: `{build_identifier()}`")
         st.markdown("""

@@ -27,10 +27,11 @@ Results are historical and can change when yfinance revises adjusted data.
 1. **Inputs and Overview — 25 seconds.** Explain strict ticker/weight validation, separate benchmark download, common-date alignment, and the headline return/risk cards.
 2. **Risk — 25 seconds.** Show VaR/CVaR, effective holdings, the correlation matrix, and Euler volatility contributions that reconcile to portfolio volatility.
 3. **Benchmark & Attribution — 20 seconds.** Compare cumulative wealth, excess return, tracking error, information ratio, beta, and asset contributions.
-4. **Research Workspace — 30 seconds.** Explain the disclosed Health Score components and coverage, compare allocation methods under one methodology, show an insight’s metric/rule evidence, and submit one hypothetical weight-and-shock scenario.
-5. **Portfolio Optimization — 20 seconds.** Show the long-only frontier, GMV/tangency/CAL, complete-portfolio risk preference, optimized weights, one feasible target, explicit constraints, and the related policy comparison.
-6. **Momentum and Stress — 20 seconds.** Point out the one-day signal lag, warm-up, transaction costs, direct per-asset shocks, and complete historical windows.
-7. **Report — 10 seconds.** Show deterministic observations and the professional self-contained HTML/CSV exports.
+4. **Security Analysis — 20 seconds.** Select a holding, compare alpha/beta and risk decomposition, then show its characteristic line, fitted excess returns and residual diagnostics.
+5. **Research Workspace — 30 seconds.** Explain the disclosed Health Score components and coverage, compare allocation methods under one methodology, show an insight’s metric/rule evidence, and submit one hypothetical weight-and-shock scenario.
+6. **Portfolio Optimization — 20 seconds.** Show the long-only frontier, GMV/tangency/CAL, complete-portfolio risk preference, optimized weights, one feasible target, explicit constraints, and the related policy comparison.
+7. **Momentum and Stress — 20 seconds.** Point out the one-day signal lag, warm-up, transaction costs, direct per-asset shocks, and complete historical windows.
+8. **Report — 10 seconds.** Show deterministic observations and the professional self-contained HTML/CSV exports.
 
 Close with: “The design favors transparent financial conventions and deterministic tests over feature breadth or personalized recommendations.”
 

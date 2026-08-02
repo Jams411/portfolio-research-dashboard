@@ -63,8 +63,9 @@ def test_app_renders_helpful_initial_state():
     assert widget(app.text_input, "Benchmark").value == "SPX"
     assert any("No market data are downloaded" in item.value for item in app.info)
     assert [tab.label for tab in app.tabs] == [
-        "Overview", "Performance", "Risk", "Benchmark & Attribution", "Portfolio Optimization",
-        "Momentum Strategy", "Stress Testing", "Research Workspace", "Research Report", "Methodology & Limitations",
+        "Overview", "Performance", "Risk", "Benchmark & Attribution", "Security Analysis",
+        "Portfolio Optimization", "Momentum Strategy", "Stress Testing", "Research Workspace",
+        "Research Report", "Methodology & Limitations",
     ]
     assert any("Application build:" in item.value for item in app.caption)
     assert not app.metric
@@ -110,12 +111,24 @@ def test_default_spx_uses_provider_symbol_without_mapping_banner(offline_app):
 
 def test_security_analysis_is_visible_with_offline_data(offline_app):
     run_analysis(offline_app)
-    offline_app.session_state["analysis_tab"] = "Benchmark & Attribution"
+    offline_app.session_state["analysis_tab"] = "Security Analysis"
     offline_app.run(timeout=30)
     assert not offline_app.exception
+    assert any(tab.label == "Security Analysis" for tab in offline_app.tabs)
+    assert any(item.value == "Security Analysis" for item in offline_app.subheader)
     assert any("Single-Index Security Analysis" in item.value for item in offline_app.markdown)
+    assert any("Benchmark: SPX" in item.value for item in offline_app.caption)
     assert any(item.label == "Security to inspect" for item in offline_app.selectbox)
     assert any(item.label == "Annualized regression alpha" for item in offline_app.metric)
+    assert any(
+        {
+            "Regression Alpha", "Beta", "R-Squared", "Residual Volatility",
+            "Systematic Variance", "Idiosyncratic Variance",
+            "Systematic Risk Share", "Idiosyncratic Risk Share",
+            "Jensen's Alpha", "Treynor Ratio",
+        } <= set(item.value.columns)
+        for item in offline_app.dataframe
+    )
     titles = " ".join(
         json.loads(item.proto.spec).get("layout", {}).get("title", {}).get("text", "")
         for item in offline_app.get("plotly_chart")
