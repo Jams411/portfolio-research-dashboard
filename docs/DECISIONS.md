@@ -2,6 +2,15 @@
 
 Significant product, financial-methodology, architecture, and scope decisions are recorded here. Add new entries rather than rewriting prior decisions; mark superseded entries explicitly.
 
+## D029 — Consolidate performance evaluation without changing established metric conventions
+
+- **Date:** 2026-08-02
+- **Status:** Accepted
+- **Decision:** Add a top-level Performance Evaluation workspace and the source-supported Fama selectivity chain. Preserve the existing annual arithmetic Sharpe/Treynor/Jensen conventions and target-downside Sortino convention. Keep the source's category attribution, Modified Dietz and time-weighted formulas as tested primitives until explicit category or external-cash-flow inputs exist.
+- **Context:** The direct seven-worksheet audit showed that the source supports Sharpe, Treynor, Jensen, Fama selectivity, a combined selection-plus-interaction convention, fee-horizon exercises, time/dollar-weighted returns and a mean-semideviation Sortino example. It does not contain tracking error, Information Ratio, M², Calmar, drawdown or rolling metrics, despite an older summary trace row attributing some of those features to it.
+- **Rationale:** Consolidation improves professional usability, while precise provenance prevents similarly named measures from being treated as methodological equivalents. Price data cannot safely supply manager cash flows or benchmark category weights.
+- **Consequences:** Fama metrics are visible and exportable. Rolling metrics are explicitly labeled professional enhancements. The source attribution term is named “Selection Effect Including Interaction.” Fund-fee and money-weighted workflows remain educational/deferred rather than being fabricated from adjusted prices.
+
 ## D024 — Adopt the verified product-aligned Streamlit URL
 
 - **Date:** 2026-08-02

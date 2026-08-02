@@ -1,5 +1,12 @@
 # Project history
 
+## 2026-08-02 — Performance evaluation source integration
+
+- **What changed:** Added a visible Performance Evaluation workspace, exact Fama selectivity/diversification/net-selectivity decomposition, source-convention allocation/selection attribution, Modified Dietz and time-weighted return primitives, rolling stability diagnostics, exports, and deterministic tests.
+- **Audit correction:** A fresh seven-worksheet inspection found no tracking-error, Information-Ratio, M², Calmar, drawdown, rolling-metric, Brinson-standard, Solver, or chart methodology. Older traceability that attributed tracking error and Information Ratio to this workbook was corrected.
+- **Tradeoffs:** The public workspace consolidates existing professional measures but distinguishes them from source-derived formulas. Fund-fee analysis, dollar-weighted IRR and category attribution are not inferred from adjusted-price data.
+- **Evidence:** Exact reconciliation to the workbook's Fama, allocation/selection and midpoint-Dietz examples; synthetic rolling tests; offline AppTest for the exact top-level tab and exports.
+
 ## 2026-08-02 — Deployment package and repository audit
 
 - **What changed:** Audited all Python imports and legacy names, normalized the sole internal absolute import to package-relative form, added a regression test that imports every tracked `portfolio_dashboard` module, and documented the exact Streamlit Cloud repository/branch recovery procedure.

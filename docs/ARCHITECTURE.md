@@ -30,6 +30,7 @@ portfolio_dashboard/
   config.py                         shared constants, benchmark aliases, presets and stress windows
   data.py                           input validation, benchmark resolution and yfinance price boundary
   performance.py                    returns and performance scorecard
+  evaluation.py                     Fama evaluation, source attribution, Modified Dietz and rolling diagnostics
   risk.py                           tail, benchmark, security-regression and contribution analytics
   research.py                       comparison, score, scenario and deterministic insight diagnostics
   construction.py                   annualized inputs, constrained optimizers, frontier/CAL diagnostics and utility

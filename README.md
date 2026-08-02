@@ -32,6 +32,7 @@ This application demonstrates:
 - Transparent benchmark aliases for common index names such as SPX, DJIA, NASDAQ, VIX and RUT, with provider-symbol disclosure and friendly report labels
 - Explicit holding-period-return logic; asset-level periodic arithmetic/geometric returns, annualized arithmetic return/CAGR, sample variance/volatility, coefficient of variation, and downloadable foundation tables
 - Total return, consistently defined Sharpe, Sortino, drawdown, Calmar, tail risk, monthly returns and wealth charts
+- A dedicated **Performance Evaluation** workspace consolidating return/risk, Sharpe, Sortino, Treynor, Jensen alpha, active risk, Information Ratio, Fama selectivity, rolling stability diagnostics, and CSV exports
 - Portfolio- and security-level excess-return single-index analysis with alpha/beta/R², coefficient inference, characteristic lines, residual plots, systematic/idiosyncratic risk, CAPM required return, Jensen’s alpha, Treynor and downloadable comparison diagnostics
 - A dedicated Asset Pricing workspace with a Security Market Line, realized-versus-required return comparison, Jensen’s alpha, and a clearly bounded assumption-based factor-pricing framework
 - A dedicated **Security Analysis** tab with a holding selector, benchmark context, comparison table, fitted characteristic line, residual diagnostics, methodology warnings, and CSV exports
@@ -56,6 +57,7 @@ portfolio_dashboard/
   config.py                         conventions, presets, historical windows
   data.py                           inputs, yfinance parsing, missing-data policy
   performance.py                    returns and performance metrics
+  evaluation.py                     manager evaluation, attribution and cash-flow return primitives
   risk.py                           benchmark metrics and attribution
   research.py                       research comparison, score, scenarios and deterministic insights
   construction.py                   allocation methods and SLSQP optimizers

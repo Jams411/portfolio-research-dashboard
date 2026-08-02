@@ -2,6 +2,14 @@
 
 This journal explains the project’s evolution in plain language. It complements, rather than replaces, the evidence-focused [project history](PROJECT_HISTORY.md), formal [decision log](DECISIONS.md), user-facing [changelog](../CHANGELOG.md), and forward-looking [roadmap](ROADMAP.md).
 
+## 2026-08-02 — Performance evaluation trace and workspace
+
+- **Goal:** Re-audit the exact performance-evaluation workbook and expose every product-appropriate result through a professional top-level workflow.
+- **Finding:** Seven worksheets cover risk-adjusted manager ranking, Fama selectivity, a source-specific allocation/selection decomposition, fee horizons, Modified Dietz/time- versus dollar-weighted returns, and Sortino. The file contains no Solver or native chart objects and does not support the earlier tracking-error/Information-Ratio provenance claim.
+- **Implementation:** Added pure Fama, attribution, Modified Dietz, time-weighted and rolling functions; consolidated existing performance/CAPM/benchmark metrics in a visible Performance Evaluation tab; added exports and explicit limitations.
+- **Methodology choice:** Retained PortfolioLens's target-downside Sortino rather than silently adopting the workbook's below-mean semideviation. Named its portfolio-weighted selection term as including interaction. Kept rolling results as a professional enhancement.
+- **Boundary:** Category attribution needs explicit category data; money-weighted return needs account cash flows; fund fees need product-specific fee terms. None are inferred from ticker history.
+
 ## 2026-08-02 — Verified PortfolioLens deployment address
 
 - **Goal:** Align every current public-deployment reference with the verified product URL.

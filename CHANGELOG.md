@@ -4,6 +4,10 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Added a top-level **Performance Evaluation** workspace with a consolidated historical scorecard, benchmark evaluation, Fama selectivity/diversification diagnostics, 63-observation rolling stability measures, and CSV exports.
+- Added deterministic Fama selectivity, source-convention allocation/selection attribution, Modified Dietz, time-weighted return, and rolling evaluation primitives with exact example reconciliation.
+- Completed a fresh seven-worksheet audit of the performance-evaluation source workbook. Corrected prior provenance: the workbook supports Sharpe, Treynor, Jensen, Sortino, Fama selectivity, attribution, fee, and cash-flow return exercises, but not tracking error, Information Ratio, M², Calmar, drawdown, or rolling metrics.
+
 - Added a top-level **Portfolio Strategies** workspace with aligned rebalancing-policy and benchmark comparison, active return, mean absolute periodic difference, tracking error, information ratio, drawdown, turnover, costs, and exports.
 - Added source-supported passive-tracking diagnostics while preserving PortfolioLens's annualized sample tracking-error convention and clearly separating it from the source's population-standard-deviation example.
 - Completed a direct eleven-worksheet trace of the portfolio-strategies workbook; fixed-income, tax, index-construction, and valuation exercises remain documented rather than being forced into the public application.

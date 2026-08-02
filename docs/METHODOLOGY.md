@@ -61,6 +61,27 @@ Return and Euler volatility contributions remain separate reconciled analyses.
 
 Arithmetic return and CAGR answer different questions. Arithmetic annualized return is a historical mean estimate suitable for one-period mean-variance comparisons; CAGR is the realized compound growth rate over the selected path. Neither is presented as a forecast. The annual risk-free input is subtracted from annualized ratio numerators. For Sortino's downside target only, it is converted to an equivalent daily rate. A 252-trading-day convention is used throughout.
 
+### Performance evaluation and Fama decomposition
+
+The Performance Evaluation workspace consolidates existing return, risk-adjusted and benchmark-relative measures without changing their formulas. Its Fama diagnostics use the same aligned annual arithmetic inputs:
+
+- overall performance: `R_p - R_f`
+- CAPM required return: `R_f + beta_p(R_m - R_f)`
+- CML required return at portfolio total risk: `R_f + (R_m - R_f)(sigma_p / sigma_m)`
+- selectivity: `R_p - CAPM required return`
+- diversification effect: `CML required return - CAPM required return`
+- net selectivity: `selectivity - diversification effect = R_p - CML required return`
+
+`R_p`, `R_m`, and `R_f` are annual decimal returns; `sigma_p` and `sigma_m` are annual sample volatilities; beta is unitless. The benchmark is the selected market proxy. These are historical diagnostics, not proof that manager skill exists or persists.
+
+The reviewed source's allocation effect is `sum((w_p-w_b)(r_b-R_b))`. Its selection effect is `sum(w_p(r_p-r_b))`; because it uses portfolio rather than benchmark weights, this term includes the conventional interaction effect. PortfolioLens preserves that formula in `evaluation.allocation_selection_attribution` and names it **Selection Effect Including Interaction**. It is not displayed from market-price data because category-level portfolio and benchmark weights and returns are not available and are not inferred.
+
+Modified Dietz is available as `(V_end - V_begin - sum(CF_i)) / (V_begin + sum((1-t_i)CF_i))`, where `t_i` is the elapsed fraction of the period when an external contribution occurs. Time-weighted return compounds subperiod returns as `product(1+r_t)-1`. They remain reusable calculation primitives rather than default price-history outputs because the application does not collect external account cash flows.
+
+The 63-observation rolling chart is a professional enhancement. Rolling Sharpe uses annualized arithmetic return and sample volatility; rolling tracking error is the annualized sample standard deviation of active returns; rolling Information Ratio divides rolling annualized arithmetic active return by rolling tracking error. Calmar, drawdown, tracking error, Information Ratio and rolling metrics are existing PortfolioLens measures and are not attributed to this source workbook.
+
+The source Sortino example defines semideviation around each manager's arithmetic mean using only observations below that mean and a population denominator equal to the number of downside observations. PortfolioLens intentionally retains its established target-downside convention: the annual risk-free rate is converted to a daily target, all observations enter the denominator, and non-shortfall observations contribute zero. The UI and tests document this methodological difference.
+
 ## Risk and benchmark comparison
 
 Historical 95% VaR is reported as a nonnegative loss magnitude at the empirical fifth percentile. Historical 95% CVaR is the nonnegative magnitude of mean returns at or below that percentile. If the observed lower tail contains gains rather than losses, the reported loss measure is zero. These are backward-looking one-day statistics and can understate unseen tail events.
