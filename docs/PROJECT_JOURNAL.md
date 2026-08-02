@@ -228,3 +228,17 @@ Interview explainability and financial correctness were prioritized over feature
 - **Open questions:** None requiring a methodology decision. The source period for the workbook's assumed moments is not identified and is documented as unknown.
 - **Next step:** Complete repository verification, CI, deployment health, and synchronization evidence.
 - **Related commit hashes:** Commits created with this milestone; verify final hashes from Git history.
+
+## 2026-08-02 — Workbook 3 evidence boundary and utility implementation
+
+- **Date:** 2026-08-02
+- **Goal:** Trace the exact capital-and-asset-classes workbook and implement every focused, recoverable gap without inventing policy-allocation functionality.
+- **Context:** Six visible worksheets combine formulas, Solver metadata, classroom charts, handwritten work, third-party questionnaire images and extensive stale add-in names.
+- **What changed:** Added quadratic utility and optimal complete-portfolio allocation using direct `A`; exposed it alongside direct risky allocation; documented worksheet formulas, three recoverable Solver states, assumptions and conflicts.
+- **Why it changed:** Workbook 3 supplies `U` and `y*`, closing the risk-aversion gap left by Workbook 2. Its title alone does not support strategic/tactical weights, policy bands, liabilities, glide paths or inferred asset classifications.
+- **Relevant career or course connection:** Capital allocation, risk preference, Solver/model audit, covariance-driven diversification and model-risk communication.
+- **Tradeoffs:** The classroom unconstrained result is shown, but the applied result remains lending-only. The suitability questionnaire is not reproduced, and a double-weighted workbook return formula is corrected using the CAL identity.
+- **Lessons learned:** Workbook labels, saved Solver constraints and formulas can conflict. Exact reproduction claims require agreement among all three; otherwise the discrepancy belongs in traceability.
+- **Open questions:** The period underlying assumed returns/volatilities and the intended short-sale setting in `Optimal Complete Pf` cannot be recovered safely.
+- **Next step:** Complete repository validation, push both logical commits, and verify CI/deployment evidence.
+- **Related commit hashes:** `e67ea01` and the documentation commit created for this milestone.

@@ -4,6 +4,8 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Added Workbook 3 quadratic-utility complete-portfolio selection with an explicit risk-aversion coefficient, the unconstrained classroom allocation, a visible lending-only product boundary, and deterministic reconciliation tests.
+- Completed a six-worksheet Workbook 3 trace. The third-party risk questionnaire, generic policy-allocation features absent from the source, and an erroneous double-weighted complete-return cell are documented rather than reproduced.
 - Added a deployment-facing package import contract covering every tracked `portfolio_dashboard` module, normalized internal report formatting to a relative import, and documented recovery when Streamlit Cloud is connected to an obsolete repository.
 - Updated the canonical deployment URL and automated health check to `https://portfolio-lens.streamlit.app` after verifying the product-aligned Streamlit deployment.
 - Rendered the complete top-level tab bar before analysis so **Portfolio Optimization** is discoverable on initial load, and added a runtime commit identifier for verifying the revision served by Streamlit Cloud.

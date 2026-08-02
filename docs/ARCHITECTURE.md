@@ -32,7 +32,7 @@ portfolio_dashboard/
   performance.py                    returns and performance scorecard
   risk.py                           tail, benchmark and contribution analytics
   research.py                       comparison, score, scenario and deterministic insight diagnostics
-  construction.py                   allocation methods and constrained optimizers
+  construction.py                   allocation methods, constrained optimizers and quadratic utility
   pipeline.py                       main analytics orchestration and Analysis result
   rebalancing.py                    target-allocation trade plan
   strategy.py                       lagged moving-average backtest

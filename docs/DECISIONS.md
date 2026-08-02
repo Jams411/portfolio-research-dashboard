@@ -249,3 +249,13 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Alternatives considered:** Reproduce the unconstrained tangency weights, enable `y>1` behind a checkbox, or infer a quadratic utility function and risk-aversion coefficient.
 - **Consequences:** Complete-portfolio points reconcile exactly with the displayed CAL. They are historical scenarios rather than recommendations. Workbook tangency outputs are documented as methodologically different, and no claim of exact reproduction is made.
 - **Status:** Accepted.
+
+## D024 — Use Workbook 3 quadratic utility without turning PortfolioLens into a suitability tool
+
+- **Date:** 2026-08-02
+- **Decision:** Let users enter a positive risk-aversion coefficient `A`, calculate the workbook's unconstrained `y*=(E[r_T]−r_f)/(Aσ_T²)`, and report the lending-only allocation after applying `0≤y≤1`. Retain direct allocation as an alternative. Do not reproduce the embedded third-party questionnaire or its score-to-`A` rule.
+- **Context:** Workbook 3 provides a recoverable quadratic utility model and Solver-constrained complete-portfolio allocation. It also embeds an Advisor Group questionnaire, while another worksheet contains a double-weighted complete-return formula and conflicting short-sale labels/Solver bounds.
+- **Rationale:** Direct `A` preserves the supported financial model while avoiding an unvalidated personal-risk assessment. Showing both unconstrained and applied allocations makes PortfolioLens's product constraint explicit. Correct CAL arithmetic is more defensible than copying a demonstrably inconsistent cell.
+- **Alternatives considered:** Recreate the questionnaire, silently cap `y`, enable borrowing/leverage, reproduce the erroneous cell, or infer a full strategic asset-allocation workflow from the workbook title.
+- **Consequences:** The output is a historical mean-variance sensitivity, not advice. Users see when the lending-only boundary binds. Asset classes are not inferred from tickers, and unsupported policy, tactical, liability, and lifecycle features are not attributed to Workbook 3.
+- **Status:** Accepted.

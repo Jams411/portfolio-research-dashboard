@@ -28,6 +28,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 - Phase 4 educational companion: two-asset variance derivation, frontier/CAL intuition, CAPM/single-index interpretation, and educational-only Treynor–Black/APT/multifactor boundaries
 - Workbook 1 deep trace: HPR, periodic arithmetic/geometric means, asset sample variance/volatility, coefficient of variation, covariance/correlation matrices, portfolio moments, and observed diversification reduction
 - Workbook 2 deep trace: recoverable long-only target-return and unconstrained tangency Solver models, frontier/CML methodology comparison, and non-leveraged complete portfolios combining the tangency portfolio with the risk-free asset
+- Workbook 3 deep trace: two-asset asset-class allocation, correlation-sensitive minimum variance, and quadratic-utility complete-portfolio selection with a disclosed non-leveraged boundary
 - Verified product-aligned Streamlit deployment at `https://portfolio-lens.streamlit.app`, with matching documentation and automated health checks
 
 ## Deferred — separately approved future work only

@@ -184,3 +184,10 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - **What changed:** Promoted the existing mean-variance backend from the combined Construction & Rebalancing tab to an explicitly named Portfolio Optimization section. Added direct GMV, tangency, target-return, complete-portfolio and optimized-weight labels/exports, while documenting why the direct risky-allocation control is not a risk-aversion coefficient.
 - **Why:** Workbook 2 calculations were present and tested but were too difficult to discover in the application navigation.
 - **Follow-up:** The tab bar originally rendered only after a successful analysis because the empty-state `st.stop()` preceded `st.tabs`. Navigation now renders on initial load, Portfolio Optimization has a dedicated pre-analysis empty state, and the running Git revision is visible in-app.
+
+## 2026-08-02 — Workbook 3 capital-allocation and utility trace
+
+- **What changed:** Audited all six nonempty worksheets in `2026S_FIN5745 PM_Workbook 3. Capital & Asset Classes Allocation_Q.xlsx`; recovered three Solver states and implemented the supported quadratic-utility complete-portfolio model with direct risk-aversion input, constraint disclosure and deterministic tests.
+- **Why:** The workbook adds a numerical risk-aversion model that Workbook 2 did not contain, but does not substantiate a broad strategic/tactical asset-class policy workflow.
+- **Boundary:** PortfolioLens uses historical long-only tangency estimates and `0≤y≤1`. It excludes the embedded third-party questionnaire, inferred asset classes, borrowing/leverage, and unsupported policy features. A source formula that double-weights complete-return components is documented and corrected rather than copied.
+- **Evidence:** `construction.py`, the Portfolio Optimization UI, Workbook 3 tests, Decision D024 and the permanent course trace.
