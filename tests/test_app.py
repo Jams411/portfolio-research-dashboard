@@ -65,7 +65,7 @@ def test_app_renders_helpful_initial_state():
     assert [tab.label for tab in app.tabs] == [
         "Overview", "Performance", "Performance Evaluation", "Risk", "Benchmark & Attribution", "Security Analysis",
         "Asset Pricing", "Portfolio Optimization", "Portfolio Strategies", "Stress Testing",
-        "Research Workspace", "Research Report", "Methodology & Limitations",
+        "Research Workspace", "Research Report", "ETF Research", "Methodology & Limitations",
     ]
     assert any("Application build:" in item.value for item in app.caption)
     assert not app.metric
@@ -202,6 +202,22 @@ def test_portfolio_strategies_tab_exposes_policy_and_benchmark_comparison(offlin
     )
     labels = {item.label for item in offline_app.get("download_button")}
     assert {"Download strategy history", "Download strategy trade log"} <= labels
+
+
+def test_etf_research_tab_exposes_screening_and_holdings_workflow(offline_app):
+    run_analysis(offline_app)
+    offline_app.session_state["analysis_tab"] = "ETF Research"
+    offline_app.run(timeout=30)
+    assert not offline_app.exception
+    assert any(tab.label == "ETF Research" for tab in offline_app.tabs)
+    assert any(item.value == "ETF Research" for item in offline_app.subheader)
+    headings = {item.value for item in offline_app.markdown}
+    assert {"### Universe Research", "### Security Screening", "### Holdings Look-Through"} <= headings
+    assert any({"Historical Arithmetic Return", "Volatility", "Sharpe Ratio"} <= set(item.value.columns) for item in offline_app.dataframe)
+    assert any({"Passes Screen", "Regression Alpha", "Alpha p-Value"} <= set(item.value.columns) for item in offline_app.dataframe)
+    labels = {item.label for item in offline_app.get("download_button")}
+    assert {"Download universe research CSV", "Download security screen CSV", "Download holdings template"} <= labels
+    assert any("Upload a holdings CSV" in item.value for item in offline_app.info)
 
 
 def test_nondefault_benchmark_alias_shows_mapping_banner(offline_app):

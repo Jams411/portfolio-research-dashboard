@@ -27,6 +27,10 @@ from portfolio_dashboard.formatting import metric_value, money, pct, ratio
 from portfolio_dashboard.evaluation import (
     fama_selectivity_decomposition, rolling_performance_evaluation,
 )
+from portfolio_dashboard.etf_research import (
+    consolidated_security_exposure, etf_overlap, etf_research_metrics,
+    filter_etf_research, holdings_coverage, parse_holdings_csv, rank_security_candidates,
+)
 from portfolio_dashboard.performance import (
     annualized_volatility, asset_risk_return_table, diversification_effect,
     drawdown_series, monthly_returns,
@@ -234,7 +238,7 @@ if run:
 tab_names = [
     "Overview", "Performance", "Performance Evaluation", "Risk", "Benchmark & Attribution", "Security Analysis",
     "Asset Pricing", "Portfolio Optimization", "Portfolio Strategies", "Stress Testing",
-    "Research Workspace", "Research Report", "Methodology & Limitations",
+    "Research Workspace", "Research Report", "ETF Research", "Methodology & Limitations",
 ]
 tabs = st.tabs(tab_names, key="analysis_tab", on_change="rerun")
 
@@ -298,6 +302,17 @@ if "result" not in st.session_state:
                 "risky-asset exposure directly or provide an explicit risk-aversion coefficient."
             )
         elif open_tab == 12:
+            st.subheader("ETF Research")
+            st.info("Run an analysis to screen the selected universe and open holdings look-through tools.")
+            st.markdown("""
+**This top-level workspace displays:**
+
+- Historical return, volatility, Sharpe, drawdown, and observation filters
+- Transparent security-level alpha screening against the selected benchmark
+- Optional holdings normalization, consolidated exposure, and ETF overlap analysis
+- Downloadable research, screening, and look-through tables
+""")
+        elif open_tab == 13:
             st.subheader("Methodology and limitations")
             st.write(f"Application build: `{build_identifier()}`")
             st.info("Run an analysis to view the complete methodology alongside calculated results.")
@@ -1483,6 +1498,129 @@ if tabs[11].open:
 
 if tabs[12].open:
     with tabs[12]:
+        st.subheader("ETF Research")
+        st.caption(
+            "Research the user-selected universe using aligned historical returns, then optionally upload disclosed holdings "
+            "for look-through analysis. Results are diagnostics, not fund ratings or investment recommendations."
+        )
+        st.markdown("### Universe Research")
+        filter_columns = st.columns(3)
+        min_history = filter_columns[0].number_input(
+            "Minimum observations", min_value=2, value=60, step=1, key="etf_min_observations"
+        )
+        min_sharpe = filter_columns[1].number_input(
+            "Minimum Sharpe ratio", value=0.50, step=0.05, key="etf_min_sharpe"
+        )
+        max_volatility = filter_columns[2].number_input(
+            "Maximum annualized volatility (%)", min_value=0.0, value=25.0, step=1.0,
+            key="etf_max_volatility",
+        ) / 100
+        universe_metrics = etf_research_metrics(a.asset_returns, r["risk_free"])
+        screened_universe = filter_etf_research(
+            universe_metrics, int(min_history), float(min_sharpe), float(max_volatility)
+        )
+        st.dataframe(
+            universe_metrics, width="stretch",
+            column_config={
+                "Historical Arithmetic Return": st.column_config.NumberColumn(format="percent"),
+                "Volatility": st.column_config.NumberColumn(format="percent"),
+                "Cumulative Return": st.column_config.NumberColumn(format="percent"),
+                "Maximum Drawdown": st.column_config.NumberColumn(format="percent"),
+            },
+        )
+        st.caption(
+            f"{len(screened_universe)} of {len(universe_metrics)} analyzed symbols pass the selected history, Sharpe, and volatility filters. "
+            "Expected-return estimates are historical arithmetic annualized means; volatility uses annualized sample standard deviation."
+        )
+        st.download_button(
+            "Download universe research CSV", universe_metrics.to_csv().encode("utf-8"),
+            "portfoliolens_etf_universe_research.csv", "text/csv",
+        )
+
+        st.markdown("### Security Screening")
+        security_screen = rank_security_candidates(
+            security_single_index_table(a.asset_returns, a.benchmark_returns, r["risk_free"]),
+            minimum_alpha=0.0, maximum_p_value=0.10, minimum_observations=int(min_history),
+        )
+        screen_columns = [
+            "Passes Screen", "Regression Alpha", "Alpha p-Value", "Beta", "R-Squared",
+            "Residual Volatility", "Alpha / Residual Variance", "Regression Observations",
+        ]
+        st.dataframe(
+            security_screen[screen_columns], width="stretch",
+            column_config={
+                "Regression Alpha": st.column_config.NumberColumn(format="percent"),
+                "R-Squared": st.column_config.NumberColumn(format="percent"),
+                "Residual Volatility": st.column_config.NumberColumn(format="percent"),
+            },
+        )
+        st.caption(
+            f"Screen: annualized regression alpha > 0%, two-sided alpha p-value ≤ 10%, and at least {int(min_history)} observations. "
+            "Historical alpha and significance do not imply persistence. Portfolio construction remains in the Portfolio Optimization workspace."
+        )
+        st.download_button(
+            "Download security screen CSV", security_screen.to_csv().encode("utf-8"),
+            "portfoliolens_security_screen.csv", "text/csv",
+        )
+
+        st.markdown("### Holdings Look-Through")
+        holdings_template = pd.DataFrame({
+            "ETF": [a.asset_returns.columns[0]], "Security": ["EXAMPLE"], "Holding Weight": [0.05]
+        })
+        st.download_button(
+            "Download holdings template", holdings_template.to_csv(index=False).encode("utf-8"),
+            "portfoliolens_holdings_template.csv", "text/csv",
+        )
+        holdings_file = st.file_uploader(
+            "Upload disclosed holdings CSV",
+            type=["csv"],
+            help="Required columns: ETF, Security, Holding Weight. Weights may be decimals or percentages.",
+        )
+        if holdings_file is None:
+            st.info("Upload a holdings CSV to calculate disclosed-weight coverage, consolidated underlying exposure, and pairwise ETF overlap.")
+        else:
+            try:
+                normalized_holdings = parse_holdings_csv(holdings_file.getvalue())
+                relevant_allocations = r["weights"].reindex(
+                    sorted(normalized_holdings["ETF"].unique()), fill_value=0.0
+                )
+                coverage = holdings_coverage(normalized_holdings)
+                overlap = etf_overlap(normalized_holdings)
+                st.markdown("**Disclosure coverage**")
+                st.dataframe(coverage, width="stretch", column_config={
+                    "Disclosed Weight": st.column_config.NumberColumn(format="percent")
+                })
+                if relevant_allocations.sum() == 0:
+                    exposure = pd.DataFrame(columns=["Portfolio Exposure"])
+                    st.warning("Uploaded ETF symbols do not match the current portfolio, so portfolio-level exposure is zero.")
+                else:
+                    exposure = consolidated_security_exposure(normalized_holdings, relevant_allocations)
+                    st.markdown("**Consolidated underlying exposure**")
+                    st.dataframe(exposure, width="stretch", column_config={
+                        "Portfolio Exposure": st.column_config.NumberColumn(format="percent")
+                    })
+                st.markdown("**Pairwise ETF overlap**")
+                st.dataframe(overlap, width="stretch", hide_index=True, column_config={
+                    "Constituent Jaccard": st.column_config.NumberColumn(format="percent"),
+                    "Weighted Overlap": st.column_config.NumberColumn(format="percent"),
+                })
+                st.download_button(
+                    "Download consolidated exposure CSV", exposure.to_csv().encode("utf-8"),
+                    "portfoliolens_consolidated_exposure.csv", "text/csv",
+                )
+                st.download_button(
+                    "Download ETF overlap CSV", overlap.to_csv(index=False).encode("utf-8"),
+                    "portfoliolens_etf_overlap.csv", "text/csv",
+                )
+            except ValueError as exc:
+                st.error(f"Holdings analysis could not run: {exc}")
+        st.caption(
+            "Holdings are user-supplied and may omit cash, derivatives, or minor positions. PortfolioLens does not infer stale dates, "
+            "issuer classifications, or undisclosed exposures. Weight overlap is the sum of pairwise minimum disclosed weights."
+        )
+
+if tabs[13].open:
+    with tabs[13]:
         st.subheader("Methodology and limitations")
         st.caption(f"Application build: `{build_identifier()}`")
         st.markdown("""
