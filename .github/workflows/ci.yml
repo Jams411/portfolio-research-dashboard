@@ -45,7 +45,7 @@ jobs:
 
       - name: Import application modules
         run: |
-          python -c "import portfolio_dashboard.config, portfolio_dashboard.construction, portfolio_dashboard.data, portfolio_dashboard.formatting, portfolio_dashboard.performance, portfolio_dashboard.pipeline, portfolio_dashboard.rebalancing, portfolio_dashboard.reporting, portfolio_dashboard.research, portfolio_dashboard.risk, portfolio_dashboard.strategy, portfolio_dashboard.stress; print('All application modules imported')"
+          python -c "import portfolio_dashboard.config, portfolio_dashboard.construction, portfolio_dashboard.data, portfolio_dashboard.etf_research, portfolio_dashboard.formatting, portfolio_dashboard.performance, portfolio_dashboard.pipeline, portfolio_dashboard.rebalancing, portfolio_dashboard.reporting, portfolio_dashboard.research, portfolio_dashboard.risk, portfolio_dashboard.strategy, portfolio_dashboard.stress; print('All application modules imported')"
 
       - name: Validate Streamlit configuration
         run: streamlit config show >/dev/null
