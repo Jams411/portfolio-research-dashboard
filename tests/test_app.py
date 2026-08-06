@@ -2,6 +2,7 @@
 
 import base64
 import json
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
@@ -47,8 +48,8 @@ def test_app_renders_helpful_initial_state():
     app = AppTest.from_file("app.py").run(timeout=20)
     assert not app.exception
     assert app.title[0].value == "PortfolioLens"
-    assert any("Multi-Asset Portfolio Analytics & Investment Research" in item.value for item in app.caption)
-    assert any(item.value == "Analysis inputs" for item in app.header)
+    assert any("Multi-asset portfolio analytics and investment research" in item.value for item in app.caption)
+    assert any(item.value == "Analysis setup" for item in app.subheader)
     expected_controls = {
         "Portfolio tickers", "Weights (%)", "Benchmark", "Initial portfolio value",
         "Annual risk-free rate (%)", "Transaction cost rate (%)",
@@ -57,17 +58,18 @@ def test_app_renders_helpful_initial_state():
     assert expected_controls <= {
         item.label for collection in (app.text_input, app.number_input) for item in collection
     }
-    assert any(item.label == "Example portfolio" for item in app.selectbox)
+    assert any(item.label == "Portfolio preset" for item in app.selectbox)
     assert any(item.label == "Use equal weights" for item in app.checkbox)
     assert any(item.label == "Run analysis" for item in app.button)
     assert widget(app.text_input, "Benchmark").value == "SPX"
-    assert any("No market data are downloaded" in item.value for item in app.info)
-    assert [tab.label for tab in app.tabs] == [
-        "Overview", "Performance", "Performance Evaluation", "Risk", "Benchmark & Attribution", "Security Analysis",
-        "Asset Pricing", "Portfolio Optimization", "Asset Allocation", "Portfolio Strategies", "Stress Testing",
-        "Research Workspace", "Research Report", "ETF Research", "Methodology & Limitations",
+    assert any("Market data are requested only" in item.value for item in app.info)
+    primary = widget(app.get("button_group"), "Primary workspace")
+    assert primary.value == "Dashboard"
+    assert len(primary.options) == 6
+    assert primary.options == [
+        "Dashboard", "Analytics", "Research", "Portfolio Construction", "Strategies", "Reports",
     ]
-    assert any("Application build:" in item.value for item in app.caption)
+    assert not any("Application build:" in item.value for item in app.caption)
     assert not app.metric
 
 
@@ -76,7 +78,6 @@ def test_performance_evaluation_tab_exposes_scorecard_and_fama_diagnostics(offli
     offline_app.session_state["analysis_tab"] = "Performance Evaluation"
     offline_app.run(timeout=30)
     assert not offline_app.exception
-    assert any(tab.label == "Performance Evaluation" for tab in offline_app.tabs)
     assert any(item.value == "Performance Evaluation" for item in offline_app.subheader)
     headings = {item.value for item in offline_app.markdown}
     assert {"### Performance Summary", "### Risk-Adjusted Performance", "### Benchmark Evaluation", "### Manager Evaluation"} <= headings
@@ -96,10 +97,9 @@ def test_portfolio_optimization_is_visible_before_analysis():
     app.session_state["analysis_tab"] = "Portfolio Optimization"
     app.run(timeout=20)
     assert not app.exception
-    assert any(tab.label == "Portfolio Optimization" for tab in app.tabs)
-    assert any(item.value == "Portfolio Optimization" for item in app.subheader)
-    assert any("efficient frontier" in item.value.lower() for item in app.info)
-    assert any("Global Minimum Variance" in item.value for item in app.markdown)
+    assert any(item.value == "Portfolio Optimization & Rebalancing" for item in app.subheader)
+    assert any("Market data are requested only" in item.value for item in app.info)
+    assert widget(app.get("button_group"), "Primary workspace").value == "Portfolio Construction"
 
 
 def test_app_rejects_multiple_benchmark_tickers_before_download():
@@ -134,7 +134,6 @@ def test_security_analysis_is_visible_with_offline_data(offline_app):
     offline_app.session_state["analysis_tab"] = "Security Analysis"
     offline_app.run(timeout=30)
     assert not offline_app.exception
-    assert any(tab.label == "Security Analysis" for tab in offline_app.tabs)
     assert any(item.value == "Security Analysis" for item in offline_app.subheader)
     assert any("Single-Index Security Analysis" in item.value for item in offline_app.markdown)
     assert any("Benchmark: SPX" in item.value for item in offline_app.caption)
@@ -165,7 +164,6 @@ def test_asset_pricing_tab_exposes_capm_and_security_market_line(offline_app):
     offline_app.session_state["analysis_tab"] = "Asset Pricing"
     offline_app.run(timeout=30)
     assert not offline_app.exception
-    assert any(tab.label == "Asset Pricing" for tab in offline_app.tabs)
     assert any(item.value == "Asset Pricing" for item in offline_app.subheader)
     assert any(item.label == "Security for CAPM review" for item in offline_app.selectbox)
     metric_labels = {item.label for item in offline_app.metric}
@@ -189,8 +187,7 @@ def test_portfolio_strategies_tab_exposes_policy_and_benchmark_comparison(offlin
     offline_app.session_state["analysis_tab"] = "Portfolio Strategies"
     offline_app.run(timeout=30)
     assert not offline_app.exception
-    assert any(tab.label == "Portfolio Strategies" for tab in offline_app.tabs)
-    assert any(item.value == "Portfolio Strategies" for item in offline_app.subheader)
+    assert any(item.value == "Portfolio Strategies & Momentum" for item in offline_app.subheader)
     assert any(item.label == "Strategy policy" for item in offline_app.selectbox)
     assert {"Active return", "Tracking error", "Information ratio", "Total turnover"} <= {
         item.label for item in offline_app.metric
@@ -209,7 +206,6 @@ def test_asset_allocation_tab_exposes_comparison_contributions_and_trades(offlin
     offline_app.session_state["analysis_tab"] = "Asset Allocation"
     offline_app.run(timeout=30)
     assert not offline_app.exception
-    assert any(tab.label == "Asset Allocation" for tab in offline_app.tabs)
     assert any(item.value == "Asset Allocation" for item in offline_app.subheader)
     headings = {item.value for item in offline_app.markdown}
     assert {"### Current and model allocations", "### Risk and return comparison", "### Current allocation contributions", "### Implementation trades"} <= headings
@@ -223,10 +219,9 @@ def test_etf_research_tab_exposes_screening_and_holdings_workflow(offline_app):
     offline_app.session_state["analysis_tab"] = "ETF Research"
     offline_app.run(timeout=30)
     assert not offline_app.exception
-    assert any(tab.label == "ETF Research" for tab in offline_app.tabs)
     assert any(item.value == "ETF Research" for item in offline_app.subheader)
     headings = {item.value for item in offline_app.markdown}
-    assert {"### Universe Research", "### Security Screening", "### Holdings Look-Through"} <= headings
+    assert {"### Universe research", "### Security screening", "### Holdings look-through"} <= headings
     assert any({"Historical Arithmetic Return", "Volatility", "Sharpe Ratio"} <= set(item.value.columns) for item in offline_app.dataframe)
     assert any({"Passes Screen", "Regression Alpha", "Alpha p-Value"} <= set(item.value.columns) for item in offline_app.dataframe)
     labels = {item.label for item in offline_app.get("download_button")}
@@ -264,8 +259,7 @@ def test_research_workspace_is_initialized_from_computed_analysis(offline_app):
     assert not offline_app.exception
     assert "what_if_weights" in offline_app.session_state
     assert "what_if_shocks" in offline_app.session_state
-    assert any(tab.label == "Research Workspace" for tab in offline_app.tabs)
-    assert any(metric.label == "Health score" for metric in offline_app.metric)
+    assert any(metric.label == "Portfolio value" for metric in offline_app.metric)
     offline_app.session_state["analysis_tab"] = "Research Workspace"
     offline_app.run(timeout=20)
     assert not offline_app.exception
@@ -280,7 +274,7 @@ def test_portfolio_optimization_view_exposes_workbook_two_tools_offline(offline_
     offline_app.session_state["analysis_tab"] = "Portfolio Optimization"
     offline_app.run(timeout=30)
     assert not offline_app.exception
-    assert any(item.value == "Portfolio Optimization" for item in offline_app.subheader)
+    assert any(item.value == "Portfolio Optimization & Rebalancing" for item in offline_app.subheader)
     assert any(item.label == "Policy detail" for item in offline_app.selectbox)
     assert any(item.label == "Construct target-return portfolio" for item in offline_app.button)
     assert any(
@@ -347,21 +341,79 @@ def test_failed_run_clears_prior_results_and_successful_rerun_recovers(offline_a
     widget(offline_app.text_input, "Weights (%)").set_value("50,35,15")
     run_analysis(offline_app)
     assert "result" in offline_app.session_state
-    assert offline_app.tabs
+    assert widget(offline_app.get("button_group"), "Primary workspace")
 
     widget(offline_app.text_input, "Benchmark").set_value("SPY, VTI")
     offline_app.run(timeout=20)
     assert "result" not in offline_app.session_state
-    assert any(tab.label == "Portfolio Optimization" for tab in offline_app.tabs)
+    assert widget(offline_app.get("button_group"), "Primary workspace")
     run_analysis(offline_app)
     assert any("exactly one benchmark ticker" in item.value for item in offline_app.error)
     assert "result" not in offline_app.session_state
-    assert any(tab.label == "Portfolio Optimization" for tab in offline_app.tabs)
+    assert widget(offline_app.get("button_group"), "Primary workspace")
     assert not offline_app.metric
 
     widget(offline_app.text_input, "Benchmark").set_value("SPY")
     run_analysis(offline_app)
     assert not offline_app.error
     assert "result" in offline_app.session_state
-    assert offline_app.tabs
+    assert widget(offline_app.get("button_group"), "Primary workspace")
     assert offline_app.session_state["result"]["weights"].tolist() == pytest.approx([.50, .35, .15])
+
+
+def test_grouped_navigation_keeps_every_major_section_reachable():
+    expected = {
+        "Dashboard": ("Dashboard",),
+        "Analytics": ("Performance", "Performance Evaluation", "Risk", "Benchmark & Attribution", "Stress Testing"),
+        "Research": ("Security Analysis", "Asset Pricing", "ETF Research"),
+        "Portfolio Construction": ("Portfolio Optimization & Rebalancing", "Asset Allocation"),
+        "Strategies": ("Portfolio Strategies & Momentum",),
+        "Reports": ("Research Workspace", "Research Report", "Methodology & Limitations"),
+    }
+    app = AppTest.from_file("app.py").run(timeout=20)
+    primary = widget(app.get("button_group"), "Primary workspace")
+    assert primary.options == list(expected)
+    assert len(primary.options) <= 6
+    for workspace, sections in expected.items():
+        for section in sections:
+            app.session_state["analysis_tab"] = section
+            app.run(timeout=20)
+            assert not app.exception
+            assert app.session_state["primary_workspace"] == workspace
+            assert app.session_state["workspace_section"] == section
+            assert any(item.value == section for item in app.subheader)
+
+
+def test_sidebar_groups_and_compact_header_contract():
+    source = Path("app.py").read_text()
+    for label in (
+        "Portfolio", "Analysis period", "Benchmark & assumptions", "Implementation",
+        "Strategy settings", "About",
+    ):
+        assert f'st.expander("{label}"' in source
+    app = AppTest.from_file("app.py").run(timeout=20)
+    assert app.title[0].value == "PortfolioLens"
+    assert any(button.label == "Run analysis" for button in app.button)
+    assert not any("Application build:" in caption.value for caption in app.caption)
+
+
+def test_dashboard_key_metrics_and_state_survive_navigation(offline_app):
+    widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, QQQ, TLT, GLD")
+    widget(offline_app.text_input, "Weights (%)").set_value("40,25,20,15")
+    run_analysis(offline_app)
+    expected_metrics = {
+        "Portfolio value", "Total return", "CAGR", "Arithmetic return", "Volatility",
+        "Sharpe ratio", "Max drawdown", "Beta", "Tracking error", "Information ratio",
+        "Strongest risk contributor", "Active return",
+    }
+    assert expected_metrics <= {metric.label for metric in offline_app.metric}
+    saved_weights = offline_app.session_state["result"]["weights"].copy()
+    for section in ("Risk", "ETF Research", "Research Report", "Dashboard"):
+        offline_app.session_state["analysis_tab"] = section
+        offline_app.run(timeout=30)
+        assert not offline_app.exception
+        pd.testing.assert_series_equal(offline_app.session_state["result"]["weights"], saved_weights)
+    assert any(item.label == "Download HTML report" for item in offline_app.get("download_button")) is False
+    offline_app.session_state["analysis_tab"] = "Research Report"
+    offline_app.run(timeout=30)
+    assert any(item.label == "Download HTML report" for item in offline_app.get("download_button"))

@@ -105,6 +105,27 @@ ANALYSIS_STATE_KEYS = (
     "constrained_result", "constraint_editor",
 )
 
+PRIMARY_WORKSPACES = (
+    "Dashboard", "Analytics", "Research", "Portfolio Construction", "Strategies", "Reports",
+)
+
+WORKSPACE_SECTIONS = {
+    "Dashboard": ("Dashboard",),
+    "Analytics": (
+        "Performance", "Performance Evaluation", "Risk", "Benchmark & Attribution", "Stress Testing",
+    ),
+    "Research": ("Security Analysis", "Asset Pricing", "ETF Research"),
+    "Portfolio Construction": ("Portfolio Optimization & Rebalancing", "Asset Allocation"),
+    "Strategies": ("Portfolio Strategies & Momentum",),
+    "Reports": ("Research Workspace", "Research Report", "Methodology & Limitations"),
+}
+
+SECTION_TO_WORKSPACE = {
+    section: workspace
+    for workspace, sections in WORKSPACE_SECTIONS.items()
+    for section in sections
+}
+
 
 def clear_analysis_state() -> None:
     """Remove outputs whose inputs no longer match the current widget values."""
@@ -113,55 +134,61 @@ def clear_analysis_state() -> None:
 
 
 st.title("PortfolioLens")
-st.caption("Multi-Asset Portfolio Analytics & Investment Research")
-st.caption(f"Application build: `{build_identifier()}`")
+st.caption("Multi-asset portfolio analytics and investment research")
 
 with st.sidebar:
-    st.header("Analysis inputs")
-    preset = st.selectbox("Example portfolio", ["Custom"] + list(PRESETS), on_change=clear_analysis_state)
-    default_tickers, default_weights = PRESETS.get(preset, ("SPY, AGG, GLD", "50, 35, 15"))
-    ticker_text = st.text_input(
-        "Portfolio tickers", value=default_tickers, help="Comma-separated; duplicates are removed.",
-        on_change=clear_analysis_state,
-    )
-    equal = st.checkbox("Use equal weights", value=False, on_change=clear_analysis_state)
-    weight_text = st.text_input(
-        "Weights (%)", value=default_weights, disabled=equal,
-        help="Same order as tickers. Approximate totals within 0.1% are normalized with notice.",
-        on_change=clear_analysis_state,
-    )
-    start_input = st.date_input("Start date", date(2018, 1, 1), on_change=clear_analysis_state)
-    end_input = st.date_input("End date", date.today(), on_change=clear_analysis_state)
-    benchmark_ticker = st.text_input(
-        "Benchmark", "SPX",
-        help="Enter one ticker or supported index alias, such as SPX, DJIA, NASDAQ, VIX, or RUT.",
-        on_change=clear_analysis_state,
-    )
-    initial_value = st.number_input(
-        "Initial portfolio value", min_value=1.0, value=100000.0, step=5000.0,
-        on_change=clear_analysis_state,
-    )
-    risk_free = st.number_input(
-        "Annual risk-free rate (%)", min_value=-99.0, max_value=100.0, value=4.0, step=0.1,
-        on_change=clear_analysis_state,
-    ) / 100
-    transaction_cost = st.number_input(
-        "Transaction cost rate (%)", min_value=0.0, max_value=10.0, value=0.10, step=0.05,
-        help="Applied proportionally to strategy position changes and rebalancing gross trade notional.",
-        on_change=clear_analysis_state,
-    ) / 100
-    rebalancing_threshold = st.number_input(
-        "Rebalancing drift threshold (%)", min_value=0.0, max_value=100.0, value=5.0, step=0.5,
-        help="Threshold policy trades when any holding's absolute weight drift reaches this level.",
-        on_change=clear_analysis_state,
-    ) / 100
-    with st.expander("Momentum parameters"):
+    st.subheader("Analysis setup")
+    with st.expander("Portfolio", expanded=True, icon=":material/pie_chart:"):
+        preset = st.selectbox("Portfolio preset", ["Custom"] + list(PRESETS), on_change=clear_analysis_state)
+        default_tickers, default_weights = PRESETS.get(preset, ("SPY, AGG, GLD", "50, 35, 15"))
+        ticker_text = st.text_input(
+            "Portfolio tickers", value=default_tickers, help="Comma-separated; duplicates are removed.",
+            on_change=clear_analysis_state,
+        )
+        equal = st.checkbox("Use equal weights", value=False, on_change=clear_analysis_state)
+        weight_text = st.text_input(
+            "Weights (%)", value=default_weights, disabled=equal,
+            help="Same order as tickers. Approximate totals within 0.1% are normalized with notice.",
+            on_change=clear_analysis_state,
+        )
+        initial_value = st.number_input(
+            "Initial portfolio value", min_value=1.0, value=100000.0, step=5000.0,
+            on_change=clear_analysis_state,
+        )
+    with st.expander("Analysis period", expanded=True, icon=":material/date_range:"):
+        start_input = st.date_input("Start date", date(2018, 1, 1), on_change=clear_analysis_state)
+        end_input = st.date_input("End date", date.today(), on_change=clear_analysis_state)
+    with st.expander("Benchmark & assumptions", expanded=True, icon=":material/query_stats:"):
+        benchmark_ticker = st.text_input(
+            "Benchmark", "SPX",
+            help="Enter one ticker or supported index alias, such as SPX, DJIA, NASDAQ, VIX, or RUT.",
+            on_change=clear_analysis_state,
+        )
+        risk_free = st.number_input(
+            "Annual risk-free rate (%)", min_value=-99.0, max_value=100.0, value=4.0, step=0.1,
+            on_change=clear_analysis_state,
+        ) / 100
+    with st.expander("Implementation", icon=":material/tune:"):
+        transaction_cost = st.number_input(
+            "Transaction cost rate (%)", min_value=0.0, max_value=10.0, value=0.10, step=0.05,
+            help="Applied proportionally to strategy position changes and rebalancing gross trade notional.",
+            on_change=clear_analysis_state,
+        ) / 100
+        rebalancing_threshold = st.number_input(
+            "Rebalancing drift threshold (%)", min_value=0.0, max_value=100.0, value=5.0, step=0.5,
+            help="Threshold policy trades when any holding's absolute weight drift reaches this level.",
+            on_change=clear_analysis_state,
+        ) / 100
+    with st.expander("Strategy settings", icon=":material/show_chart:"):
         short_window = st.number_input("Short moving average", 2, 500, 50, on_change=clear_analysis_state)
         long_window = st.number_input("Long moving average", 3, 1000, 200, on_change=clear_analysis_state)
     run = st.button("Run analysis", type="primary", width="stretch")
     if st.button("Reset", width="stretch"):
         st.session_state.clear()
         st.rerun()
+    with st.expander("About", icon=":material/info:"):
+        st.caption("Historical investment research · not personalized financial advice")
+        st.caption(f"Build `{build_identifier()}`")
 
 if run:
     clear_analysis_state()
@@ -240,95 +267,80 @@ if run:
     except (ValueError, MarketDataError) as exc:
         st.error(f"Analysis could not run: {exc}")
 
-tab_names = [
-    "Overview", "Performance", "Performance Evaluation", "Risk", "Benchmark & Attribution", "Security Analysis",
-    "Asset Pricing", "Portfolio Optimization", "Asset Allocation", "Portfolio Strategies", "Stress Testing",
-    "Research Workspace", "Research Report", "ETF Research", "Methodology & Limitations",
-]
-tabs = st.tabs(tab_names, key="analysis_tab", on_change="rerun")
+requested_section = st.session_state.get("analysis_tab", "Dashboard")
+requested_section = {
+    "Overview": "Dashboard",
+    "Portfolio Optimization": "Portfolio Optimization & Rebalancing",
+    "Rebalancing": "Portfolio Optimization & Rebalancing",
+    "Portfolio Strategies": "Portfolio Strategies & Momentum",
+    "Momentum Strategy": "Portfolio Strategies & Momentum",
+}.get(requested_section, requested_section)
+if requested_section not in SECTION_TO_WORKSPACE:
+    requested_section = "Dashboard"
+
+# Preserve compatibility with saved sessions and deep links that address the former section key.
+if requested_section != st.session_state.get("_navigation_section"):
+    st.session_state["primary_workspace"] = SECTION_TO_WORKSPACE[requested_section]
+    st.session_state["workspace_section"] = requested_section
+
+
+def change_workspace() -> None:
+    workspace = st.session_state["primary_workspace"]
+    section = WORKSPACE_SECTIONS[workspace][0]
+    st.session_state["workspace_section"] = section
+    st.session_state["analysis_tab"] = section
+    st.session_state["_navigation_section"] = section
+
+
+def change_section() -> None:
+    section = st.session_state["workspace_section"]
+    st.session_state["analysis_tab"] = section
+    st.session_state["_navigation_section"] = section
+
+
+primary_workspace = st.segmented_control(
+    "Primary workspace",
+    PRIMARY_WORKSPACES,
+    key="primary_workspace",
+    on_change=change_workspace,
+    label_visibility="collapsed",
+    width="stretch",
+)
+if primary_workspace is None:
+    primary_workspace = "Dashboard"
+sections = WORKSPACE_SECTIONS[primary_workspace]
+if st.session_state.get("workspace_section") not in sections:
+    st.session_state["workspace_section"] = sections[0]
+if len(sections) == 1:
+    active_section = sections[0]
+    st.session_state["workspace_section"] = active_section
+else:
+    active_section = st.selectbox(
+        f"{primary_workspace} view",
+        sections,
+        key="workspace_section",
+        on_change=change_section,
+    )
+st.session_state["analysis_tab"] = active_section
+st.session_state["_navigation_section"] = active_section
+section_container = st.container()
 
 if "result" not in st.session_state:
-    open_tab = next((index for index, tab in enumerate(tabs) if tab.open), 0)
-    with tabs[open_tab]:
-        if open_tab == 2:
-            st.subheader("Performance Evaluation")
-            st.info("Run an analysis from the sidebar to open the performance-evaluation scorecard.")
-            st.markdown("""
-**This top-level workspace displays:**
-
-- Return, risk, drawdown, and risk-adjusted performance
-- Benchmark-relative active return, tracking error, and Information Ratio
-- CAPM required return, Jensen's alpha, and Treynor ratio
-- Fama selectivity, diversification effect, and net selectivity
-- Rolling historical diagnostics and downloadable evaluation results
-""")
-        elif open_tab == 5:
-            st.subheader("Security Analysis")
-            st.info("Run an analysis from the sidebar to compare security-level single-index results.")
-            st.markdown("""
-**This top-level workspace displays:**
-
-- Security-level alpha, beta, R-squared, and residual volatility
-- Systematic and idiosyncratic risk decomposition
-- Jensen's alpha and Treynor ratio
-- Security Characteristic Line and fitted excess returns
-- Residual diagnostics and cross-security comparison
-- Methodology, limitations, and downloadable results
-""")
-        elif open_tab == 6:
-            st.subheader("Asset Pricing")
-            st.info("Run an analysis from the sidebar to compare realized security returns with CAPM required returns.")
-            st.markdown("""
-**This top-level workspace displays:**
-
-- Security-level beta and historical arithmetic return
-- CAPM required return and Jensen's alpha
-- Security Market Line with actual-return observations
-- Above/on/below-line classification without trade recommendations
-- Factor-pricing scope, assumptions, and limitations
-""")
-        elif open_tab == 7:
-            st.subheader("Portfolio Optimization")
-            st.info("Run an analysis from the sidebar to calculate the efficient frontier and optimized portfolios.")
-            st.markdown("""
-**This top-level workspace displays:**
-
-- Efficient Frontier and current portfolio point
-- Global Minimum Variance and Maximum Sharpe / Tangency portfolios
-- Target Return portfolio construction
-- Non-leveraged Capital Allocation Line
-- Complete portfolio risk preference
-- Expected return, volatility, Sharpe ratio, and optimized weights
-- Methodology, limitations, and downloadable results
-""")
-            st.caption(
-                "Historical arithmetic returns and sample covariance are estimation inputs, not forecasts. "
-                "Long-only weights sum to 100%; short selling and leverage are disabled. Users may select "
-                "risky-asset exposure directly or provide an explicit risk-aversion coefficient."
-            )
-        elif open_tab == 8:
-            st.subheader("Asset Allocation")
-            st.info("Run an analysis to compare current and model allocations, contribution profiles, and implementation trades.")
-        elif open_tab == 13:
-            st.subheader("ETF Research")
-            st.info("Run an analysis to screen the selected universe and open holdings look-through tools.")
-            st.markdown("""
-**This top-level workspace displays:**
-
-- Historical return, volatility, Sharpe, drawdown, and observation filters
-- Transparent security-level alpha screening against the selected benchmark
-- Optional holdings normalization, consolidated exposure, and ETF overlap analysis
-- Downloadable research, screening, and look-through tables
-""")
-        elif open_tab == 14:
+    with section_container:
+        st.subheader(active_section)
+        if active_section == "Methodology & Limitations":
             st.subheader("Methodology and limitations")
             st.write(f"Application build: `{build_identifier()}`")
-            st.info("Run an analysis to view the complete methodology alongside calculated results.")
+            st.info("Run an analysis to view methodology alongside the calculated results.")
         else:
-            st.info("Choose a preset or enter portfolio inputs in the sidebar, then select **Run analysis**. No market data are downloaded until then.")
-            if open_tab == 0:
-                st.markdown("### What this application answers")
-                st.write("How has the portfolio performed? What drives risk? How does it compare with a benchmark? Which historical long-only portfolios satisfy explicit constraints? How do rebalancing policies, implementation costs, strategy behavior, and stress losses differ?")
+            st.info("Configure the portfolio in the sidebar, then select **Run analysis**. Market data are requested only when you run the analysis.")
+            if active_section == "Dashboard":
+                with st.container(border=True):
+                    st.markdown("**Executive research view**")
+                    st.caption(
+                        "Portfolio growth, benchmark-relative performance, allocation, drawdown, risk contribution, "
+                        "portfolio construction, and deterministic insights appear here after analysis."
+                    )
     st.stop()
 
 r = st.session_state["result"]
@@ -353,33 +365,89 @@ st.caption(
 )
 st.caption("Historical research only · constant portfolio weights · not personalized financial advice")
 
-if tabs[0].open:
-    with tabs[0]:
-        st.subheader("Portfolio at a glance")
+if active_section == "Dashboard":
+    with section_container:
+        st.subheader("Executive dashboard")
+        ending_value = r["initial_value"] * (1 + a.performance["Total Return"])
         cards = [
-            ("Health score", f"{health_score:.0f}/100"),
+            ("Portfolio value", money(ending_value)),
             ("Total return", pct(a.performance["Total Return"])),
-            ("Arithmetic return", pct(a.performance["Historical Arithmetic Annualized Return"])),
             ("CAGR", pct(a.performance["CAGR"])),
+            ("Arithmetic return", pct(a.performance["Historical Arithmetic Annualized Return"])),
             ("Volatility", pct(a.performance["Annualized Volatility"])),
-            ("Performance Sharpe", ratio(a.performance["Sharpe Ratio"])),
+            ("Sharpe ratio", ratio(a.performance["Sharpe Ratio"])),
             ("Max drawdown", pct(a.performance["Maximum Drawdown"])),
+            ("Beta", ratio(a.benchmark["Beta"])),
+            ("Tracking error", pct(a.benchmark["Tracking Error"])),
+            ("Information ratio", ratio(a.benchmark["Information Ratio"])),
+            ("Strongest risk contributor", str(a.volatility_contributions.idxmax())),
+            ("Active return", pct(a.benchmark["Annualized Active Return"])),
         ]
-        with st.container(horizontal=True):
-            for label, value in cards:
-                st.metric(label, value, border=True)
-        st.caption(f"Health Score is a transparent historical diagnostic with {health_coverage:.0%} metric coverage, not an investment recommendation.")
+        for start_index in range(0, len(cards), 4):
+            card_columns = st.columns(4)
+            for column, (label, value) in zip(card_columns, cards[start_index:start_index + 4]):
+                column.metric(label, value, border=True)
+        st.caption(
+            f"Health score: {health_score:.0f}/100 with {health_coverage:.0%} metric coverage · "
+            f"benchmark: {r['benchmark_ticker']}"
+        )
         growth = pd.concat([
             (1 + a.portfolio_returns).cumprod().rename("Portfolio"),
             (1 + a.benchmark_returns).cumprod().rename(r["benchmark_ticker"]),
         ], axis=1)
         line_chart(growth * r["initial_value"], "Growth of the initial portfolio value", "Value ($)")
-        st.dataframe(r["weights"].rename("Weight").to_frame(), width="stretch", column_config={
-            "Weight": st.column_config.NumberColumn(format="percent")
-        })
+        line_chart(
+            pd.concat([
+                drawdown_series(a.portfolio_returns).rename("Portfolio"),
+                drawdown_series(a.benchmark_returns).rename(r["benchmark_ticker"]),
+            ], axis=1),
+            "Drawdown",
+            "Drawdown",
+        )
+        allocation_column, risk_column = st.columns(2)
+        with allocation_column:
+            allocation_figure = px.pie(
+                values=r["weights"].values,
+                names=r["weights"].index,
+                title="Current allocation",
+                hole=0.55,
+            )
+            allocation_figure.update_layout(margin=dict(l=10, r=10, t=50, b=10), legend_title_text="")
+            st.plotly_chart(allocation_figure, width="stretch", theme="streamlit")
+        with risk_column:
+            risk_figure = px.bar(
+                a.volatility_contributions.rename("Contribution").reset_index(),
+                x="index",
+                y="Contribution",
+                title="Risk contribution",
+                labels={"index": "Security", "Contribution": "Annualized volatility contribution"},
+            )
+            risk_figure.update_layout(margin=dict(l=10, r=10, t=50, b=10), showlegend=False)
+            risk_figure.update_yaxes(tickformat=".1%")
+            st.plotly_chart(risk_figure, width="stretch", theme="streamlit")
+        if not r["frontier"].empty:
+            frontier_preview = px.line(
+                r["frontier"],
+                x="Optimizer Volatility",
+                y="Optimizer Expected Return",
+                title="Efficient frontier preview",
+                labels={
+                    "Optimizer Volatility": "Annualized volatility",
+                    "Optimizer Expected Return": "Expected annual return",
+                },
+            )
+            frontier_preview.update_layout(margin=dict(l=10, r=10, t=50, b=10))
+            frontier_preview.update_xaxes(tickformat=".1%")
+            frontier_preview.update_yaxes(tickformat=".1%")
+            st.plotly_chart(frontier_preview, width="stretch", theme="streamlit")
+        st.markdown("### Key insights")
+        for observation in insights["Observation"]:
+            st.write(f"- {observation}")
+        with st.expander("Insight evidence", icon=":material/fact_check:"):
+            st.dataframe(insights, width="stretch", hide_index=True)
 
-if tabs[1].open:
-    with tabs[1]:
+if active_section == "Performance":
+    with section_container:
         st.subheader("Performance")
         st.caption(
             "Arithmetic return is the historical expected-return estimate used by Sharpe and optimization. "
@@ -395,8 +463,8 @@ if tabs[1].open:
             month: st.column_config.NumberColumn(format="percent") for month in monthly_returns(a.portfolio_returns).columns
         })
 
-if tabs[2].open:
-    with tabs[2]:
+if active_section == "Performance Evaluation":
+    with section_container:
         st.subheader("Performance Evaluation")
         st.caption(
             "A consolidated historical evaluation of return, total risk, systematic risk, benchmark-relative risk, "
@@ -486,8 +554,8 @@ if tabs[2].open:
 - Calmar, drawdown, tracking error, Information Ratio, and rolling diagnostics are professional product measures; they are not attributed to the source model reviewed for this integration.
 """)
 
-if tabs[3].open:
-    with tabs[3]:
+if active_section == "Risk":
+    with section_container:
         st.subheader("Risk and diversification")
         var95, cvar95 = historical_var(a.portfolio_returns), historical_cvar(a.portfolio_returns)
         effective = 1 / float((r["weights"] ** 2).sum())
@@ -545,8 +613,8 @@ if tabs[3].open:
         })
         st.caption("Volatility contribution uses Euler decomposition: wᵢ(Σw)ᵢ / √(w′Σw); contributions reconcile to annualized portfolio volatility.")
 
-if tabs[4].open:
-    with tabs[4]:
+if active_section == "Benchmark & Attribution":
+    with section_container:
         st.subheader("Benchmark-relative results and attribution")
         relative_names = [
             "Portfolio Return", "Benchmark Return", "Excess Return", "Tracking Error",
@@ -576,8 +644,8 @@ if tabs[4].open:
             "CAPM required return is the risk-free rate plus beta times the benchmark risk premium. "
             "Jensen’s alpha is realized arithmetic return minus that required return; Treynor is excess return per unit of beta."
         )
-if tabs[5].open:
-    with tabs[5]:
+if active_section == "Security Analysis":
+    with section_container:
         st.subheader("Security Analysis")
         st.markdown("### Single-Index Security Analysis")
         st.caption(
@@ -585,10 +653,17 @@ if tabs[5].open:
             "Results are historical diagnostics, not forecasts, ratings, or investment recommendations."
         )
         st.caption(f"Benchmark: {r['benchmark_ticker']} · Annual risk-free rate: {r['risk_free']:.2%}")
+        selected_security = st.selectbox(
+            "Security to inspect", list(a.asset_returns.columns), key="single_index_security"
+        )
         security_table = security_single_index_table(
             a.asset_returns, a.benchmark_returns, r["risk_free"]
         )
         comparison_columns = [
+            "Regression Alpha", "Beta", "R-Squared", "Residual Volatility",
+            "Systematic Risk Share", "Jensen's Alpha",
+        ]
+        diagnostic_columns = [
             "Regression Alpha", "Beta", "R-Squared", "Residual Volatility",
             "Systematic Volatility", "Systematic Variance", "Idiosyncratic Variance",
             "Systematic Risk Share", "Idiosyncratic Risk Share", "Jensen's Alpha",
@@ -608,12 +683,25 @@ if tabs[5].open:
                 "Jensen's Alpha": st.column_config.NumberColumn(format="percent"),
             },
         )
+        with st.expander("Cross-security diagnostics", icon=":material/table_chart:"):
+            st.dataframe(
+                security_table[diagnostic_columns],
+                width="stretch",
+                column_config={
+                    "Regression Alpha": st.column_config.NumberColumn(format="percent"),
+                    "R-Squared": st.column_config.NumberColumn(format="percent"),
+                    "Residual Volatility": st.column_config.NumberColumn(format="percent"),
+                    "Systematic Volatility": st.column_config.NumberColumn(format="percent"),
+                    "Systematic Variance": st.column_config.NumberColumn(format="%.4f"),
+                    "Idiosyncratic Variance": st.column_config.NumberColumn(format="%.4f"),
+                    "Systematic Risk Share": st.column_config.NumberColumn(format="percent"),
+                    "Idiosyncratic Risk Share": st.column_config.NumberColumn(format="percent"),
+                    "Jensen's Alpha": st.column_config.NumberColumn(format="percent"),
+                },
+            )
         st.caption(
             "Alpha / Residual Variance is a historical screening diagnostic. A positive value does not imply that alpha will persist. "
             "Statistical significance and economic magnitude should be assessed separately."
-        )
-        selected_security = st.selectbox(
-            "Security to inspect", list(a.asset_returns.columns), key="single_index_security"
         )
         security_metrics, security_observations = single_index_regression_diagnostics(
             a.asset_returns[selected_security], a.benchmark_returns, r["risk_free"]
@@ -681,8 +769,8 @@ if tabs[5].open:
             f"portfoliolens_{str(selected_security).lower()}_single_index.csv", "text/csv",
         )
 
-if tabs[6].open:
-    with tabs[6]:
+if active_section == "Asset Pricing":
+    with section_container:
         st.subheader("Asset Pricing")
         st.caption(
             "CAPM compares each security's historical arithmetic return with the return implied by its estimated beta, "
@@ -779,8 +867,8 @@ if tabs[6].open:
                     "are required before multifactor estimates can be presented as live research outputs."
                 )
 
-if tabs[4].open:
-    with tabs[4]:
+if active_section == "Benchmark & Attribution":
+    with section_container:
         comparison = pd.concat([
             (1 + a.portfolio_returns).cumprod().rename("Portfolio"),
             (1 + a.benchmark_returns).cumprod().rename(r["benchmark_ticker"]),
@@ -794,9 +882,9 @@ if tabs[4].open:
         })
         st.caption(f"Return contributions sum to {a.return_contributions.sum():.2%}; portfolio total return is {a.performance['Total Return']:.2%}.")
 
-if tabs[7].open:
-    with tabs[7]:
-        st.subheader("Portfolio Optimization")
+if active_section == "Portfolio Optimization & Rebalancing":
+    with section_container:
+        st.subheader(active_section)
         st.caption(
             "Modern portfolio construction tools: long-only efficient frontier, global minimum-variance portfolio, "
             "constrained tangency portfolio, target-return portfolio, non-leveraged Capital Allocation Line, "
@@ -1225,8 +1313,8 @@ if tabs[7].open:
                 f"{selected_policy.lower().replace(' ', '_')}_trades.csv", "text/csv",
             )
 
-if tabs[8].open:
-    with tabs[8]:
+if active_section == "Asset Allocation":
+    with section_container:
         st.subheader("Asset Allocation")
         st.caption(
             "Compare the current security allocation with transparent long-only model portfolios. Ticker-to-asset-class labels are not inferred; "
@@ -1270,9 +1358,9 @@ if tabs[8].open:
                 "portfoliolens_allocation_trades.csv", "text/csv",
             )
 
-if tabs[9].open:
-    with tabs[9]:
-        st.subheader("Portfolio Strategies")
+if active_section == "Portfolio Strategies & Momentum":
+    with section_container:
+        st.subheader(active_section)
         st.caption(
             f"Compare buy-and-hold and explicit rebalancing policies against {r['benchmark_ticker']} on one aligned history. "
             f"Initial value: {money(r['initial_value'])} · transaction-cost rate: {r['transaction_cost']:.2%} · "
@@ -1358,8 +1446,8 @@ if tabs[9].open:
         st.dataframe(display_metric_frame(stats), width="stretch")
         st.download_button("Download strategy results CSV", r["strategy_data"].to_csv(), "strategy_results.csv", "text/csv")
 
-if tabs[10].open:
-    with tabs[10]:
+if active_section == "Stress Testing":
+    with section_container:
         st.subheader("Custom shock test")
         st.caption("No asset classes are inferred. Enter a direct shock for every holding.")
         shock_seed = st.session_state["current_shocks"]
@@ -1391,8 +1479,8 @@ if tabs[10].open:
                 "Benchmark Return": st.column_config.NumberColumn(format="percent"),
             })
 
-if tabs[11].open:
-    with tabs[11]:
+if active_section == "Research Workspace":
+    with section_container:
         st.subheader("Investment research workspace")
         with st.container(horizontal=True):
             st.metric("Portfolio Health Score", f"{health_score:.0f}/100", border=True)
@@ -1484,8 +1572,8 @@ if tabs[11].open:
                 "Dollar Impact": st.column_config.NumberColumn(format="dollar"),
             })
 
-if tabs[12].open:
-    with tabs[12]:
+if active_section == "Research Report":
+    with section_container:
         st.subheader("Deterministic investment-research report")
         current_shocks = st.session_state["current_shocks"]
         shock_table, shock_summary = custom_shock(r["weights"], current_shocks, r["initial_value"])
@@ -1567,14 +1655,19 @@ if tabs[12].open:
             for label, payload in downloads.items():
                 st.download_button(label + " CSV", payload, label.lower().replace(" ", "_") + ".csv", "text/csv")
 
-if tabs[13].open:
-    with tabs[13]:
+if active_section == "ETF Research":
+    with section_container:
         st.subheader("ETF Research")
         st.caption(
             "Research the user-selected universe using aligned historical returns, then optionally upload disclosed holdings "
             "for look-through analysis. Results are diagnostics, not fund ratings or investment recommendations."
         )
-        st.markdown("### Universe Research")
+        with st.container(horizontal=True):
+            st.metric("Pipeline status", "Ready", border=True)
+            st.metric("Universe", f"{len(a.asset_returns.columns)} securities", border=True)
+            st.metric("Holdings look-through", "Optional upload", border=True)
+            st.metric("Optimization route", "Portfolio Construction", border=True)
+        st.markdown("### Universe research")
         filter_columns = st.columns(3)
         min_history = filter_columns[0].number_input(
             "Minimum observations", min_value=2, value=60, step=1, key="etf_min_observations"
@@ -1608,7 +1701,7 @@ if tabs[13].open:
             "portfoliolens_etf_universe_research.csv", "text/csv",
         )
 
-        st.markdown("### Security Screening")
+        st.markdown("### Security screening")
         security_screen = rank_security_candidates(
             security_single_index_table(a.asset_returns, a.benchmark_returns, r["risk_free"]),
             minimum_alpha=0.0, maximum_p_value=0.10, minimum_observations=int(min_history),
@@ -1634,7 +1727,7 @@ if tabs[13].open:
             "portfoliolens_security_screen.csv", "text/csv",
         )
 
-        st.markdown("### Holdings Look-Through")
+        st.markdown("### Holdings look-through")
         holdings_template = pd.DataFrame({
             "ETF": [a.asset_returns.columns[0]], "Security": ["EXAMPLE"], "Holding Weight": [0.05]
         })
@@ -1690,8 +1783,8 @@ if tabs[13].open:
             "issuer classifications, or undisclosed exposures. Weight overlap is the sum of pairwise minimum disclosed weights."
         )
 
-if tabs[14].open:
-    with tabs[14]:
+if active_section == "Methodology & Limitations":
+    with section_container:
         st.subheader("Methodology and limitations")
         st.caption(f"Application build: `{build_identifier()}`")
         st.markdown("""
