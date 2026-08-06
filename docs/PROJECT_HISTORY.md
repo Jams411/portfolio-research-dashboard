@@ -1,5 +1,13 @@
 # Project history
 
+## 2026-08-06 — Cohesive workspace and executive-dashboard redesign
+
+- **What changed:** Replaced 15 top-level tabs with six task-oriented workspaces, grouped global sidebar controls, compacted the header, moved build metadata to low-priority locations, and expanded Dashboard into an executive research view.
+- **Why it changed:** Laptop-width screenshots showed horizontal navigation overflow, crowded controls, weak hierarchy, duplicated orientation copy, and an underpowered Overview page.
+- **Problem solved:** Every existing feature is now discoverable through one primary workspace and one secondary selector, while the first analytical screen answers the main portfolio, risk, and benchmark questions immediately.
+- **Boundaries:** No financial formula, data source, optimization constraint, strategy rule, or report methodology changed. The frozen Portfolio Intelligence Platform was not inspected or modified.
+- **Evidence:** Offline AppTest, a deterministic four-ETF workflow, 1366×768 before/after screenshots, complete reachability checks, public-language scans, export tests, and full repository verification.
+
 ## 2026-08-02 — Performance evaluation source integration
 
 - **What changed:** Added a visible Performance Evaluation workspace, exact Fama selectivity/diversification/net-selectivity decomposition, source-convention allocation/selection attribution, Modified Dietz and time-weighted return primitives, rolling stability diagnostics, exports, and deterministic tests.

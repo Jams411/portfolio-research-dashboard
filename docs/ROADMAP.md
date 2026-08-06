@@ -4,6 +4,8 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 
 ## Completed
 
+- Six-workspace professional information architecture with complete legacy-feature reachability, compact header, grouped sidebar, executive Dashboard, laptop-width visual verification, and navigation/state AppTest coverage
+
 - Modular analytics package and reusable pipeline
 - Strict ticker, date, weight, and market-data validation
 - Daily simple-return and constant-weight portfolio analytics
@@ -38,6 +40,12 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 ## Deferred — separately approved future work only
 
 The approved Portfolio Management implementation roadmap is complete. These items are not current commitments and require separate approval.
+
+### UX maintainability
+
+- Split the single Streamlit rendering entrypoint into view modules only after a dedicated regression-safe architecture task.
+- Evaluate responsive stacked metric density below common laptop widths without reducing desktop research readability.
+- Add automated screenshot-diff baselines if the deployment environment gains a stable browser/font rendering stack.
 
 ### Strategy robustness
 

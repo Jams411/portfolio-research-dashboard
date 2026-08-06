@@ -4,6 +4,12 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Replaced the 15-item horizontally scrolling tab rail with six primary workspaces and compact secondary view selection while preserving every existing feature section.
+- Compacted the product header, moved the build identifier into low-priority About/Methodology locations, and grouped sidebar inputs by portfolio, period, assumptions, implementation, and strategy settings.
+- Rebuilt Dashboard as an executive research view with 12 key metrics, portfolio-versus-benchmark growth, drawdown, allocation, risk contribution, an efficient-frontier preview, and deterministic insights.
+- Added AppTest coverage for six-item navigation, complete section reachability, compact-header behavior, sidebar grouping, state survival, stale-result clearing, dashboard metrics, and report access.
+- Added a screenshot-backed UX audit and updated the product architecture, decisions, history, journal, roadmap, demo guide, and methodology navigation notes.
+
 - Added a top-level **Performance Evaluation** workspace with a consolidated historical scorecard, benchmark evaluation, Fama selectivity/diversification diagnostics, 63-observation rolling stability measures, and CSV exports.
 - Added deterministic Fama selectivity, source-convention allocation/selection attribution, Modified Dietz, time-weighted return, and rolling evaluation primitives with exact example reconciliation.
 - Completed a fresh seven-worksheet audit of the performance-evaluation source workbook. Corrected prior provenance: the workbook supports Sharpe, Treynor, Jensen, Sortino, Fama selectivity, attribution, fee, and cash-flow return exercises, but not tracking error, Information Ratio, M², Calmar, drawdown, or rolling metrics.

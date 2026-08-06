@@ -2,6 +2,15 @@
 
 Significant product, financial-methodology, architecture, and scope decisions are recorded here. Add new entries rather than rewriting prior decisions; mark superseded entries explicitly.
 
+## D032 — Replace the crowded tab rail with six professional workspaces
+
+- **Date:** 2026-08-06
+- **Status:** Accepted; supersedes the navigation portion of D031.
+- **Decision:** Group all existing feature sections under Dashboard, Analytics, Research, Portfolio Construction, Strategies, and Reports. Use native Streamlit selection controls, preserve the legacy section state key for compatibility, keep global inputs in a grouped sidebar, and place build metadata in About and Methodology rather than the main header.
+- **Context:** The 15 top-level tabs overflowed at 1366×768, required a hidden scroll action to discover later sections, and made related analysis feel like separate modules. The initial page also spent prime vertical space on metadata and explanatory copy.
+- **Rationale:** Six stable workspaces match professional research tasks, fit a laptop canvas, and preserve feature reachability without duplicating calculations or introducing custom navigation code.
+- **Consequences:** Dashboard becomes the executive entry point; secondary selectors expose every former section; global analysis state survives navigation; advanced sidebar inputs are collapsed; documentation and AppTest treat the mapping registry as authoritative. Rendering remains in the single entrypoint, which is a known maintainability limitation but avoids a risky financial-methodology refactor.
+
 ## D029 — Consolidate performance evaluation without changing established metric conventions
 
 - **Date:** 2026-08-02

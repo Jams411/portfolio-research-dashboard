@@ -1,6 +1,6 @@
 # Portfolio Management Coverage
 
-This internal audit reconciles the complete folder at `/Users/jameelshaikh/Documents/University/Portfolio Management` with PortfolioLens as of 2026-08-02. Source files were inspected read-only. “Implemented” below means the concept is mapped to code, deterministic tests, public UI where appropriate, methodology documentation, and report/export coverage; it does not mean a literal spreadsheet reproduction.
+This internal audit reconciles the external Portfolio Management source archive with PortfolioLens as of 2026-08-02. Source files were inspected read-only. “Implemented” below means the concept is mapped to code, deterministic tests, public UI where appropriate, methodology documentation, and report/export coverage; it does not mean a literal spreadsheet reproduction. Absolute workstation paths are intentionally not retained in tracked documentation.
 
 ## What PortfolioLens covers
 

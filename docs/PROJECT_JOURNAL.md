@@ -2,6 +2,15 @@
 
 This journal explains the project’s evolution in plain language. It complements, rather than replaces, the evidence-focused [project history](PROJECT_HISTORY.md), formal [decision log](DECISIONS.md), user-facing [changelog](../CHANGELOG.md), and forward-looking [roadmap](ROADMAP.md).
 
+## 2026-08-06 — UX, information architecture, and demo-readiness pass
+
+- **Goal:** Make PortfolioLens feel like one investment-research product without changing its finance capabilities.
+- **Observed friction:** Fifteen tabs overflowed a laptop viewport, later reports and research tools depended on horizontal discovery, the build hash competed with product identity, the sidebar was one long control stack, and Overview repeated only a small subset of already available evidence.
+- **Implementation:** Introduced six primary workspaces with secondary views, retained the old section key as a compatibility bridge, grouped sidebar inputs into progressive-disclosure sections, kept Run analysis and Reset persistent, and created a 12-metric executive Dashboard with the main decision charts in priority order.
+- **Duplication choice:** Dashboard summarizes authoritative metrics and links users through workspace navigation; detailed formulas, diagnostics, tables, and downloads remain in their single functional homes.
+- **Tradeoff:** The view code remains in `app.py`; this keeps the change presentation-only and reduces regression risk, but a future modular rendering refactor would improve maintainability.
+- **Verification:** AppTest uses deterministic local data; screenshots use the requested SPY/QQQ/TLT/GLD weights and SPX benchmark at 1366×768; no live market data are used in CI.
+
 ## 2026-08-02 — Performance evaluation trace and workspace
 
 - **Goal:** Re-audit the exact performance-evaluation workbook and expose every product-appropriate result through a professional top-level workflow.

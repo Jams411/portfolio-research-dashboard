@@ -11,8 +11,8 @@ Use the same settings for screenshots and interviews so results remain easy to r
 | Setting | Value |
 |---|---|
 | Tickers | `SPY, QQQ, TLT, GLD` |
-| Weights | `35, 30, 20, 15` |
-| Benchmark | `VTI` |
+| Weights | `40, 25, 20, 15` |
+| Benchmark | `SPX` |
 | Dates | `2020-01-01` to `2025-12-31` |
 | Initial value | `$100,000` |
 | Annual risk-free rate | `4.00%` |
@@ -24,14 +24,16 @@ Results are historical and can change when yfinance revises adjusted data.
 
 ## Two-minute demo
 
-1. **Inputs and Overview — 25 seconds.** Explain strict ticker/weight validation, separate benchmark download, common-date alignment, and the headline return/risk cards.
-2. **Risk — 25 seconds.** Show VaR/CVaR, effective holdings, the correlation matrix, and Euler volatility contributions that reconcile to portfolio volatility.
-3. **Benchmark & Attribution — 20 seconds.** Compare cumulative wealth, excess return, tracking error, information ratio, beta, and asset contributions.
-4. **Security Analysis — 20 seconds.** Select a holding, compare alpha/beta and risk decomposition, then show its characteristic line, fitted excess returns and residual diagnostics.
-5. **Research Workspace — 30 seconds.** Explain the disclosed Health Score components and coverage, compare allocation methods under one methodology, show an insight’s metric/rule evidence, and submit one hypothetical weight-and-shock scenario.
-6. **Portfolio Optimization — 20 seconds.** Show the long-only frontier, GMV/tangency/CAL, complete-portfolio risk preference, optimized weights, one feasible target, explicit constraints, and the related policy comparison.
-7. **Momentum and Stress — 20 seconds.** Point out the one-day signal lag, warm-up, transaction costs, direct per-asset shocks, and complete historical windows.
-8. **Report — 10 seconds.** Show deterministic observations and the professional self-contained HTML/CSV exports.
+1. **Dashboard — 25 seconds.** Run the four-ETF portfolio and show value, return, CAGR, arithmetic return, volatility, Sharpe, drawdown, beta, tracking error, information ratio, strongest risk contributor, active return, growth, and allocation.
+2. **Analytics → Risk — 20 seconds.** Show VaR/CVaR, effective holdings, correlation, and Euler volatility contributions that reconcile to portfolio volatility.
+3. **Analytics → Benchmark & Attribution — 15 seconds.** Compare cumulative wealth, active return, tracking error, information ratio, beta, and contributions.
+4. **Research → Security Analysis — 20 seconds.** Use the obvious security selector, then show alpha/beta, risk decomposition, characteristic line, and residuals.
+5. **Portfolio Construction → Portfolio Optimization & Rebalancing — 25 seconds.** Show the frontier, GMV/tangency/CAL, optimized weights, constraints, target trades, and policy diagnostics.
+6. **Strategies → Portfolio Strategies & Momentum — 15 seconds.** Point out policy comparison, the one-day momentum signal lag, shared evaluation period, turnover, costs, and drawdown.
+7. **Analytics → Stress Testing — 10 seconds.** Show direct holding shocks and historical windows.
+8. **Reports → Research Report — 10 seconds.** Show deterministic observations and the self-contained HTML/CSV exports.
+
+The six primary workspaces should all be visible at once on a 1366-pixel-wide display. If the sidebar is collapsed for a chart-focused presentation, reopen it before discussing assumptions so the audience can see the portfolio, date range, benchmark, and risk-free rate.
 
 Close with: “The design favors transparent financial conventions and deterministic tests over feature breadth or personalized recommendations.”
 

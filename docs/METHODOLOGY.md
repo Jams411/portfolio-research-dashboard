@@ -1,5 +1,11 @@
 # Methodology and limitations
 
+## Presentation architecture
+
+The six-workspace navigation and executive Dashboard are presentation layers only. Dashboard cards read the same `Analysis` result dictionaries and contribution series used by detailed workspaces and reports; they do not recompute formulas. Secondary workspace navigation changes only Streamlit session-state selectors. It does not download data, rerun the analytical pipeline, change weights, alter the benchmark, or mutate saved results. Input changes and failed runs clear dependent output state before new results can render.
+
+The Dashboard ending value is `initial value × (1 + total return)`. Allocation and Euler volatility contribution use the existing portfolio weights and risk-contribution series. Its efficient-frontier preview uses the already calculated frontier. Deterministic insights use the same fixed evidence rules documented below. Detailed assumptions and limitations remain authoritative in this document and the Methodology & Limitations report view.
+
 ## Data and returns
 
 ### Benchmark ticker resolution

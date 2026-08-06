@@ -1,6 +1,6 @@
 # PortfolioLens
 
-**Multi-Asset Portfolio Analytics & Investment Research**
+**Multi-asset portfolio analytics and investment research**
 
 [![CI](https://github.com/Jams411/portfoliolens/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Jams411/portfoliolens/actions/workflows/ci.yml)
 
@@ -9,6 +9,12 @@ PortfolioLens is a focused, internship-ready Streamlit application for historica
 [Launch PortfolioLens](https://portfolio-lens.streamlit.app/) · [View the GitHub repository](https://github.com/Jams411/portfoliolens)
 
 The project is intentionally small enough to explain in an interview: market data enter through one validated boundary, financial calculations are pure functions, the UI only orchestrates those functions, and core formulas and reconciliation rules are covered by deterministic local tests.
+
+## Product navigation
+
+PortfolioLens uses six primary workspaces that fit on a common laptop without a horizontally scrolling tab rail: **Dashboard**, **Analytics**, **Research**, **Portfolio Construction**, **Strategies**, and **Reports**. Each workspace has one compact secondary view selector. The sidebar keeps portfolio, period, and benchmark assumptions visible; implementation and strategy settings are collapsed until needed.
+
+The Dashboard is the executive starting point. It combines portfolio value, return, CAGR, arithmetic return, volatility, Sharpe ratio, drawdown, beta, tracking error, information ratio, allocation, risk contribution, benchmark-relative performance, an efficient-frontier preview, and deterministic insights. Detailed methodology and exports remain available in their authoritative workspaces rather than being repeated across the app.
 
 > **Deployment status:** PortfolioLens retains the current Streamlit URL above. The scheduled [deployment-health workflow](https://github.com/Jams411/portfoliolens/actions/workflows/deployment-health.yml) records whether the endpoint returns successfully, redirects to Streamlit authentication, or fails at DNS, timeout, or server level. A redirect alone does not prove that the signed-out application UI rendered.
 
@@ -35,11 +41,11 @@ This application demonstrates:
 - A dedicated **Performance Evaluation** workspace consolidating return/risk, Sharpe, Sortino, Treynor, Jensen alpha, active risk, Information Ratio, Fama selectivity, rolling stability diagnostics, and CSV exports
 - Portfolio- and security-level excess-return single-index analysis with alpha/beta/R², coefficient inference, characteristic lines, residual plots, systematic/idiosyncratic risk, CAPM required return, Jensen’s alpha, Treynor and downloadable comparison diagnostics
 - A dedicated Asset Pricing workspace with a Security Market Line, realized-versus-required return comparison, Jensen’s alpha, and a clearly bounded assumption-based factor-pricing framework
-- A dedicated **Security Analysis** tab with a holding selector, benchmark context, comparison table, fitted characteristic line, residual diagnostics, methodology warnings, and CSV exports
+- A dedicated **Security Analysis** view with a holding selector, benchmark context, comparison table, fitted characteristic line, residual diagnostics, methodology warnings, and CSV exports
 - Benchmark excess return, tracking error, information ratio, relative drawdown and relative wealth
 - Current, equal-weight, inverse-volatility, minimum-variance and maximum-Sharpe long-only allocations
 - Audited long-only efficient upper frontier, GMV, constrained tangency, target-return portfolios, a reconciled non-leveraged Capital Allocation Line, and direct or quadratic-utility complete portfolios
-- A dedicated **Portfolio Optimization** analysis tab with current/optimized statistics, direct or utility-based allocation, numerical diagnostics, consolidated optimized weights, and CSV exports
+- A dedicated **Portfolio Optimization** view with current/optimized statistics, direct or utility-based allocation, numerical diagnostics, consolidated optimized weights, and CSV exports
 - Explicit asset bands, exclusions, user-defined groups/caps, feasibility checks, and compliance summaries
 - Buy-and-hold, monthly, quarterly, annual, and threshold rebalancing simulations with drift, turnover, costs, dates, and trade-history exports
 - A dedicated **Portfolio Strategies** workspace comparing rebalancing policies with SPX using active return, tracking error, information ratio, drawdown, turnover, costs, and downloadable histories
@@ -132,7 +138,7 @@ The Codex/Herdr sandbox can prohibit local TCP socket binding even when the appl
 3. Set the entrypoint to `app.py` and choose Python 3.11 if the runtime selector is available.
 4. Deploy. No secrets, database, paid API, system packages, or local paths are required.
 
-The app downloads data only after the user clicks **Run analysis**. `requirements.txt` uses bounded versions compatible with Community Cloud; Streamlit 1.55 or newer is required for state-aware, lazily rendered tabs.
+The app downloads data only after the user clicks **Run analysis**. `requirements.txt` uses bounded versions compatible with Community Cloud; Streamlit 1.55 or newer is required for the native navigation and state behavior used by the app.
 
 Follow the complete [deployment and post-deployment checklist](docs/DEPLOYMENT.md). Do not describe the app as deployed until its public URL passes that signed-out verification.
 

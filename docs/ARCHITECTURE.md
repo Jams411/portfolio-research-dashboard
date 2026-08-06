@@ -4,7 +4,22 @@ This is the living technical reference for maintaining, extending, testing, depl
 
 ## A. System overview
 
-The application is a single-process Streamlit dashboard backed by a small functional Python package. The browser sends user inputs to Streamlit; Streamlit validates them, downloads adjusted history from yfinance, invokes pure analytics functions, retains the resulting analysis in session state, and renders only the open analysis tab. There is no database, authentication layer, background worker, paid API, or live-trading connection.
+The application is a single-process Streamlit dashboard backed by a small functional Python package. The browser sends user inputs to Streamlit; Streamlit validates them, downloads adjusted history from yfinance, invokes pure analytics functions, retains the resulting analysis in session state, and renders only the selected workspace view. There is no database, authentication layer, background worker, paid API, or live-trading connection.
+
+### Information architecture
+
+The UI has six primary workspaces. `PRIMARY_WORKSPACES`, `WORKSPACE_SECTIONS`, and `SECTION_TO_WORKSPACE` in `app.py` are the authoritative navigation registry. A Streamlit segmented control selects the primary workspace; a native select box chooses a secondary view only when the workspace has more than one. The compatibility state key `analysis_tab` remains supported so saved sessions and existing deep-link/test flows can address former section names while `primary_workspace` and `workspace_section` hold the new navigation state.
+
+| Workspace | Views |
+|---|---|
+| Dashboard | Dashboard |
+| Analytics | Performance; Performance Evaluation; Risk; Benchmark & Attribution; Stress Testing |
+| Research | Security Analysis; Asset Pricing; ETF Research |
+| Portfolio Construction | Portfolio Optimization & Rebalancing; Asset Allocation |
+| Strategies | Portfolio Strategies & Momentum |
+| Reports | Research Workspace; Research Report; Methodology & Limitations |
+
+Global analysis inputs stay in the sidebar across workspace changes. Calculation results live in `st.session_state["result"]`; changing workspace does not recompute or discard them. Input changes call `clear_analysis_state`, and a failed run clears old outputs before validation so stale results cannot survive an error.
 
 ```mermaid
 flowchart LR
@@ -73,10 +88,10 @@ pytest.ini                          local pytest configuration
 ### `app.py` — application orchestration and presentation
 
 - **Why it exists:** Provides the Streamlit user experience and connects package outputs to charts, tables, controls, warnings, and downloads.
-- **Owns:** Page configuration, sidebar widgets, cached download wrapper, session state, open-tab rendering, Plotly charts, and export buttons.
+- **Owns:** Page configuration, grouped sidebar widgets, cached download wrapper, session state, selected-view rendering, Plotly charts, and export buttons.
 - **Does not own:** Core financial formulas, yfinance response parsing, optimizer objectives, backtest mechanics, shock calculations, or HTML construction.
 - **Key inputs:** Tickers, weights, dates, benchmark, initial value, risk-free rate, transaction cost, and moving-average windows.
-- **Key outputs:** Rendered tabs, messages, CSV payloads, and an HTML report download.
+- **Key outputs:** Rendered workspace views, messages, CSV payloads, and an HTML report download.
 - **Important dependencies:** Streamlit, Plotly, pandas, and all public package modules used by the workflow.
 - **Financial concepts:** Presents all analytics but directly calculates only view-specific transformations such as 63-day rolling volatility and wealth curves.
 - **Common failure modes:** Invalid widget combinations, data-provider errors, insufficient strategy history, unavailable optimized allocations, or stale session choices. Actionable validation errors are displayed; allocation failures appear as warnings.
@@ -243,7 +258,7 @@ pytest.ini                          local pytest configuration
 7. Holding and benchmark histories are downloaded separately and cached.
 8. `run_analysis` creates core analytics; strategy, historical stress, and rebalancing plans are calculated beside it.
 9. Results are stored in Streamlit session state.
-10. State-aware tabs render only the open analysis section.
+10. The navigation registry resolves one primary workspace and one active view; only that view renders.
 
 ## E. End-to-end data flow
 
@@ -268,7 +283,7 @@ flowchart TD
     Strategy --> State
     Stress --> State
     Rebalance --> State
-    State --> UI["Open Streamlit tab"]
+    State --> UI["Selected workspace view"]
     State --> Report["Rules-based summary, CSV and HTML"]
 ```
 
@@ -327,7 +342,9 @@ There is no hidden global mutable application model. Streamlit session state sto
 - `current_shocks`: the currently edited per-asset shock Series
 - `selected_target_method`: the active rebalancing allocation
 - `normalized`: whether approximate weights were normalized
-- `analysis_tab`: the open tab
+- `primary_workspace`: the selected one of six workspaces
+- `workspace_section`: the active secondary view
+- `analysis_tab`: compatibility key for the former section names and saved test/session flows
 
 Market data are cached by the tuple of tickers and requested dates. Reset clears session state and reruns the app. Reports recompute custom stress from `current_shocks` and select the active rebalancing plan, preventing stale defaults from entering downloads.
 
@@ -348,7 +365,7 @@ Network access is deliberately excluded from tests. yfinance availability is an 
 
 ## J. Reporting and export flow
 
-1. The Research Report tab reads current session results and edited shocks.
+1. The Research Report view reads current session results and edited shocks.
 2. `research_summary` creates deterministic observations from precomputed metrics.
 3. Tables are assembled for performance, risk, benchmark, attribution, allocations, the selected rebalancing plan, strategy, and stress.
 4. `generate_html_report` escapes text, applies semantic units, and returns self-contained UTF-8 HTML bytes.
