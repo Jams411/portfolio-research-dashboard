@@ -9,6 +9,9 @@ import pytest
 from streamlit.testing.v1 import AppTest
 
 
+APP_PATH = Path(__file__).resolve().parents[1] / "app.py"
+
+
 def fake_download_prices(tickers, start, end):
     """Return deterministic adjusted-price-like history without network access."""
     index = pd.bdate_range("2020-01-01", periods=320)
@@ -25,7 +28,7 @@ def fake_download_prices(tickers, start, end):
 @pytest.fixture
 def offline_app(monkeypatch):
     monkeypatch.setattr("portfolio_dashboard.data.download_prices", fake_download_prices)
-    return AppTest.from_file("app.py").run(timeout=20)
+    return AppTest.from_file(APP_PATH).run(timeout=20)
 
 
 def widget(items, label):
@@ -45,7 +48,7 @@ def plotly_values(value):
 
 
 def test_app_renders_helpful_initial_state():
-    app = AppTest.from_file("app.py").run(timeout=20)
+    app = AppTest.from_file(APP_PATH).run(timeout=20)
     assert not app.exception
     assert app.title[0].value == "PortfolioLens"
     assert any("Multi-asset portfolio analytics and investment research" in item.value for item in app.caption)
@@ -93,7 +96,7 @@ def test_performance_evaluation_tab_exposes_scorecard_and_fama_diagnostics(offli
 
 
 def test_portfolio_optimization_is_visible_before_analysis():
-    app = AppTest.from_file("app.py").run(timeout=20)
+    app = AppTest.from_file(APP_PATH).run(timeout=20)
     app.session_state["analysis_tab"] = "Portfolio Optimization"
     app.run(timeout=20)
     assert not app.exception
@@ -103,7 +106,7 @@ def test_portfolio_optimization_is_visible_before_analysis():
 
 
 def test_app_rejects_multiple_benchmark_tickers_before_download():
-    app = AppTest.from_file("app.py").run(timeout=20)
+    app = AppTest.from_file(APP_PATH).run(timeout=20)
     benchmark = next(item for item in app.text_input if item.label == "Benchmark")
     benchmark.set_value("SPY, VTI")
     next(item for item in app.button if item.label == "Run analysis").click()
@@ -370,7 +373,7 @@ def test_grouped_navigation_keeps_every_major_section_reachable():
         "Strategies": ("Portfolio Strategies & Momentum",),
         "Reports": ("Research Workspace", "Research Report", "Methodology & Limitations"),
     }
-    app = AppTest.from_file("app.py").run(timeout=20)
+    app = AppTest.from_file(APP_PATH).run(timeout=20)
     primary = widget(app.get("button_group"), "Primary workspace")
     assert primary.options == list(expected)
     assert len(primary.options) <= 6
@@ -385,13 +388,13 @@ def test_grouped_navigation_keeps_every_major_section_reachable():
 
 
 def test_sidebar_groups_and_compact_header_contract():
-    source = Path("app.py").read_text()
+    source = APP_PATH.read_text()
     for label in (
         "Portfolio", "Analysis period", "Benchmark & assumptions", "Implementation",
         "Strategy settings", "About",
     ):
         assert f'st.expander("{label}"' in source
-    app = AppTest.from_file("app.py").run(timeout=20)
+    app = AppTest.from_file(APP_PATH).run(timeout=20)
     assert app.title[0].value == "PortfolioLens"
     assert any(button.label == "Run analysis" for button in app.button)
     assert not any("Application build:" in caption.value for caption in app.caption)
