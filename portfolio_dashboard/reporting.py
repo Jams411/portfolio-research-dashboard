@@ -108,6 +108,36 @@ def _constraint_table(frame: pd.DataFrame) -> str:
             formatted[column] = frame[column].map(_pct)
     return _table(formatted)
 
+
+def _fixed_income_report_sections(
+    fixed_income: dict[str, pd.DataFrame | pd.Series | str] | None,
+) -> list[tuple[str, str]]:
+    """Render only completed fixed-income outputs supplied by the application."""
+    if not fixed_income:
+        return []
+    rendered: list[tuple[str, str]] = []
+    for name, value in fixed_income.items():
+        if isinstance(value, pd.Series):
+            content = _table(value.rename("Value").to_frame())
+        elif isinstance(value, pd.DataFrame):
+            if value.empty:
+                continue
+            content = _table(value)
+        elif value:
+            content = f"<p>{escape(str(value))}</p>"
+        else:
+            continue
+        rendered.append((f"Fixed income — {name}", content))
+    if rendered:
+        rendered.append((
+            "Fixed-income limitations",
+            "<p>Bond prices use explicit option-free contractual cash flows and nominal annual YTM compounded at "
+            "the coupon frequency. Portfolio YTM is a market-value-weighted descriptive average, not a portfolio "
+            "IRR. Parallel yield shifts do not capture curve-shape, spread, liquidity, optionality, credit, tax, or "
+            "liability risk. Outputs are research diagnostics, not personalized investment advice.</p>",
+        ))
+    return rendered
+
 def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, start: object, end: object,
                          summary: list[str], performance: pd.DataFrame, risk: pd.DataFrame,
                          benchmark: pd.DataFrame, attribution: pd.DataFrame, allocations: pd.DataFrame,
@@ -132,7 +162,8 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
                          asset_pricing: pd.DataFrame | None = None,
                          performance_evaluation: pd.DataFrame | None = None,
                          etf_research: pd.DataFrame | None = None,
-                         security_screen: pd.DataFrame | None = None) -> bytes:
+                         security_screen: pd.DataFrame | None = None,
+                         fixed_income: dict[str, pd.DataFrame | pd.Series | str] | None = None) -> bytes:
     """Generate a self-contained, deterministic investment research report."""
     assumptions = [
         "Daily simple returns and a 252-trading-day annualization convention.",
@@ -194,9 +225,10 @@ def generate_html_report(*, title: str, tickers: list[str], weights: pd.Series, 
                 ("Selected rebalancing history", _financial_table(rebalancing_history) if rebalancing_history is not None else "<p>Policy history unavailable.</p>"),
                 ("Momentum-strategy results", _metric_table(strategy)), ("Stress-test results", _financial_table(stress)),
                 ("ETF universe research", _comparison_table(etf_research) if etf_research is not None else "<p>ETF research unavailable.</p>"),
-                ("Security candidate screen", _comparison_table(security_screen) if security_screen is not None else "<p>Security screen unavailable.</p>"),
-                ("Methodology", "<p>Simple daily returns; arithmetic annualized return for Sharpe, Sortino, CAPM evaluation, and optimization; CAGR for realized compound growth; annualized sample variance and volatility; 252-day annualization; constant weights for baseline analytics; empirical 95% VaR/CVaR; excess-return single-index OLS with annualized alpha and residual volatility; CAPM required return, Jensen's alpha, and Treynor ratio; systematic/idiosyncratic variance decomposition; Euler volatility attribution; long-only efficient-frontier, minimum-variance, maximum-Sharpe, target-return, and explicit-constraint optimization; analytical nonleveraged Capital Allocation Line and lending-only complete portfolios; separate holdings-level buy-and-hold, periodic, and threshold rebalancing simulations with costs only on trade dates; one-day-lagged dual-moving-average signal; proportional transaction costs. Regression, CAPM, and optimization outputs are historical sample estimates, not forecasts, recommendations, or evidence of skill.</p>"),
-                ("Limitations and disclaimer", "<p>Historical adjusted prices may contain provider errors and do not predict future results. Excludes taxes, liquidity constraints, market impact and slippage beyond configured cost. Optimization uses historical estimates. Historical investment research only; not personalized financial advice.</p>")]
+                ("Security candidate screen", _comparison_table(security_screen) if security_screen is not None else "<p>Security screen unavailable.</p>")]
+    sections.extend(_fixed_income_report_sections(fixed_income))
+    sections.extend([("Methodology", "<p>Simple daily returns; arithmetic annualized return for Sharpe, Sortino, CAPM evaluation, and optimization; CAGR for realized compound growth; annualized sample variance and volatility; 252-day annualization; constant weights for baseline analytics; empirical 95% VaR/CVaR; excess-return single-index OLS with annualized alpha and residual volatility; CAPM required return, Jensen's alpha, and Treynor ratio; systematic/idiosyncratic variance decomposition; Euler volatility attribution; long-only efficient-frontier, minimum-variance, maximum-Sharpe, target-return, and explicit-constraint optimization; analytical nonleveraged Capital Allocation Line and lending-only complete portfolios; separate holdings-level buy-and-hold, periodic, and threshold rebalancing simulations with costs only on trade dates; one-day-lagged dual-moving-average signal; proportional transaction costs. Regression, CAPM, and optimization outputs are historical sample estimates, not forecasts, recommendations, or evidence of skill.</p>"),
+                ("Limitations and disclaimer", "<p>Historical adjusted prices may contain provider errors and do not predict future results. Excludes taxes, liquidity constraints, market impact and slippage beyond configured cost. Optimization uses historical estimates. Historical investment research only; not personalized financial advice.</p>")])
     body = "".join(f"<section><h2>{escape(name)}</h2>{content}</section>" for name, content in sections)
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     html = f"""<!doctype html><html><head><meta charset='utf-8'><title>{escape(title)}</title><style>

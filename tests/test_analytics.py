@@ -1108,6 +1108,10 @@ def test_report_uses_metric_units_and_selected_rebalancing_method():
         transaction_cost_rate=.001, rebalancing_threshold=.05,
         selected_rebalancing_policy="Quarterly",
         strategy_short_window=50, strategy_long_window=200,
+        fixed_income={
+            "bond analytics": pd.Series({"Yield to Maturity": .05, "Modified Duration": 4.5, "DV01": .43}),
+            "cash-flow schedule": pd.DataFrame({"Coupon": [20.0], "Principal": [1_000.0]}),
+        },
     ).decode()
     assert "12.50%" in html
     assert ">1.25<" in html
@@ -1122,6 +1126,7 @@ def test_report_uses_metric_units_and_selected_rebalancing_method():
     assert "Threshold-policy absolute weight-drift trigger: 5.00%" in html
     assert "50/200 trading days" in html
     assert "Benchmark: SPX" in html and "Annual risk-free assumption: 4.00%" in html
+    assert "Fixed income — bond analytics" in html and "Fixed-income limitations" in html
     assert "^GSPC" not in html
 
 

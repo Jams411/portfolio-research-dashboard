@@ -142,6 +142,7 @@ def test_complete_four_etf_research_workflow():
     assert sml.loc[sml["Beta"].eq(0), "CAPM Required Return"].iloc[0] == pytest.approx(.04)
     html = report.decode()
     assert len(report) > 10_000
+    assert "Fixed income —" not in html
     for section in (
         "Portfolio inputs", "Benchmark comparison", "Efficient frontier",
         "Optimized allocations", "Rebalancing policy comparison",
