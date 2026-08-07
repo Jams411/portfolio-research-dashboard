@@ -410,6 +410,8 @@ def test_dashboard_key_metrics_and_state_survive_navigation(offline_app):
         "Strongest risk contributor", "Active return",
     }
     assert expected_metrics <= {metric.label for metric in offline_app.metric}
+    portfolio_value = next(metric.value for metric in offline_app.metric if metric.label == "Portfolio value")
+    assert portfolio_value.startswith("$") and "." not in portfolio_value
     saved_weights = offline_app.session_state["result"]["weights"].copy()
     for section in ("Risk", "ETF Research", "Research Report", "Dashboard"):
         offline_app.session_state["analysis_tab"] = section

@@ -377,7 +377,7 @@ if active_section == "Dashboard":
         st.subheader("Executive dashboard")
         ending_value = r["initial_value"] * (1 + a.performance["Total Return"])
         cards = [
-            ("Portfolio value", money(ending_value)),
+            ("Portfolio value", f"${ending_value:,.0f}"),
             ("Total return", pct(a.performance["Total Return"])),
             ("CAGR", pct(a.performance["CAGR"])),
             ("Arithmetic return", pct(a.performance["Historical Arithmetic Annualized Return"])),
