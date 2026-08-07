@@ -85,6 +85,7 @@ def _editor(frame: pd.DataFrame, key: str) -> pd.DataFrame:
         key=key,
         num_rows="dynamic",
         hide_index=True,
+        width="stretch",
         column_config={
             "Bond": st.column_config.TextColumn(required=True, pinned=True),
             "Quantity": st.column_config.NumberColumn(min_value=0.000001, required=True, format="%.2f"),
@@ -103,9 +104,9 @@ def _editor(frame: pd.DataFrame, key: str) -> pd.DataFrame:
 
 
 def _metric_rows(items: list[tuple[str, str]]) -> None:
-    with st.container(horizontal=True):
+    with st.container(horizontal=True, gap="xsmall"):
         for label, value in items:
-            st.metric(label, value, border=True)
+            st.metric(label, value, border=True, width=170)
 
 
 def _render_calculator() -> None:
@@ -167,10 +168,13 @@ def _render_calculator() -> None:
     ])
     scenario = result["scenario"]
     st.markdown("**Yield-shock comparison**")
-    st.dataframe(pd.DataFrame({"Value": scenario}), column_config={"Value": st.column_config.NumberColumn(format="%.6f")})
+    st.dataframe(
+        pd.DataFrame({"Value": scenario}), width="stretch",
+        column_config={"Value": st.column_config.NumberColumn(format="%.6f")},
+    )
     st.markdown("**Cash-flow schedule**")
     st.dataframe(
-        result["cash_flows"], hide_index=True,
+        result["cash_flows"], hide_index=True, width="stretch",
         column_config={
             "Payment Date": st.column_config.DateColumn(format="MMM D, YYYY"),
             "Coupon": st.column_config.NumberColumn(format="$%.2f"),
@@ -228,7 +232,7 @@ def _render_portfolio() -> None:
         "Bond", "Clean Price", "Market Value", "Portfolio Weight", "Current Yield", "Yield to Maturity",
     ]]
     st.markdown("**Pricing and yield**")
-    st.dataframe(pricing, hide_index=True, column_config={
+    st.dataframe(pricing, hide_index=True, width="stretch", column_config={
         "Clean Price": st.column_config.NumberColumn(format="dollar"),
         "Market Value": st.column_config.NumberColumn(format="dollar"),
         "Portfolio Weight": st.column_config.NumberColumn(format="percent"),
@@ -239,7 +243,7 @@ def _render_portfolio() -> None:
         "Bond", "Macaulay Duration", "Modified Duration", "Dollar Duration", "DV01", "Convexity",
     ]]
     st.markdown("**Rate-risk measures**")
-    st.dataframe(rate_risk, hide_index=True, column_config={
+    st.dataframe(rate_risk, hide_index=True, width="stretch", column_config={
         "Dollar Duration": st.column_config.NumberColumn(format="$%.2f"),
         "DV01": st.column_config.NumberColumn(format="$%.4f"),
     })
@@ -247,10 +251,10 @@ def _render_portfolio() -> None:
         "Bond", "Duration Contribution", "DV01 Contribution", "Convexity Contribution",
     ]]
     st.markdown("**Portfolio contributions**")
-    st.dataframe(contribution, hide_index=True, column_config={
+    st.dataframe(contribution, hide_index=True, width="stretch", column_config={
         "DV01 Contribution": st.column_config.NumberColumn(format="$%.4f"),
     })
-    st.bar_chart(contribution.set_index("Bond"))
+    st.bar_chart(contribution.set_index("Bond"), height=400)
     st.download_button(
         "Download bond portfolio analytics CSV", analysis.holdings.to_csv(index=False),
         "bond_portfolio_analytics.csv", "text/csv", icon=":material/download:",
@@ -287,7 +291,7 @@ def _render_scenarios() -> None:
         ("Full repricing impact", f"{summary['Full Repricing Return']:.2%}"),
         ("Convexity approximation error", f"${summary['Approximation Error']:,.2f}"),
     ])
-    st.dataframe(detail, hide_index=True, column_config={
+    st.dataframe(detail, hide_index=True, width="stretch", column_config={
         column: st.column_config.NumberColumn(format="dollar")
         for column in [
             "Base Value", "Duration-only Value", "Duration + Convexity Value", "Full Repriced Value",
@@ -303,7 +307,7 @@ def _render_scenarios() -> None:
             ],
         }
     )
-    st.bar_chart(comparison, x="Method", y="Portfolio Value")
+    st.bar_chart(comparison, x="Method", y="Portfolio Value", height=400)
     st.download_button(
         "Download rate scenario CSV", detail.to_csv(index=False), "bond_rate_scenario.csv", "text/csv",
         icon=":material/download:",
@@ -365,7 +369,7 @@ def _render_selection() -> None:
         return
     ranked, formula = selection
     st.info(f"Ranking formula: {formula}")
-    st.dataframe(ranked, hide_index=True, column_config={
+    st.dataframe(ranked, hide_index=True, width="stretch", column_config={
         "Yield to Maturity": st.column_config.NumberColumn(format="percent"),
         "Current Yield": st.column_config.NumberColumn(format="percent"),
         "Coupon Rate": st.column_config.NumberColumn(format="percent"),
@@ -427,9 +431,15 @@ def _render_selection() -> None:
         construction = st.session_state.get("fi_construction_result")
         if construction is not None:
             weights, summary, validation = construction
-            st.dataframe(weights.to_frame(), column_config={"Portfolio Weight": st.column_config.NumberColumn(format="percent")})
-            st.dataframe(summary.to_frame(), column_config={"Value": st.column_config.NumberColumn(format="%.6f")})
-            st.dataframe(validation, hide_index=True)
+            st.dataframe(
+                weights.to_frame(), width="stretch",
+                column_config={"Portfolio Weight": st.column_config.NumberColumn(format="percent")},
+            )
+            st.dataframe(
+                summary.to_frame(), width="stretch",
+                column_config={"Value": st.column_config.NumberColumn(format="%.6f")},
+            )
+            st.dataframe(validation, hide_index=True, width="stretch")
     with st.expander("Methodology and limitations", icon=":material/info:"):
         st.write(
             "Filters are inclusive and rankings use exactly one displayed formula. Issuer, sector, credit quality, "
