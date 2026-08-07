@@ -5,6 +5,7 @@ This roadmap is intentionally conservative. Items move to **Completed** only whe
 ## Completed
 
 - Six-workspace professional information architecture with complete legacy-feature reachability, compact header, grouped sidebar, executive Dashboard, laptop-width visual verification, and navigation/state AppTest coverage
+- Explicit fixed-income workflow: option-free bond pricing/YTM, clean/dirty price and accrual, duration/DV01/convexity, bond portfolio contributions, full-repricing parallel scenarios, transparent selection, constrained construction, optional report sections, and offline reconciliation tests
 
 - Modular analytics package and reusable pipeline
 - Strict ticker, date, weight, and market-data validation
@@ -69,7 +70,9 @@ Why: subperiod evidence is more informative than a single full-period result and
 - **Volatility targeting and regime rotation:** Course-relevant but would add another portfolio/strategy layer before the single momentum model has subperiod diagnostics.
 - **Brinson allocation/selection attribution:** Requires trustworthy benchmark constituent weights and classifications; current holdings contribution should not be mislabeled as Brinson attribution.
 - **Account-level money-weighted return and fee analysis:** Requires dated external cash flows and explicit product fee terms; adjusted market prices cannot supply those inputs.
-- **Bond duration and convexity:** Requires explicit coupon, maturity, yield, frequency, and instrument assumptions that yfinance price history does not reliably provide.
+- **Key-rate duration and yield-curve construction:** Requires governed curve instruments, interpolation, tenor mapping, and shock conventions beyond the reviewed source and current explicit single-YTM cash-flow model.
+- **Credit and embedded-option modeling:** Requires issuer/default/recovery/spread data or option-adjusted valuation assumptions that explicit classifications alone do not provide.
+- **Liability immunization and liability-driven investing:** Requires a complete liability cash-flow schedule, horizon/reinvestment policy, matching constraints, and governance not supported by the reviewed source.
 - **Tax-aware fund evaluation:** The source defines turnover and tax-cost ratios, but PortfolioLens has no tax-lot, distribution, jurisdiction, or after-tax data model.
 - **Fundamental clustering:** A defensible machine-learning research idea only with reproducible, point-in-time fundamental data. It should begin outside the core dashboard if revisited.
 - **Multifactor or Treynor–Black live models:** Educational companion only unless reliable factor data and a separately approved estimation design become available.
@@ -101,12 +104,12 @@ Why: subperiod evidence is more informative than a single full-period result and
 
 - **Completed:** selected-universe return/risk metrics and filters; exact regression candidate screen; holdings schema validation; duplicate consolidation; disclosure coverage; consolidated exposure; pairwise overlap; CSV exports; offline tests.
 - **Deferred:** governed broad-universe data, dated authoritative holdings feeds, issuer/sector concentration, ranking robustness, optimizer sensitivity and walk-forward evaluation.
-- **Educational-only:** incomplete source Treynor–Black active/passive construction and bond duration/convexity ranking example.
+- **Educational-only:** incomplete source Treynor–Black active/passive construction, liability immunization exercise, and yield-pickup swap example.
 - **Intentionally excluded:** analyst-target trade gates, automatic recommendations, undated hard-coded bond composites and silent ticker/classification inference.
 
 ## Integration-audit disposition
 
 - **Completed:** complete source inventory, canonical formula registry, Asset Allocation discoverability, comprehensive report/CSV stitching, formula-to-test map and two end-to-end fixed-data workflows.
 - **Medium / deferred:** migrate fifteen peer tabs to grouped native `st.navigation` pages after state and deep-link design is specified.
-- **Educational-only:** IPS examples, risk questionnaires, fixed-income exercises, incomplete Treynor–Black examples and textbook/class-note supplements.
+- **Educational-only:** IPS examples, risk questionnaires, unsupported fixed-income immunization/swap exercises, incomplete Treynor–Black examples and textbook/class-note supplements.
 - **Intentionally excluded:** personalized policy/suitability, automatic classifications, live factor claims, fragile source scripts and unsupported trading workflows.

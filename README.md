@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/Jams411/portfoliolens/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Jams411/portfoliolens/actions/workflows/ci.yml)
 
-PortfolioLens is a focused, internship-ready Streamlit application for historical portfolio research. It turns a ticker-and-weight input into a reproducible investment-research workflow spanning performance, market risk, benchmark-relative results, attribution, allocation alternatives, a transparent Portfolio Health Score, interactive what-if analysis, deterministic insights, rebalancing trades, a lagged momentum backtest, stress tests, and a professional downloadable HTML report.
+PortfolioLens is a focused, internship-ready Streamlit application for multi-asset portfolio research. It combines a ticker-and-weight market-history workflow with explicit bond cash-flow analytics spanning performance, market risk, benchmark-relative results, allocation, fixed-income pricing and rate risk, deterministic insights, strategy testing, and a professional downloadable HTML report.
 
 [Launch PortfolioLens](https://portfolio-lens.streamlit.app/) · [View the GitHub repository](https://github.com/Jams411/portfoliolens)
 
@@ -12,7 +12,7 @@ The project is intentionally small enough to explain in an interview: market dat
 
 ## Product navigation
 
-PortfolioLens uses six primary workspaces that fit on a common laptop without a horizontally scrolling tab rail: **Dashboard**, **Analytics**, **Research**, **Portfolio Construction**, **Strategies**, and **Reports**. Each workspace has one compact secondary view selector. The sidebar keeps portfolio, period, and benchmark assumptions visible; implementation and strategy settings are collapsed until needed.
+PortfolioLens uses six primary workspaces that fit on a common laptop without a horizontally scrolling tab rail: **Dashboard**, **Analytics**, **Research**, **Portfolio Construction**, **Strategies**, and **Reports**. Each workspace has one compact secondary view selector. **Fixed Income** is discoverable under Research and remains independent of the equity/ETF market-history inputs in the sidebar.
 
 The Dashboard is the executive starting point. It combines portfolio value, return, CAGR, arithmetic return, volatility, Sharpe ratio, drawdown, beta, tracking error, information ratio, allocation, risk contribution, benchmark-relative performance, an efficient-frontier preview, and deterministic insights. Detailed methodology and exports remain available in their authoritative workspaces rather than being repeated across the app.
 
@@ -42,6 +42,8 @@ This application demonstrates:
 - Portfolio- and security-level excess-return single-index analysis with alpha/beta/R², coefficient inference, characteristic lines, residual plots, systematic/idiosyncratic risk, CAPM required return, Jensen’s alpha, Treynor and downloadable comparison diagnostics
 - A dedicated Asset Pricing workspace with a Security Market Line, realized-versus-required return comparison, Jensen’s alpha, and a clearly bounded assumption-based factor-pricing framework
 - A dedicated **Security Analysis** view with a holding selector, benchmark context, comparison table, fitted characteristic line, residual diagnostics, methodology warnings, and CSV exports
+- A dedicated **Fixed Income** view with an explicit bond calculator, editable bond portfolio, parallel-rate scenarios, transparent bond selection, constrained construction, cash-flow tables, contribution reconciliation, and CSV exports
+- Clean and dirty price, accrued interest, current yield, YTM, Macaulay and modified duration, dollar duration, DV01/PVBP, convexity, duration approximations, and full repricing for annual, semiannual, quarterly, monthly, and zero-coupon instruments
 - Benchmark excess return, tracking error, information ratio, relative drawdown and relative wealth
 - Current, equal-weight, inverse-volatility, minimum-variance and maximum-Sharpe long-only allocations
 - Audited long-only efficient upper frontier, GMV, constrained tangency, target-return portfolios, a reconciled non-leveraged Capital Allocation Line, and direct or quadratic-utility complete portfolios
@@ -67,6 +69,9 @@ portfolio_dashboard/
   risk.py                           benchmark metrics and attribution
   research.py                       research comparison, score, scenarios and deterministic insights
   construction.py                   allocation methods and SLSQP optimizers
+  fixed_income.py                   explicit bond cash flows, pricing, yield and rate-risk measures
+  bond_portfolio.py                 bond aggregation, scenarios, selection and constrained construction
+  fixed_income_ui.py                independent Streamlit fixed-income workflow
   rebalancing.py                    target trade plan
   strategy.py                       lagged momentum backtest
   stress.py                         custom and historical stress tests
@@ -88,7 +93,7 @@ docs/images/                        reproducible application screenshot gallery
 CHANGELOG.md                        user-facing milestone changes
 ```
 
-For module ownership, dependencies, state, and end-to-end diagrams, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Foundational derivations and advanced-model boundaries are in the [Portfolio Management companion](docs/education/PORTFOLIO_MANAGEMENT_COMPANION.md).
+For module ownership, dependencies, state, and end-to-end diagrams, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Formula conventions and model boundaries are in [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 
 ## Screenshot gallery
 
@@ -125,7 +130,7 @@ Open the local URL Streamlit prints. Select a preset, adjust inputs if desired, 
 .venv/bin/python scripts/validate_markdown_links.py
 ```
 
-Tests cover validation, data layout/missingness, arithmetic return, CAGR, annualized variance/volatility, portfolio `w′μ` and `w′Σw`, displayed/optimizer Sharpe reconciliation, Sortino, portfolio aggregation, drawdown, VaR/CVaR, excess-return regression and CAPM reconciliation, tracking error, information ratio, risk-contribution reconciliation, allocation comparison, Health Score arithmetic and coverage, what-if validation and reconciliation, deterministic insight traceability, allocation failure handling, rebalancing, signal lag, costs, stress tests, professional report units/sections, the integrated analytics pipeline, and the offline Streamlit research workspace.
+Tests cover validation, market-data layout, return/risk formulas, construction, benchmark regression, strategies, reports, and the offline Streamlit workflow. Fixed-income tests use synthetic contractual instruments to reconcile pricing, YTM recovery, clean/dirty price, accrued interest, duration, DV01, convexity, full repricing, portfolio contributions, selection filters, transparent rankings, constraints, and the required two-bond end-to-end case without live APIs.
 
 GitHub Actions runs the complete offline suite on every push to `main`, every pull request targeting `main`, and manual dispatch. CI also compiles and imports the application, validates Streamlit configuration, runs the non-socket AppTest smoke suite, checks repository-local Markdown links, checks dependency integrity, and rejects whitespace errors. It requires no secrets and does not contact Yahoo Finance.
 
@@ -144,13 +149,13 @@ Follow the complete [deployment and post-deployment checklist](docs/DEPLOYMENT.m
 
 ## Methodology and assumptions
 
-Daily simple returns and 252 trading days are used consistently. Arithmetic annualized return is the historical expected-return estimate used by Sharpe, Sortino, CAPM evaluation, and optimization; CAGR remains realized compound growth. The main analytical portfolio uses constant weights, while the separate holdings-level simulator models natural drift and explicit rebalancing trades. The benchmark is separately downloaded and aligned. The single-index model uses excess returns. Historical VaR/CVaR use the empirical lower tail. Optimization is long-only, sample-based, feasibility-checked, and never presented as a forecast. The momentum signal is lagged one period and pays configured proportional costs on position changes. See [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
+Daily simple returns and 252 trading days govern adjusted-price analytics. Bond analytics instead use explicit contractual cash flows, nominal annual YTM compounded at coupon frequency, settlement-aware accrued interest, dirty-price sensitivity, and parallel-shift full repricing. The two data models remain separate. See [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 
 ## Limitations and disclaimer
 
-yfinance data can be delayed, revised, incomplete, or temporarily unavailable. Common-date alignment can shorten history. Historical estimates and optimized weights are not forecasts. Results exclude taxes, liquidity constraints, market impact, and slippage beyond the configured cost, and do not model live execution. Historical stress windows are shown only when fully covered.
+yfinance data can be delayed, revised, incomplete, or temporarily unavailable. Common-date alignment can shorten history. Historical estimates and optimized weights are not forecasts. Bond scenarios assume option-free cash flows and parallel yield shifts; they exclude curve-shape, spread, default, recovery, liquidity, embedded-option, tax, and liability risk. Results do not model live execution.
 
-For research and educational use only. This application does not provide personalized financial advice.
+For investment research only. This application does not provide personalized financial advice.
 
 ## Project Story
 
@@ -194,3 +199,5 @@ The top-level **ETF Research** workspace adds transparent historical universe fi
 ### Integrated research coverage
 
 PortfolioLens connects return/risk analytics, benchmark and security diagnostics, CAPM, long-only construction, asset-allocation comparison, rebalancing, strategies, evaluation, ETF research and deterministic reporting through one aligned-return pipeline. The **Asset Allocation** workspace makes model weights, contribution profiles and implementation trades discoverable. The HTML report and CSV package include the major public analytics while preserving explicit limitations.
+
+Fixed Income uses a separate explicit-instrument pipeline: bond terms → cash flows → price/yield/rate risk → portfolio contributions → scenarios/selection/construction. It never infers coupon, maturity, issuer, credit quality, sector, callable status, or tax status from a ticker or price series.

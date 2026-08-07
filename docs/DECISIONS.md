@@ -2,6 +2,16 @@
 
 Significant product, financial-methodology, architecture, and scope decisions are recorded here. Add new entries rather than rewriting prior decisions; mark superseded entries explicitly.
 
+## D033 — Add fixed income through explicit instruments, not ticker inference
+
+- **Date:** 2026-08-07
+- **Status:** Accepted; supersedes fixed-income deferral portions of D029/D031 while retaining their unsupported-model boundaries.
+- **Decision:** Add Fixed Income as a Research secondary view within the six-workspace information architecture. Use explicit contractual terms and user-supplied classifications for bond pricing, portfolio risk, rate scenarios, selection, and constrained long-only construction. Keep fixed-income state and inputs independent of the adjusted-price pipeline.
+- **Methodology:** Price option-free periodic cash flows with nominal annual YTM compounded at coupon frequency; use settlement-aware clean/dirty price; label Macaulay, modified, dollar, DV01 and convexity separately; aggregate market-value-weighted duration/convexity and additive dollar duration/DV01; show one transparent selection formula; fully reprice parallel shocks.
+- **Alternatives rejected:** Inferring bond terms or ratings from tickers; reusing bond ETF history as contractual bond cash flows; hidden composite rankings; relabeling modified duration as effective duration; claiming portfolio weighted-average YTM is an aggregate IRR; adding a seventh primary workspace.
+- **Scope boundary:** No key-rate duration, yield-curve construction, credit/default/recovery model, embedded-option valuation, effective duration, tax model, swap engine, liability immunization, or liability-driven investing. The reviewed immunization evidence lacks complete liability inputs and a production-ready matching workflow.
+- **Consequences:** Research gains a four-view Fixed Income workflow, optional report sections, CSV exports, pure modules, and deterministic tests. The sidebar remains the market-history setup and is explicitly labeled as applying to equity/ETF inputs.
+
 ## D032 — Replace the crowded tab rail with six professional workspaces
 
 - **Date:** 2026-08-06

@@ -257,3 +257,12 @@ The current session reviewed local materials titled *Algorithmic Trading in Pyth
 - Verified that shared formulas remain owned by pure domain modules and added a canonical registry rather than another calculation layer.
 - Exposed Asset Allocation publicly and completed HTML/CSV coverage for security analysis, asset pricing, evaluation and ETF research.
 - Classified unresolved photographs, weakly labeled material, IPS workflows, fixed-income models and factor models without inflating the product scope.
+
+## 2026-08-07 — Explicit fixed-income research workflow
+
+- **What changed:** Added pure option-free bond cash-flow/pricing and rate-risk analytics, multi-holding aggregation, contribution reconciliation, parallel-shift scenarios, transparent selection, long-only constrained construction, a four-view Fixed Income workspace, conditional report sections, CSV exports, and deterministic tests.
+- **Why:** The completed source inventory established that fixed-income methods were supportable only after creating a separate explicit-instrument data model. Ticker price history could not safely provide contractual terms or classifications.
+- **Information architecture:** Fixed Income is a secondary Research view. The product still has six primary workspaces; fixed-income state renders without and survives independently of the market-history pipeline.
+- **Methodology judgment:** Standard periodic cash flows, modified duration, convexity and parallel repricing are supported. Macaulay/dollar duration, DV01, YTM recovery, market-value portfolio aggregation, transparent filtering/ranking and linear constraints are independently implemented product extensions. Effective duration is not calculated.
+- **Boundary:** Key-rate duration, yield-curve construction, spreads, credit/default/recovery, embedded options, immunization, liability-driven investing, taxes and swap analysis remain unsupported.
+- **Evidence:** Decision D033; `fixed_income.py`; `bond_portfolio.py`; `fixed_income_ui.py`; `test_fixed_income.py`; fixed-income AppTest/report tests; updated methodology, architecture, traceability and coverage records.

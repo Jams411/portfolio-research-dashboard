@@ -4,6 +4,12 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Added a self-contained **Fixed Income** view under Research without increasing the six primary workspaces or mixing bond terms with equity/ETF ticker inputs.
+- Added pure explicit-cash-flow bond analytics for clean/dirty price, accrued interest, current yield, YTM, Macaulay and modified duration, dollar duration, DV01/PVBP, convexity, duration approximations, and full yield-shock repricing.
+- Added editable multi-bond portfolio aggregation, market-value weights, duration/DV01/convexity contributions, parallel-rate scenarios, transparent filters/rankings, and long-only constrained bond portfolio construction.
+- Extended the HTML research report and CSV exports with fixed-income inputs and completed results only; empty fixed-income sections are omitted.
+- Added 33 deterministic fixed-income tests plus offline AppTest coverage for calculator, portfolio, scenarios, selection, state survival, reachability, and exports.
+
 - Replaced the 15-item horizontally scrolling tab rail with six primary workspaces and compact secondary view selection while preserving every existing feature section.
 - Compacted the product header, moved the build identifier into low-priority About/Methodology locations, and grouped sidebar inputs by portfolio, period, assumptions, implementation, and strategy settings.
 - Rebuilt Dashboard as an executive research view with 12 key metrics, portfolio-versus-benchmark growth, drawdown, allocation, risk contribution, an efficient-frontier preview, and deterministic insights.

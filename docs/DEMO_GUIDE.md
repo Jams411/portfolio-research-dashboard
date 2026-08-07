@@ -2,6 +2,18 @@
 
 Verified demo URL: [portfolio-lens.streamlit.app](https://portfolio-lens.streamlit.app/)
 
+## Fixed-income walkthrough (three minutes)
+
+1. Open **Research → Fixed Income** before running market-history analysis. Bond terms are explicit and independent of equity/ETF tickers.
+2. In **Bond calculator**, use face 1,000; coupon 4%; semiannual frequency; settlement 2026-01-01; maturity 2031-01-01; YTM 5%; Actual/Actual; and +100 bps. Show clean/dirty price, current yield, Macaulay/modified duration, dollar duration, DV01, convexity, cash flows, and the three repricing methods.
+3. In **Bond portfolio**, retain Bond A and Bond B defaults and select **Analyze bond portfolio**. Explain that dirty value drives weights and each contribution family reconciles.
+4. In **Rate scenarios**, run +100 bps. Compare duration-only, duration-plus-convexity and full repricing, then show holding impact contributions.
+5. In **Bond selection**, apply one ranking rule and show its displayed formula. Issuer, sector, credit quality, callable and tax fields are explicit editable inputs.
+6. Optionally construct a long-only portfolio with duration, position, classification, yield, and maturity-bucket constraints. The objective is displayed weighted YTM, not a hidden score.
+7. After running the standard market-history portfolio, open **Reports → Research Report**. Fixed-income sections appear only when bond analysis exists, alongside bond CSV exports.
+
+Bond A deterministic checkpoints are approximately: clean price `$956.24`, current yield `4.18%`, Macaulay duration `4.570 years`, modified duration `4.458 years`, DV01 `$0.4263` per entered instrument, and convexity `23.194`. Outputs are research diagnostics, not personalized investment advice.
+
 ## Standard demo portfolio
 
 Introduce the application as **PortfolioLens — Multi-Asset Portfolio Analytics & Investment Research**.

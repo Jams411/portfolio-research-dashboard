@@ -318,3 +318,13 @@ Interview explainability and financial correctness were prioritized over feature
 - Read-only inventory found 49 files and 12 workbooks; every nonempty worksheet was enumerated with formula/chart/visibility metadata.
 - Critical/High findings were limited to missing Asset Allocation discoverability and incomplete report/export stitching. Both were fixed without changing formulas.
 - The final classification is “substantially covered,” not “fully covered,” because specialized educational sources, five photographs and one weakly labeled workbook cannot support production claims.
+
+## 2026-08-07 — Fixed-income implementation
+
+- **Goal:** Implement the remaining defensible bond capabilities without merging contractual bond assumptions into the adjusted-price workflow.
+- **Evidence used:** Existing direct inventories of Workbook 6 bond sensitivity, duration/convexity, immunization, bond portfolio and swap sheets; the draft/final bond duration-and-convexity sheets; and the two assignment bond scripts. Source files remained read-only and outside the repository runtime.
+- **Implementation:** Added settlement-aware schedules, clean/dirty price and accrual, current yield, YTM recovery, Macaulay/modified/dollar duration, DV01, convexity, first/second-order approximations and full repricing. Added market-value portfolio aggregation, contribution reconciliation, scenario impacts, inclusive filters, displayed ranking formulas, and linear construction constraints.
+- **UX:** Kept six primary workspaces by placing Fixed Income under Research. Bond calculator, portfolio, scenarios and selection use explicit main-canvas inputs and independent `fi_*` state. Advanced construction and methodology stay in expanders.
+- **Tradeoffs:** A weighted YTM is useful as a descriptive summary but is not a portfolio IRR. Parallel shocks are useful for deterministic reconciliation but not a substitute for curve/spread risk. Minimum-position constraints apply to every included candidate because binary selection would require a mixed-integer model and an additional selection policy.
+- **Validation:** Synthetic par/premium/discount/zero bonds, four frequencies, clean/dirty/accrual, YTM solver failures, duration/DV01/convexity, approximation error, positive/negative/zero/large shocks, portfolio contributions, filters/rankings, construction constraints, report omission/inclusion, and offline UI reachability.
+- **Remaining boundary:** No key-rate duration, curve bootstrapping, credit/default/recovery, option-adjusted methods, liability immunization, tax model, or bond-swap engine.

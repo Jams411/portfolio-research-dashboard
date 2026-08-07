@@ -6,6 +6,64 @@ The six-workspace navigation and executive Dashboard are presentation layers onl
 
 The Dashboard ending value is `initial value × (1 + total return)`. Allocation and Euler volatility contribution use the existing portfolio weights and risk-contribution series. Its efficient-frontier preview uses the already calculated frontier. Deterministic insights use the same fixed evidence rules documented below. Detailed assumptions and limitations remain authoritative in this document and the Methodology & Limitations report view.
 
+## Fixed-income analytics
+
+Fixed income is a separate explicit-instrument model. It never derives coupon, maturity, issuer, sector, credit quality, callable status, tax status, or cash flows from a ticker or adjusted-price history. Standard option-free fixed-rate bonds and zero-coupon bonds support annual, semiannual, quarterly, and monthly frequencies.
+
+### Cash flows, dates, and price convention
+
+For face value `F`, annual coupon rate `c`, and frequency `m`, each coupon is `C=F×c/m`; principal `F` is paid at maturity. Coupon dates are generated backward from maturity. Future payment times are expressed in coupon periods from settlement, including the fractional first period. Actual/Actual uses actual elapsed days divided by actual days in the coupon period. The supported 30/360 convention uses the standard day-adjustment rule implemented in `fixed_income.py`. No other day-count basis is silently approximated.
+
+For nominal annual YTM `y` compounded `m` times per year and payment-period exponent `k`:
+
+- Dirty price: `P_dirty = Σ CF_k / (1+y/m)^k`
+- Accrued interest: `AI = C × elapsed coupon-period fraction`
+- Clean price: `P_clean = P_dirty − AI`
+- Current yield: `F×c / P_clean`
+- YTM: the bracketed numerical root that reconciles entered clean price to the discounted contractual cash flows
+
+Clean price is the quoted price excluding accrued interest. Dirty price is the settlement value including accrued interest and is therefore the basis for market value and rate-risk aggregation. Zero-coupon schedules expose only the maturity payment and have zero accrued interest/current yield.
+
+### Duration, DV01, convexity, and repricing
+
+Let `PV_k` be the present value of cash flow `k`, and let `k/m` be years from settlement:
+
+- Macaulay duration: `D_Mac = Σ[(k/m)×PV_k] / P_dirty`
+- Modified duration: `D_Mod = D_Mac / (1+y/m)`
+- Dollar duration: `D_$ = D_Mod × P_dirty`
+- DV01/PVBP: `DV01 = D_$ × 0.0001`
+- Discrete convexity: `Cvx = Σ[PV_k×k×(k+1)/(m²×(1+y/m)²)] / P_dirty`
+- Duration-only proportional change: `−D_Mod×Δy`
+- Duration-plus-convexity proportional change: `−D_Mod×Δy + 0.5×Cvx×(Δy)²`
+- Full repricing: rebuild dirty price at `y+Δy`
+- Approximation error: approximation minus full repricing, reported in price and proportional units
+
+Macaulay duration is a present-value-weighted time measure; modified duration is yield sensitivity. Effective duration is not calculated and modified duration is never relabeled as effective duration. Yield shocks are entered and displayed in basis points, with `100 bps = 0.01` in annual yield.
+
+### Bond portfolio aggregation
+
+For holding quantity `q_i`, dirty price `P_i`, and market value `MV_i=q_iP_i`, portfolio weight is `w_i=MV_i/ΣMV`. Portfolio Macaulay duration, modified duration, and convexity are market-value-weighted sums. Portfolio dollar duration and DV01 are direct position-level sums. Duration contribution is `w_i×D_Mod,i`; DV01 contribution is `q_i×DV01_i`; convexity contribution is `w_i×Cvx_i`. Each contribution family reconciles to its portfolio total.
+
+The displayed portfolio YTM is `Σw_i×YTM_i`, explicitly labeled a market-value-weighted descriptive average. It is not the IRR of the aggregate portfolio cash-flow stream and is not presented as a single portfolio yield.
+
+### Scenarios, selection, and construction
+
+Parallel-rate scenarios reprice every holding at its own YTM plus one common basis-point shock. Holding impacts sum to portfolio impact; contribution is holding full-repricing impact divided by starting portfolio value. A parallel shift does not measure curve-shape, key-rate, spread, liquidity, optionality, credit, tax, or liability risk.
+
+Selection filters are inclusive and act only on explicit numeric terms or user-supplied classifications. Ranking uses one displayed rule: highest YTM, lowest modified duration, YTM per unit of modified duration, lowest instrument DV01, highest convexity, absolute maturity-target gap, or absolute duration-target gap. There is no hidden composite score.
+
+Bond construction is a long-only linear program that maximizes the displayed weighted YTM subject to chosen position limits, target duration or duration band, maturity-bucket targets, issuer/credit-quality/sector caps, yield floor, and duration ceiling. Classifications are never inferred. Minimum positions apply to every included candidate and therefore do not implement binary security selection.
+
+### Fixed-income limitations
+
+The implementation excludes floating-rate notes, irregular stubs, amortizing principal, inflation linkage, embedded-option valuation, effective duration, option-adjusted spread, credit/default/recovery modeling, key-rate duration, nonparallel curve construction, liability immunization, liability-driven investing, tax optimization, execution costs, and yield-pickup swap analysis. Full immunization remains unsupported because the reviewed source does not provide a complete liability schedule and production-ready matching method.
+
+### Deterministic two-bond reconciliation
+
+At settlement 2026-01-01 with semiannual compounding, Bond A (`F=1000`, coupon 4%, maturity 2031-01-01, YTM 5%) produces clean/dirty price `956.239680`, current yield `4.183052%`, Macaulay duration `4.569508`, modified duration `4.458056`, DV01 `0.426297`, and convexity `23.194410`. Bond B (`F=1000`, coupon 6%, maturity 2036-01-01, YTM 5.5%) produces price `1038.068130`, current yield `5.779967%`, Macaulay duration `7.712185`, modified duration `7.505776`, DV01 `0.779151`, and convexity `69.711538`.
+
+For the UI defaults of 10 units of Bond A and 5 units of Bond B, dirty market value is `14,752.737455`, portfolio modified duration `5.530312`, portfolio DV01 `8.158724`, and portfolio convexity `39.560169`. A +100 bp shock fully reprices the portfolio to `13,965.237889`, a `−5.337999%` impact. Duration-plus-convexity estimates `13,966.046127`, an aggregate price error of `0.808237`. Duration, DV01, convexity and scenario contribution totals reconcile to the displayed portfolio totals within floating-point tolerance.
+
 ## Data and returns
 
 ### Benchmark ticker resolution

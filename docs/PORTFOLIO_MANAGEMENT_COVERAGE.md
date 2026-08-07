@@ -16,7 +16,7 @@ This internal audit reconciles the external Portfolio Management source archive 
 - Personalized risk profiling, investment-policy authoring, suitability conclusions or target allocations presented as advice.
 - Short selling, borrowing, leverage, options, tax-lot optimization, brokerage execution or live trade recommendations.
 - Production Treynor–Black, APT or multifactor estimation without governed factor data; the public factor section documents the framework and unavailable inputs.
-- Fixed-income duration/convexity, immunization, swaps or liability workflows; adjusted ETF prices do not provide the instrument cash-flow and liability data needed for defensible implementation.
+- Key-rate duration, yield-curve construction, credit/default/recovery modeling, embedded-option valuation, immunization, swaps, or liability workflows. Standard option-free bond analytics now use separate explicit instrument inputs; adjusted ETF prices remain outside that workflow.
 - Automatic ticker-to-sector/asset-class inference, undated holdings scraping, analyst-target signals, CPPI, Brinson/style attribution without classifications, and Monte Carlo/risk parity not substantively supported by the audited sources.
 
 ## Complete source inventory
@@ -32,7 +32,7 @@ The exact path for each root-level item is the folder above plus the shown filen
 | `2026S_FIN5745 PM_Workbook 4. Securities Selection & Single Index Model _Q.xlsx` | XLSX | Security regressions, index model, alpha/residual-risk screen, active portfolio | Regression **Fully implemented and verified**; incomplete/short-enabled active mix **Educational companion only** | `risk.py`, Security Analysis, report/CSV, regression tests |
 | `2026S_FIN5745 PM_Workbook 5-1. CAPM, APT & Multifactor Models_Q.xlsx` | XLSX | CAPM, SML, index/CAPM comparison, APT and multifactor examples | CAPM **Fully implemented and verified**; APT/multifactor numerical framework **Documentation only / Deferred** pending factor data | `asset_pricing.py`, Asset Pricing, report/CSV, CAPM tests |
 | `2026S_FIN5745 PM_Workbook 5-2. Draft Pf Model for Final Project_Jameel_Shaikh.xlsx` | XLSX | Draft capital/asset/security allocation and embedded data | All five nonempty sheets inventoried; **Documentation only** as an intermediate duplicate superseded by final model | This inventory and final-project audit |
-| `2026S_FIN5745 PM_Workbook 6. Portfolio Management Strategies_Q.xlsx` | XLSX | Index construction/tracking, active funds, taxes, equity/bond strategies, duration, immunization, swap | Previously deep-reviewed; benchmark policy comparison **Implemented differently**; specialized tax/fixed-income work **Educational companion only** | `strategy.py`, `rebalancing.py`, Portfolio Strategies, report/exports, tests |
+| `2026S_FIN5745 PM_Workbook 6. Portfolio Management Strategies_Q.xlsx` | XLSX | Index construction/tracking, active funds, taxes, equity/bond strategies, duration, immunization, swap | Previously deep-reviewed; benchmark policy comparison **Implemented differently**; option-free pricing/duration/convexity/portfolio sensitivity now **Implemented differently with explicit inputs**; tax, immunization and swap remain educational-only | `strategy.py`, `fixed_income.py`, `bond_portfolio.py`, Fixed Income, report/exports, tests |
 | `2026S_FIN5745 PM_Workbook 7. Evaluation of Portfolio Performance_Q.xlsx` | XLSX | Sharpe/Treynor/Jensen, selection/allocation, Fama, fees, weighted returns, Sortino | Previously deep-reviewed; supported measures **Fully implemented and verified**; cash-flow/fee account models **Deferred** | `evaluation.py`, Performance Evaluation, report/CSV, tests |
 | `Basic Investment Pf Model_Tech & SPY_Forecasting adjusted_Example-2.xlsx` | XLSX | Five-sheet example capital/asset/security model | Every sheet inventoried; **Educational companion only**, materially duplicated by final model | Internal inventory only |
 | `Portfolio Management.xlsx` | XLSX | Two small formula sheets (32 formulas total) | Every nonempty sheet inventoried; **Source could not be interpreted safely** because labels/provenance are insufficient for a unique model mapping | No implementation |
@@ -46,7 +46,7 @@ The exact path for each root-level item is the folder above plus the shown filen
 | `Assignment/full_market_alpha_screen.py` | Python | Statsmodels-based live ETF/security screen | Imports/functions inspected; **Deferred** broad-universe live workflow because universe/as-of data are not governed | Existing exact local screen only |
 | `Assignment/treynor_black_portfolio_model.py` | Python | Large live alpha, bond and portfolio model | Imports/functions inspected; **Educational companion only / Intentionally excluded** from production | Treynor–Black scope decision and traceability |
 | `Assignment/download_stock_data.py` | Python | Live Yahoo stock workbook generator with absolute Downloads path | Inspected; **Intentionally excluded** as brittle data-acquisition utility | `data.py` owns market retrieval |
-| `Assignment/download_bond_data.py` | Python | Live Yahoo bond workbook generator with absolute Downloads path | Inspected; **Intentionally excluded** as brittle data-acquisition utility | No fixed-income product workflow |
+| `Assignment/download_bond_data.py` | Python | Live Yahoo bond workbook generator with absolute Downloads path | Inspected; **Intentionally excluded** as brittle data-acquisition utility | Fixed Income uses no live bond-data inference |
 | `Assignment/portfolio_weights.png` | PNG | Saved notebook chart | Inspected as output evidence; **Documentation only** | No model logic |
 | `2026S_FIN5745 PM_Class Notes 1. Risk & Return of Portfolio Investments.pptx` | PPTX | 30-slide foundations lecture | Slide text/structure inspected; **Documentation only**, corroborates Workbook 1 | Workbook 1 mappings/tests |
 | `2026S_FIN5745 PM_Class Notes 2. MW Efficient Frontier & Captial Market Line.pptx` | PPTX | 36-slide Markowitz/CML lecture | Inspected; **Documentation only**, corroborates Workbook 2 | Workbook 2 mappings/tests |
@@ -105,6 +105,9 @@ No VBA was found. Several instructional workbooks contain thousands of template 
 | Strategy comparison | Lagged momentum plus rebalancing-policy paths and benchmark-relative measures | `strategy.py`, `rebalancing.py` | Portfolio Strategies | HTML/history/trades | lag/cost/active-risk tests | **Implemented differently with justification** |
 | Performance evaluation | Sharpe, Sortino, Treynor, Jensen, Information Ratio, Fama selectivity, rolling metrics | `performance.py`, `risk.py`, `evaluation.py` | Performance Evaluation | HTML and CSV | formula/rolling tests | **Fully implemented and verified**; M²/Calmar unsupported by source and excluded |
 | ETF research pipeline | Return-risk screen → disclosed holdings → overlap/exposure → regression screen → existing optimizer | `etf_research.py`, `risk.py`, `construction.py` | ETF Research + Portfolio Optimization | HTML and CSV | fixed end-to-end test | **Partially implemented** as connected research stages; no live holdings/universe service |
+| Option-free bond analytics | Explicit cash flows; `PV`; YTM root; clean/dirty/accrual; Macaulay/modified/dollar duration; DV01; convexity; full repricing | `fixed_income.py` | Research → Fixed Income → Bond calculator | Conditional HTML and CSV | `test_fixed_income.py` pricing/risk cases | **Fully implemented and verified** for supported periodic fixed-rate and zero-coupon instruments |
+| Bond portfolio and parallel-rate risk | Dirty-market-value weights; weighted duration/convexity; additive dollar duration/DV01; full repricing contributions | `bond_portfolio.py` | Bond portfolio; Rate scenarios | Conditional HTML and CSV | portfolio/scenario reconciliation | **Fully implemented and verified** for explicit holdings; no curve/spread/credit model |
+| Bond selection and construction | Inclusive explicit filters; one displayed ranking formula; long-only linear constraints | `bond_portfolio.py` | Bond selection | Conditional HTML and CSV | filter/rank/constraint tests | **Implemented differently with justification**; no hard-coded score or inferred classifications |
 | Professional report | Deterministic consolidation of all available analytics | `reporting.py` | Research Report | HTML + CSV package | report-content/integration tests | **Fully implemented and verified** after this audit |
 
 ## Canonical formula registry
@@ -129,6 +132,9 @@ The pure-function source of truth remains the domain module named above; this re
 | VaR/CVaR | Nonnegative empirical 95% loss measures |
 | Turnover/cost | One-way turnover = half gross trade / pre-trade value; gross traded notional × cost rate |
 | Drift | Actual pre-trade weight minus explicit target weight |
+| Bond price/yield | Explicit periodic cash flows; dirty PV at nominal annual YTM compounded by frequency; clean = dirty − accrued; bracketed clean-price YTM root |
+| Bond rate risk | Macaulay/modified/dollar duration; DV01 = dollar duration × 0.0001; standard discrete convexity; full repricing at shocked YTM |
+| Bond portfolio | Dirty-market-value weights; weighted duration/convexity; additive dollar duration/DV01; weighted YTM labeled descriptive, not portfolio IRR |
 
 ## Product-stitching findings
 
@@ -136,7 +142,7 @@ The pure-function source of truth remains the domain module named above; this re
 - **Fixed:** the HTML report now includes performance evaluation, security regression, CAPM/asset pricing, ETF universe research and security-screen tables; matching CSV exports are available.
 - **Preserved:** one analytics pipeline creates aligned simple returns; UI/report code consumes domain outputs rather than recalculating formulas.
 - **Preserved:** SPX remains the display benchmark while `^GSPC` is retrieval-only; unknown equity tickers are not silently mapped.
-- **Known UX limitation:** fifteen peer tabs remain crowded on narrow laptop widths. A full `st.navigation` migration would be a material architecture change and was deferred rather than risk state/report regressions during an integration audit.
+- **Fixed:** fifteen peer tabs were regrouped into six laptop-width primary workspaces. Fixed Income is a Research secondary view and does not add another primary item.
 - **No formula conflict found:** performance and optimizer Sharpe share the arithmetic convention; CAGR stays separate; covariance, risk-free rate and annualization are not independently recomputed in the new surfaces.
 
 ## Unresolved ambiguities
@@ -150,4 +156,4 @@ The pure-function source of truth remains the domain module named above; this re
 
 ## Evidence-based assessment
 
-PortfolioLens is **substantially covered**, not fully covered. Every accessible file is inventoried and every machine-readable workbook sheet is accounted for, but some source artifacts are educational-only, some advanced models lack governed data or complete methodology, and five photographs plus one weakly labeled workbook cannot be interpreted safely enough to claim full course coverage.
+PortfolioLens remains **substantially covered**, not fully covered. Standard option-free fixed-income pricing, portfolio rate risk, selection and constrained construction are now covered with explicit inputs. Full coverage is still not claimed because immunization/liability matching, key-rate duration, curve construction, credit/default/recovery, embedded options, tax and swap workflows remain unsupported; some source artifacts are educational-only or ambiguous, and five photographs plus one weakly labeled workbook cannot be interpreted safely.

@@ -14,7 +14,7 @@ The UI has six primary workspaces. `PRIMARY_WORKSPACES`, `WORKSPACE_SECTIONS`, a
 |---|---|
 | Dashboard | Dashboard |
 | Analytics | Performance; Performance Evaluation; Risk; Benchmark & Attribution; Stress Testing |
-| Research | Security Analysis; Asset Pricing; ETF Research |
+| Research | Security Analysis; Asset Pricing; ETF Research; Fixed Income |
 | Portfolio Construction | Portfolio Optimization & Rebalancing; Asset Allocation |
 | Strategies | Portfolio Strategies & Momentum |
 | Reports | Research Workspace; Research Report; Methodology & Limitations |
@@ -30,10 +30,15 @@ flowchart LR
     Pipeline --> Analytics["Performance, risk, attribution, construction"]
     Analytics --> Research["Comparison, health score and deterministic insights"]
     App --> Decisions["Rebalancing, strategy, stress"]
+    App --> Bonds["Explicit bond terms and classifications"]
+    Bonds --> BondAnalytics["Pricing, yield, duration, DV01, convexity"]
+    BondAnalytics --> BondState["Independent fixed-income session state"]
     Research --> State["Streamlit session state"]
     Decisions --> State
     State --> Views["Charts, tables, explanations"]
     State --> Exports["CSV and deterministic HTML"]
+    BondState --> Views
+    BondState --> Exports
 ```
 
 ## B. Repository structure
@@ -49,6 +54,9 @@ portfolio_dashboard/
   risk.py                           tail, benchmark, security-regression and contribution analytics
   research.py                       comparison, score, scenario and deterministic insight diagnostics
   construction.py                   annualized inputs, constrained optimizers, frontier/CAL diagnostics and utility
+  fixed_income.py                   bond cash flows, pricing, yield, duration, DV01, convexity and repricing
+  bond_portfolio.py                 aggregation, rate scenarios, filters, rankings and linear construction
+  fixed_income_ui.py                independent fixed-income Streamlit view and state wiring
   pipeline.py                       main analytics orchestration and Analysis result
   rebalancing.py                    target-allocation, policy simulation and benchmark comparison
   strategy.py                       lagged moving-average backtest
@@ -60,6 +68,7 @@ tests/
   test_app.py                       offline Streamlit entrypoint smoke tests
   test_public_language.py           public product-terminology guard
   test_workflow.py                  deterministic four-ETF research workflow
+  test_fixed_income.py              deterministic bond and bond-portfolio reconciliation
 .github/workflows/
   ci.yml                            offline code and non-socket app verification
   deployment-health.yml             scheduled public-endpoint classification
@@ -174,6 +183,29 @@ pytest.ini                          local pytest configuration
 - **Financial concepts:** Inverse volatility, sample covariance, arithmetic expected return, GMV, target-return construction, constrained tangency, efficient frontier, CAL, and policy constraints.
 - **Common failure modes:** Zero volatility, nonfinite estimates, insufficient observations, degenerate covariance, infeasible constraints, or solver nonconvergence.
 - **How tested:** Feasibility, targets, sum-to-one, bounds, monotonicity, reproducibility, CAL endpoints, group caps, exclusions, validation summaries, and failure isolation.
+
+### `fixed_income.py` — explicit bond calculation core
+
+- **Why it exists:** Prevents bond characteristics from being inferred from ETF/ticker history and gives pricing/rate-risk formulas one pure source of truth.
+- **Owns:** Coupon schedules, Actual/Actual and 30/360 accrual, clean/dirty price, current yield, bracketed YTM recovery, Macaulay/modified/dollar duration, DV01, convexity, duration approximations, full repricing, and error measurement.
+- **Does not own:** Streamlit state, market-data downloads, curve construction, credit models, embedded options, liabilities, or recommendations.
+- **Key inputs:** Explicit face, coupon, frequency, settlement, maturity, day count, clean price or nominal annual YTM, and basis-point shock.
+- **How tested:** Par/premium/discount/zero-coupon pricing, four frequencies, accrued interest, YTM recovery/failure, duration units, DV01, convexity, and full-repricing reconciliation.
+
+### `bond_portfolio.py` — bond portfolio research
+
+- **Why it exists:** Keeps aggregation, scenarios, selection, and construction reproducible outside the UI.
+- **Owns:** Dirty-market-value weights; YTM/duration/DV01/convexity aggregation and contributions; parallel-rate scenarios; explicit filters; single-formula rankings; and long-only linear construction with position, duration, maturity-bucket, classification, yield, and duration constraints.
+- **Does not own:** Classification inference, hidden scoring, binary security selection, liability immunization, or credit/curve forecasts.
+- **Key outputs:** Reconciled holding tables, portfolio summaries, scenario contributions, ranked candidates with formula text, constructed weights, and constraint validation.
+- **How tested:** Market-value and contribution sums, positive/negative/zero/large shocks, filters, duplicate/missing classifications, rankings, duration targets/bands, caps, yield floors, and maturity buckets.
+
+### `fixed_income_ui.py` — fixed-income presentation boundary
+
+- **Why it exists:** Keeps explicit instrument inputs separate from the global equity/ETF market-history sidebar while preserving the six primary workspaces.
+- **Owns:** Calculator, portfolio, scenario, selection/construction controls, result-first tables/cards, downloads, and `fi_*` session keys.
+- **State boundary:** Completed fixed-income outputs survive workspace navigation independently of `st.session_state["result"]`. Fixed Income renders before the market-history empty-state stop and never triggers yfinance.
+- **How tested:** AppTest verifies reachability before any market-data run, four secondary views, calculator metrics, portfolio/scenario/selection state, and exports.
 
 ### `pipeline.py` — main analytics composition
 
