@@ -22,7 +22,10 @@ def public_string_literals(path: str) -> list[str]:
 
 def test_public_application_and_report_strings_use_professional_language():
     violations: list[str] = []
-    for path in ("app.py", "portfolio_dashboard/reporting.py"):
+    for path in (
+        "app.py", "portfolio_dashboard/reporting.py", "portfolio_dashboard/fixed_income_ui.py",
+        "portfolio_dashboard/fixed_income.py", "portfolio_dashboard/bond_portfolio.py",
+    ):
         for value in public_string_literals(path):
             match = PROHIBITED.search(value)
             if match:

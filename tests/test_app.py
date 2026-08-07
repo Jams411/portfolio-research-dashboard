@@ -368,7 +368,7 @@ def test_grouped_navigation_keeps_every_major_section_reachable():
     expected = {
         "Dashboard": ("Dashboard",),
         "Analytics": ("Performance", "Performance Evaluation", "Risk", "Benchmark & Attribution", "Stress Testing"),
-        "Research": ("Security Analysis", "Asset Pricing", "ETF Research"),
+        "Research": ("Security Analysis", "Asset Pricing", "ETF Research", "Fixed Income"),
         "Portfolio Construction": ("Portfolio Optimization & Rebalancing", "Asset Allocation"),
         "Strategies": ("Portfolio Strategies & Momentum",),
         "Reports": ("Research Workspace", "Research Report", "Methodology & Limitations"),
@@ -420,3 +420,59 @@ def test_dashboard_key_metrics_and_state_survive_navigation(offline_app):
     offline_app.session_state["analysis_tab"] = "Research Report"
     offline_app.run(timeout=30)
     assert any(item.label == "Download HTML report" for item in offline_app.get("download_button"))
+
+
+def test_fixed_income_workspace_is_reachable_without_market_data_and_preserves_state():
+    app = AppTest.from_file(APP_PATH).run(timeout=20)
+    app.session_state["analysis_tab"] = "Fixed Income"
+    app.run(timeout=20)
+    assert not app.exception
+    assert app.session_state["primary_workspace"] == "Research"
+    assert any(item.value == "Fixed Income" for item in app.subheader)
+    view = widget(app.get("button_group"), "Fixed-income view")
+    assert view.options == ["Bond calculator", "Bond portfolio", "Rate scenarios", "Bond selection"]
+    assert any(item.label == "Calculate bond analytics" for item in app.button)
+    widget(app.button, "Calculate bond analytics").click()
+    app.run(timeout=20)
+    assert not app.exception
+    assert {
+        "Clean price", "Dirty price", "Accrued interest", "Current yield", "YTM",
+        "Macaulay duration", "Modified duration", "Dollar duration", "DV01 / PVBP", "Convexity",
+    } <= {item.label for item in app.metric}
+    assert "fi_calculator_result" in app.session_state
+    app.session_state["analysis_tab"] = "Dashboard"
+    app.run(timeout=20)
+    app.session_state["analysis_tab"] = "Fixed Income"
+    app.run(timeout=20)
+    assert "fi_calculator_result" in app.session_state
+
+
+def test_fixed_income_portfolio_scenario_selection_and_exports_render_offline():
+    app = AppTest.from_file(APP_PATH).run(timeout=20)
+    app.session_state["analysis_tab"] = "Fixed Income"
+    app.run(timeout=20)
+    view = widget(app.get("button_group"), "Fixed-income view")
+    view.set_value("Bond portfolio")
+    app.run(timeout=20)
+    widget(app.button, "Analyze bond portfolio").click()
+    app.run(timeout=20)
+    assert not app.exception and "fi_portfolio_analysis" in app.session_state
+    assert {"Market value", "Weighted YTM", "Modified duration", "Portfolio DV01", "Portfolio convexity"} <= {
+        item.label for item in app.metric
+    }
+    assert any(item.label == "Download bond portfolio analytics CSV" for item in app.get("download_button"))
+
+    widget(app.get("button_group"), "Fixed-income view").set_value("Rate scenarios")
+    app.run(timeout=20)
+    widget(app.button, "Run rate scenario").click()
+    app.run(timeout=20)
+    assert not app.exception and "fi_portfolio_scenario" in app.session_state
+    assert any(item.label == "Download rate scenario CSV" for item in app.get("download_button"))
+
+    widget(app.get("button_group"), "Fixed-income view").set_value("Bond selection")
+    app.run(timeout=20)
+    widget(app.button, "Apply filters and rank").click()
+    app.run(timeout=20)
+    assert not app.exception and "fi_selection_result" in app.session_state
+    assert any("Ranking formula:" in item.value for item in app.info)
+    assert any(item.label == "Download selected bonds CSV" for item in app.get("download_button"))

@@ -24,6 +24,7 @@ from portfolio_dashboard.data import (
     resolve_benchmark_ticker, validate_dates,
 )
 from portfolio_dashboard.formatting import metric_value, money, pct, ratio
+from portfolio_dashboard.fixed_income_ui import render_fixed_income_workspace
 from portfolio_dashboard.evaluation import (
     fama_selectivity_decomposition, rolling_performance_evaluation,
 )
@@ -114,7 +115,7 @@ WORKSPACE_SECTIONS = {
     "Analytics": (
         "Performance", "Performance Evaluation", "Risk", "Benchmark & Attribution", "Stress Testing",
     ),
-    "Research": ("Security Analysis", "Asset Pricing", "ETF Research"),
+    "Research": ("Security Analysis", "Asset Pricing", "ETF Research", "Fixed Income"),
     "Portfolio Construction": ("Portfolio Optimization & Rebalancing", "Asset Allocation"),
     "Strategies": ("Portfolio Strategies & Momentum",),
     "Reports": ("Research Workspace", "Research Report", "Methodology & Limitations"),
@@ -138,6 +139,7 @@ st.caption("Multi-asset portfolio analytics and investment research")
 
 with st.sidebar:
     st.subheader("Analysis setup")
+    st.caption("Equity and ETF market-history inputs")
     with st.expander("Portfolio", expanded=True, icon=":material/pie_chart:"):
         preset = st.selectbox("Portfolio preset", ["Custom"] + list(PRESETS), on_change=clear_analysis_state)
         default_tickers, default_weights = PRESETS.get(preset, ("SPY, AGG, GLD", "50, 35, 15"))
@@ -324,6 +326,11 @@ else:
 st.session_state["analysis_tab"] = active_section
 st.session_state["_navigation_section"] = active_section
 section_container = st.container()
+
+if active_section == "Fixed Income":
+    with section_container:
+        render_fixed_income_workspace()
+    st.stop()
 
 if "result" not in st.session_state:
     with section_container:
@@ -1604,6 +1611,38 @@ if active_section == "Research Report":
             "Portfolio": a.performance,
             "Benchmark-relative": a.benchmark,
         })
+        fixed_income_report: dict[str, pd.DataFrame | pd.Series | str] = {}
+        calculator_result = st.session_state.get("fi_calculator_result")
+        if calculator_result is not None:
+            terms = calculator_result["terms"]
+            fixed_income_report["bond inputs"] = pd.Series({
+                "Face value": terms.face_value,
+                "Coupon rate": terms.coupon_rate,
+                "Coupon frequency": terms.frequency,
+                "Settlement": str(terms.settlement),
+                "Maturity": str(terms.maturity),
+                "Day count": terms.day_count,
+            })
+            fixed_income_report["bond analytics"] = pd.Series(calculator_result["metrics"])
+            fixed_income_report["cash-flow schedule"] = calculator_result["cash_flows"]
+            fixed_income_report["bond yield shock"] = pd.Series(calculator_result["scenario"])
+        bond_analysis = st.session_state.get("fi_portfolio_analysis")
+        if bond_analysis is not None:
+            fixed_income_report["portfolio summary"] = bond_analysis.summary
+            fixed_income_report["portfolio holdings and contributions"] = bond_analysis.holdings
+        bond_scenario = st.session_state.get("fi_portfolio_scenario")
+        if bond_scenario is not None:
+            fixed_income_report["portfolio rate scenario summary"] = bond_scenario[1]
+            fixed_income_report["portfolio rate scenario detail"] = bond_scenario[0]
+        bond_selection = st.session_state.get("fi_selection_result")
+        if bond_selection is not None:
+            fixed_income_report["selection formula"] = bond_selection[1]
+            fixed_income_report["selected bonds"] = bond_selection[0]
+        bond_construction = st.session_state.get("fi_construction_result")
+        if bond_construction is not None:
+            fixed_income_report["constructed portfolio weights"] = bond_construction[0]
+            fixed_income_report["constructed portfolio summary"] = bond_construction[1]
+            fixed_income_report["construction constraints"] = bond_construction[2]
         report = generate_html_report(
             title="PortfolioLens Investment Research Report", tickers=r["tickers"], weights=r["weights"],
             start=a.prices.index.min().date(), end=a.prices.index.max().date(), summary=summary,
@@ -1634,6 +1673,7 @@ if active_section == "Research Report":
             performance_evaluation=report_evaluation,
             etf_research=report_etf,
             security_screen=report_screen,
+            fixed_income=fixed_income_report or None,
         )
         downloads = {
             "Performance metrics": metric_frame(a.performance).to_csv(),
@@ -1650,6 +1690,12 @@ if active_section == "Research Report":
             "ETF research": report_etf.to_csv(),
             "Security screen": report_screen.to_csv(),
         }
+        if bond_analysis is not None:
+            downloads["Bond portfolio analytics"] = bond_analysis.holdings.to_csv(index=False)
+        if bond_scenario is not None:
+            downloads["Bond rate scenario"] = bond_scenario[0].to_csv(index=False)
+        if bond_selection is not None:
+            downloads["Selected bonds"] = bond_selection[0].to_csv(index=False)
         with st.container(horizontal=True):
             st.download_button("Download HTML report", report, "portfoliolens_research_report.html", "text/html")
             for label, payload in downloads.items():
