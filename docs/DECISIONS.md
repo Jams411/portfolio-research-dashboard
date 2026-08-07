@@ -2,6 +2,17 @@
 
 Significant product, financial-methodology, architecture, and scope decisions are recorded here. Add new entries rather than rewriting prior decisions; mark superseded entries explicitly.
 
+## D035 — Use a scoped responsive Dashboard card grid with financial color semantics
+
+- **Date:** 2026-08-07
+- **Status:** Accepted; supersedes the fixed-card-width portion of D034.
+- **Decision:** Render the two Dashboard metric groups as sanitized `st.html` flex grids whose real cards grow and wrap to fill every row. Keep the HTML meaningful without CSS, use no JavaScript, and avoid styling Streamlit's internal DOM. Preserve native Streamlit for navigation, inputs, charts, tables, and actions.
+- **Color semantics:** Blue identifies the primary portfolio value and active product controls. Green/red apply only to signed return, CAGR, Sharpe, drawdown, Information Ratio, and active-return results. Volatility, beta, tracking error, and risk-contributor identity remain neutral. Existing warnings inherit the amber theme color. Signs, labels, and context text preserve meaning without color.
+- **Responsive contract:** Six primary cards and five benchmark/risk cards fill their group at wide desktop widths; laptop rows wrap and redistribute remaining width; screens at or below 700 pixels use two cards per row, and screens at or below 420 pixels use one. Card heights, padding, borders, hover treatment, and keyboard focus outlines remain consistent.
+- **Rationale:** Native horizontal containers can wrap, but fixed child widths leave substantial unused space on wide displays and uneven last rows at narrower breakpoints. A scoped flex layout provides content-aware redistribution without placeholder cards or viewport-reading JavaScript.
+- **Consequences:** Dashboard cards are custom presentational HTML and therefore do not appear as `st.metric` elements in AppTest. Tests inspect the sanitized HTML contract directly. Streamlit still controls outer page padding and chart responsiveness; the chart height remains a stable 400 pixels.
+- **Scope boundary:** No metric, financial formula, state key, report, export, data source, or workspace changed.
+
 ## D034 — Keep the primary analysis action in the opening sidebar viewport
 
 - **Date:** 2026-08-07

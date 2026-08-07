@@ -3,6 +3,7 @@
 import base64
 import json
 from pathlib import Path
+import re
 import numpy as np
 import pandas as pd
 import pytest
@@ -262,7 +263,7 @@ def test_research_workspace_is_initialized_from_computed_analysis(offline_app):
     assert not offline_app.exception
     assert "what_if_weights" in offline_app.session_state
     assert "what_if_shocks" in offline_app.session_state
-    assert any(metric.label == "Portfolio value" for metric in offline_app.metric)
+    assert "Portfolio value" in "".join(item.proto.body for item in offline_app.get("html"))
     offline_app.session_state["analysis_tab"] = "Research Workspace"
     offline_app.run(timeout=20)
     assert not offline_app.exception
@@ -403,13 +404,16 @@ def test_dashboard_key_metrics_and_state_survive_navigation(offline_app):
     widget(offline_app.text_input, "Weights (%)").set_value("40,25,20,15")
     run_analysis(offline_app)
     expected_order = [
-        "Portfolio value", "Total return", "CAGR", "Volatility", "Sharpe ratio", "Max drawdown",
+        "Portfolio value", "Total return", "CAGR", "Volatility", "Sharpe ratio", "Maximum drawdown",
         "Beta", "Tracking error", "Information ratio", "Largest risk contributor",
-        "Vs. benchmark",
+        "Relative benchmark result",
     ]
-    assert [metric.label for metric in offline_app.metric[:len(expected_order)]] == expected_order
-    portfolio_value = next(metric.value for metric in offline_app.metric if metric.label == "Portfolio value")
-    assert portfolio_value.startswith("$") and portfolio_value.endswith("K")
+    metric_html = "".join(item.proto.body for item in offline_app.get("html"))
+    assert all(label in metric_html for label in expected_order)
+    assert [metric_html.index(label) for label in expected_order] == sorted(
+        metric_html.index(label) for label in expected_order
+    )
+    assert re.search(r"Portfolio value: \$[\d,.]+[KMB]?", metric_html)
     saved_weights = offline_app.session_state["result"]["weights"].copy()
     for section in ("Risk", "ETF Research", "Research Report", "Dashboard"):
         offline_app.session_state["analysis_tab"] = section
@@ -420,6 +424,42 @@ def test_dashboard_key_metrics_and_state_survive_navigation(offline_app):
     offline_app.session_state["analysis_tab"] = "Research Report"
     offline_app.run(timeout=30)
     assert any(item.label == "Download HTML report" for item in offline_app.get("download_button"))
+
+
+def test_dashboard_uses_responsive_semantic_metric_grid_without_placeholders(offline_app):
+    run_analysis(offline_app)
+    html_bodies = [item.proto.body for item in offline_app.get("html")]
+    combined = "".join(html_bodies)
+    assert sum('<section class="financial-metric-grid' in body for body in html_bodies) == 2
+    assert combined.count('financial-metric-grid financial-metric-grid--') == 2
+    assert combined.count('role="listitem"') == 11
+    assert "display: flex" in combined
+    assert "flex-wrap: wrap" in combined
+    assert "flex: 1 1 8.625rem" in combined
+    assert "@media (max-width: 700px)" in combined
+    assert "financial-metric-grid--secondary" in combined
+    assert "placeholder" not in combined.lower()
+
+
+def test_dashboard_color_classes_only_mark_directional_metrics(offline_app):
+    run_analysis(offline_app)
+    combined = "".join(item.proto.body for item in offline_app.get("html"))
+    articles = re.findall(r'<article class="([^"]+)"[^>]*>(.*?)</article>', combined, re.DOTALL)
+    tones_by_label = {}
+    for classes, body in articles:
+        label = re.search(r'financial-metric-card__label">([^<]+)', body).group(1)
+        tone = re.search(r"financial-metric-card--([a-z]+)", classes).group(1)
+        tones_by_label[label] = tone
+    assert tones_by_label["Portfolio value"] == "primary"
+    assert tones_by_label["Maximum drawdown"] == "negative"
+    assert tones_by_label["Volatility"] == "neutral"
+    assert tones_by_label["Beta"] == "neutral"
+    assert tones_by_label["Tracking error"] == "neutral"
+    assert tones_by_label["Largest risk contributor"] == "neutral"
+    assert {label for label, tone in tones_by_label.items() if tone in {"positive", "negative"}} <= {
+        "Total return", "CAGR", "Sharpe ratio", "Maximum drawdown",
+        "Information ratio", "Relative benchmark result",
+    }
 
 
 def test_fixed_income_workspace_is_reachable_without_market_data_and_preserves_state():

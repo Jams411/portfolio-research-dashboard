@@ -1,5 +1,13 @@
 # Project history
 
+## 2026-08-07 — Responsive financial dashboard cards
+
+- **What changed:** Replaced the Dashboard's fixed 140/170-pixel card widths with two scoped flex grids. Added consistent card height, contextual subtitles, focus treatment, and restrained blue/green/red/neutral semantic accents. The Portfolio-versus-benchmark chart now explicitly uses blue and green series colors.
+- **Root cause:** Fixed child widths could wrap but could not grow, leaving unused horizontal space at wide viewports and uneven row endings at medium widths.
+- **Responsive evidence:** Reviewed 1,920×1,080, 1,440×900, 1,366×768, 1,100×768, 600×900, and 390×844 layouts. Real cards expand to fill each row, desktop supports five or six cards, medium widths wrap to three or four, and narrow layouts use one or two without page overflow.
+- **Accessibility:** Card meaning remains available through labels, signs, context text, semantic list roles, keyboard focus, and high-contrast text rather than color alone.
+- **Boundaries:** Navigation, sidebar behavior, analytics, reports, exports, and financial calculations are unchanged. Streamlit retains control of outer padding and the shared 400-pixel Plotly chart height.
+
 ## 2026-08-07 — Internship-demo visual refinement
 
 - **What changed:** Moved Run analysis into the opening sidebar viewport, reduced the expanded input stack, compacted header spacing, rebuilt the Dashboard metric grid, standardized chart height, and aligned fixed-income cards and tables with the shared analytical canvas.

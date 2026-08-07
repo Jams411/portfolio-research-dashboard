@@ -2,6 +2,14 @@
 
 This journal explains the project’s evolution in plain language. It complements, rather than replaces, the evidence-focused [project history](PROJECT_HISTORY.md), formal [decision log](DECISIONS.md), user-facing [changelog](../CHANGELOG.md), and forward-looking [roadmap](ROADMAP.md).
 
+## 2026-08-07 — Responsive card and financial-color pass
+
+- **Goal:** Remove Dashboard dead space and add useful financial emphasis without turning the interface into a color-coded scorecard.
+- **Observed friction:** The previous fixed widths looked orderly at 1,366 pixels but stopped expanding on a 1,920-pixel canvas. At medium widths, wrapped rows could end with large unused areas.
+- **Implementation:** Used a scoped, JavaScript-free flex grid with a 138-pixel growth basis, equal card heights, two-card and one-card narrow breakpoints, and a separate medium basis for the five-card benchmark/risk group. Context lines use only existing calculations or definitions.
+- **Color choice:** Portfolio value receives the blue product accent. Signed performance and efficiency metrics receive green or red by their verified sign; volatility, beta, tracking error, and risk identity stay neutral. The value sign and context remain readable when color is unavailable.
+- **Tradeoff:** The Dashboard cards use sanitized custom HTML because native Streamlit containers cannot make every wrapped final row redistribute its remaining width. The implementation does not target generated Streamlit class names and falls back to readable stacked HTML if CSS is unavailable.
+
 ## 2026-08-07 — Primary-action and layout refinement
 
 - **Goal:** Make the product immediately operable at internship-demo laptop sizes without changing its finance scope.

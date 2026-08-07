@@ -4,9 +4,12 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Replaced fixed-width Dashboard metrics with an accessible flex-wrapping card grid that fills each real row at wide, laptop, and narrow widths without placeholder cells.
+- Added restrained financial color semantics: blue for the primary portfolio value, green/red only for directionally meaningful results, neutral gray for risk descriptors, and amber for existing warnings.
+- Added verified metric context lines, consistent card heights, visible focus treatment, and explicit blue/green Portfolio-versus-benchmark chart colors.
 - Moved **Run analysis** and the secondary Reset action directly below the visible portfolio, period, and benchmark inputs so both remain in the opening 768-pixel-high sidebar viewport.
 - Reduced the default sidebar height by moving initial value and risk-free rate into **Advanced assumptions** while keeping implementation and strategy controls collapsed.
-- Reordered Dashboard metrics into primary portfolio and benchmark-relative groups, added responsive fixed-width metric cards, and standardized analytical chart height at 400 pixels.
+- Reordered Dashboard metrics into primary portfolio and benchmark-relative groups and standardized analytical chart height at 400 pixels.
 - Standardized fixed-income metric cards, charts, editors, and tables to use the same responsive sizing and full-width data layout as the other workspaces.
 
 - Added a self-contained **Fixed Income** view under Research without increasing the six primary workspaces or mixing bond terms with equity/ETF ticker inputs.

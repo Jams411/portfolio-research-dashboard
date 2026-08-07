@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import date
+from html import escape
 import os
 from pathlib import Path
 import subprocess
@@ -53,6 +54,80 @@ st.set_page_config(page_title="PortfolioLens", page_icon=":material/analytics:",
 
 CHART_HEIGHT = 400
 
+DASHBOARD_METRIC_GRID_CSS = """
+<style>
+.financial-metric-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    width: 100%;
+    margin: 0 0 0.75rem;
+}
+.financial-metric-card {
+    --metric-accent: #64748b;
+    flex: 1 1 8.625rem;
+    min-width: min(100%, 8.625rem);
+    height: 8.875rem;
+    padding: 0.9rem 1rem 0.85rem;
+    border: 1px solid #334155;
+    border-top: 3px solid var(--metric-accent);
+    border-radius: 0.55rem;
+    background: #111b2e;
+    color: #f1f5f9;
+    box-sizing: border-box;
+}
+.financial-metric-card:hover {
+    border-color: #475569;
+    background: #162033;
+}
+.financial-metric-card:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 2px;
+}
+.financial-metric-card--primary { --metric-accent: #60a5fa; }
+.financial-metric-card--positive { --metric-accent: #34d399; }
+.financial-metric-card--negative { --metric-accent: #f87171; }
+.financial-metric-card--warning { --metric-accent: #fbbf24; }
+.financial-metric-card__label {
+    min-height: 2.15em;
+    color: #cbd5e1;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.08rem;
+}
+.financial-metric-card__value {
+    margin-top: 0.25rem;
+    color: #f8fafc;
+    font-size: clamp(1.55rem, 2.35vw, 2.2rem);
+    font-weight: 600;
+    line-height: 1.1;
+    white-space: nowrap;
+}
+.financial-metric-card--positive .financial-metric-card__value { color: #6ee7b7; }
+.financial-metric-card--negative .financial-metric-card__value { color: #fca5a5; }
+.financial-metric-card__context {
+    margin-top: 0.45rem;
+    color: #94a3b8;
+    font-size: 0.72rem;
+    line-height: 1.05rem;
+}
+.financial-metric-card__context--positive { color: #6ee7b7; }
+.financial-metric-card__context--negative { color: #fca5a5; }
+@media (max-width: 700px) {
+    .financial-metric-card {
+        flex-basis: calc(50% - 0.35rem);
+        min-width: min(100%, 8.25rem);
+    }
+}
+@media (min-width: 701px) and (max-width: 1200px) {
+    .financial-metric-grid--secondary .financial-metric-card { flex-basis: 12rem; }
+}
+@media (max-width: 420px) {
+    .financial-metric-card { flex-basis: 100%; }
+}
+</style>
+"""
+
 @st.cache_data(ttl=3600, max_entries=32, show_spinner=False)
 def cached_prices(tickers: tuple[str, ...], start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
     return download_prices(tickers, start, end)
@@ -90,8 +165,69 @@ def compact_pct(value: float) -> str:
     return f"{value:.1%}"
 
 
-def line_chart(frame: pd.DataFrame, title: str, y_title: str) -> None:
-    fig = px.line(frame, title=title, labels={"value": y_title, "index": "Date", "variable": "Series"})
+def compact_signed_money(value: float) -> str:
+    """Format a signed currency change for concise, verified card context."""
+    sign = "+" if value > 0 else "−" if value < 0 else ""
+    return f"{sign}{compact_money(abs(value))}"
+
+
+def dashboard_metric_tone(label: str, value: float | None = None) -> str:
+    """Return a restrained semantic tone only for directionally meaningful metrics."""
+    if label == "Portfolio value":
+        return "primary"
+    if label == "Maximum drawdown":
+        return "negative" if value is not None and value < 0 else "neutral"
+    if label in {"Total return", "CAGR", "Sharpe ratio", "Information ratio", "Relative benchmark result"}:
+        if value is not None and value > 0:
+            return "positive"
+        if value is not None and value < 0:
+            return "negative"
+    return "neutral"
+
+
+def dashboard_metric_grid(cards: list[dict[str, object]], group_label: str, variant: str) -> None:
+    """Render a responsive, accessible dashboard metric row without placeholder cards."""
+    articles = []
+    for card in cards:
+        label = escape(str(card["label"]))
+        value = escape(str(card["value"]))
+        context = escape(str(card.get("context", "")))
+        tone = str(card.get("tone", "neutral"))
+        context_tone = str(card.get("context_tone", "neutral"))
+        context_class = (
+            f" financial-metric-card__context--{context_tone}"
+            if context_tone in {"positive", "negative"}
+            else ""
+        )
+        articles.append(
+            f'<article class="financial-metric-card financial-metric-card--{tone}" '
+            f'role="listitem" tabindex="0" aria-label="{label}: {value}">'
+            f'<div class="financial-metric-card__label">{label}</div>'
+            f'<div class="financial-metric-card__value">{value}</div>'
+            f'<div class="financial-metric-card__context{context_class}">{context}</div>'
+            "</article>"
+        )
+    st.html(
+        f'<section class="financial-metric-grid financial-metric-grid--{escape(variant)}" '
+        f'role="list" aria-label="{escape(group_label)}">'
+        + "".join(articles)
+        + "</section>",
+        width="stretch",
+    )
+
+
+def line_chart(
+    frame: pd.DataFrame,
+    title: str,
+    y_title: str,
+    colors: list[str] | None = None,
+) -> None:
+    fig = px.line(
+        frame,
+        title=title,
+        labels={"value": y_title, "index": "Date", "variable": "Series"},
+        color_discrete_sequence=colors,
+    )
     fig.update_layout(
         height=CHART_HEIGHT,
         legend_title_text="",
@@ -409,25 +545,66 @@ if active_section == "Dashboard":
     with section_container:
         st.subheader("Executive dashboard")
         ending_value = r["initial_value"] * (1 + a.performance["Total Return"])
+        value_change = ending_value - r["initial_value"]
         primary_cards = [
-            ("Portfolio value", compact_money(ending_value)),
-            ("Total return", compact_pct(a.performance["Total Return"])),
-            ("CAGR", compact_pct(a.performance["CAGR"])),
-            ("Volatility", compact_pct(a.performance["Annualized Volatility"])),
-            ("Sharpe ratio", ratio(a.performance["Sharpe Ratio"])),
-            ("Max drawdown", compact_pct(a.performance["Maximum Drawdown"])),
+            {
+                "label": "Portfolio value", "value": compact_money(ending_value),
+                "context": f"{compact_signed_money(value_change)} since inception",
+                "tone": dashboard_metric_tone("Portfolio value"),
+                "context_tone": "positive" if value_change > 0 else "negative" if value_change < 0 else "neutral",
+            },
+            {
+                "label": "Total return", "value": compact_pct(a.performance["Total Return"]),
+                "context": "Since inception",
+                "tone": dashboard_metric_tone("Total return", a.performance["Total Return"]),
+            },
+            {
+                "label": "CAGR", "value": compact_pct(a.performance["CAGR"]),
+                "context": "Annualized compound return",
+                "tone": dashboard_metric_tone("CAGR", a.performance["CAGR"]),
+            },
+            {
+                "label": "Volatility", "value": compact_pct(a.performance["Annualized Volatility"]),
+                "context": "Annualized variability", "tone": "neutral",
+            },
+            {
+                "label": "Sharpe ratio", "value": ratio(a.performance["Sharpe Ratio"]),
+                "context": "Risk-adjusted return",
+                "tone": dashboard_metric_tone("Sharpe ratio", a.performance["Sharpe Ratio"]),
+            },
+            {
+                "label": "Maximum drawdown", "value": compact_pct(a.performance["Maximum Drawdown"]),
+                "context": "Peak-to-trough loss",
+                "tone": dashboard_metric_tone("Maximum drawdown", a.performance["Maximum Drawdown"]),
+            },
         ]
         relative_cards = [
-            ("Beta", ratio(a.benchmark["Beta"])),
-            ("Tracking error", compact_pct(a.benchmark["Tracking Error"])),
-            ("Information ratio", ratio(a.benchmark["Information Ratio"])),
-            ("Largest risk contributor", str(a.volatility_contributions.idxmax())),
-            ("Vs. benchmark", compact_pct(a.benchmark["Annualized Active Return"])),
+            {
+                "label": "Beta", "value": ratio(a.benchmark["Beta"]),
+                "context": "Benchmark sensitivity", "tone": "neutral",
+            },
+            {
+                "label": "Tracking error", "value": compact_pct(a.benchmark["Tracking Error"]),
+                "context": "Active-return variability", "tone": "neutral",
+            },
+            {
+                "label": "Information ratio", "value": ratio(a.benchmark["Information Ratio"]),
+                "context": "Active return per unit of tracking error",
+                "tone": dashboard_metric_tone("Information ratio", a.benchmark["Information Ratio"]),
+            },
+            {
+                "label": "Largest risk contributor", "value": str(a.volatility_contributions.idxmax()),
+                "context": "Highest volatility contribution", "tone": "neutral",
+            },
+            {
+                "label": "Relative benchmark result", "value": compact_pct(a.benchmark["Annualized Active Return"]),
+                "context": "Annualized active return",
+                "tone": dashboard_metric_tone("Relative benchmark result", a.benchmark["Annualized Active Return"]),
+            },
         ]
-        for cards, card_width in ((primary_cards, 140), (relative_cards, 170)):
-            with st.container(horizontal=True, gap="xsmall"):
-                for label, value in cards:
-                    st.metric(label, value, border=True, width=card_width)
+        st.html(DASHBOARD_METRIC_GRID_CSS)
+        dashboard_metric_grid(primary_cards, "Portfolio summary metrics", "primary")
+        dashboard_metric_grid(relative_cards, "Benchmark and risk metrics", "secondary")
         st.caption(
             f"Health score: {health_score:.0f}/100 with {health_coverage:.0%} metric coverage · "
             f"benchmark: {r['benchmark_ticker']}"
@@ -440,6 +617,7 @@ if active_section == "Dashboard":
             growth * r["initial_value"],
             f"Portfolio vs {r['benchmark_ticker']}",
             "Portfolio value ($)",
+            colors=["#60A5FA", "#34D399"],
         )
         line_chart(
             pd.concat([

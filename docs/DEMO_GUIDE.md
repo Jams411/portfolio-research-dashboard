@@ -9,6 +9,11 @@ Verified demo URL: [portfolio-lens.streamlit.app](https://portfolio-lens.streaml
 3. Keep Advanced assumptions, Implementation, and Strategy settings collapsed until their values need explanation.
 4. At 1366×768, confirm all six workspaces remain on one line and the Dashboard cards show complete values.
 5. Treat horizontal movement inside a wide dataframe as intentional table scrolling; the page itself should not scroll horizontally.
+6. At 1,920 pixels, confirm both metric groups and the growth chart share the same full-width content edges with no empty metric column.
+7. At approximately 1,100 pixels, confirm the six primary metrics wrap 4+2 and the five benchmark/risk metrics wrap 3+2; every wrapped row should fill its available width.
+8. At a narrow width, collapse the sidebar and confirm the cards use two columns, then one below 420 pixels. Navigation remains horizontally compact, but a desktop-width presentation remains the recommended demo format.
+
+Dashboard color semantics are intentionally restrained: blue marks the primary portfolio value and active controls; green/red identify directionally meaningful results; gray identifies neutral risk information; amber remains reserved for warnings. Labels, signs, and context text carry the same meaning when color is unavailable.
 
 ## Fixed-income walkthrough (three minutes)
 
