@@ -402,14 +402,14 @@ def test_dashboard_key_metrics_and_state_survive_navigation(offline_app):
     widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, QQQ, TLT, GLD")
     widget(offline_app.text_input, "Weights (%)").set_value("40,25,20,15")
     run_analysis(offline_app)
-    expected_metrics = {
-        "Portfolio value", "Total return", "CAGR", "Arithmetic return", "Volatility",
-        "Sharpe ratio", "Max drawdown", "Beta", "Tracking error", "Information ratio",
-        "Strongest risk contributor", "Active return",
-    }
-    assert expected_metrics <= {metric.label for metric in offline_app.metric}
+    expected_order = [
+        "Portfolio value", "Total return", "CAGR", "Volatility", "Sharpe ratio", "Max drawdown",
+        "Beta", "Tracking error", "Information ratio", "Largest risk contributor",
+        "Vs. benchmark",
+    ]
+    assert [metric.label for metric in offline_app.metric[:len(expected_order)]] == expected_order
     portfolio_value = next(metric.value for metric in offline_app.metric if metric.label == "Portfolio value")
-    assert portfolio_value.startswith("$") and "." not in portfolio_value
+    assert portfolio_value.startswith("$") and portfolio_value.endswith("K")
     saved_weights = offline_app.session_state["result"]["weights"].copy()
     for section in ("Risk", "ETF Research", "Research Report", "Dashboard"):
         offline_app.session_state["analysis_tab"] = section

@@ -51,6 +51,8 @@ from portfolio_dashboard.stress import custom_shock, historical_stress
 
 st.set_page_config(page_title="PortfolioLens", page_icon=":material/analytics:", layout="wide")
 
+CHART_HEIGHT = 400
+
 @st.cache_data(ttl=3600, max_entries=32, show_spinner=False)
 def cached_prices(tickers: tuple[str, ...], start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
     return download_prices(tickers, start, end)
@@ -71,9 +73,31 @@ def percent_table(frame: pd.DataFrame) -> pd.io.formats.style.Styler:
     return frame.style.format("{:.2%}", na_rep="—")
 
 
+def compact_money(value: float) -> str:
+    """Format an executive-card value to remain readable at laptop widths."""
+    magnitude = abs(value)
+    if magnitude >= 1_000_000_000:
+        return f"${value / 1_000_000_000:,.1f}B"
+    if magnitude >= 1_000_000:
+        return f"${value / 1_000_000:,.1f}M"
+    if magnitude >= 1_000:
+        return f"${value / 1_000:,.0f}K"
+    return f"${value:,.0f}"
+
+
+def compact_pct(value: float) -> str:
+    """Format a dashboard percentage without crowding compact metric cards."""
+    return f"{value:.1%}"
+
+
 def line_chart(frame: pd.DataFrame, title: str, y_title: str) -> None:
     fig = px.line(frame, title=title, labels={"value": y_title, "index": "Date", "variable": "Series"})
-    fig.update_layout(legend_title_text="", hovermode="x unified", margin=dict(l=10, r=10, t=50, b=10))
+    fig.update_layout(
+        height=CHART_HEIGHT,
+        legend_title_text="",
+        hovermode="x unified",
+        margin=dict(l=10, r=10, t=50, b=10),
+    )
     st.plotly_chart(fig, width="stretch", theme="streamlit")
 
 
@@ -334,7 +358,7 @@ else:
     )
 st.session_state["analysis_tab"] = active_section
 st.session_state["_navigation_section"] = active_section
-section_container = st.container()
+section_container = st.container(gap="small")
 
 if active_section == "Fixed Income":
     with section_container:
@@ -385,24 +409,25 @@ if active_section == "Dashboard":
     with section_container:
         st.subheader("Executive dashboard")
         ending_value = r["initial_value"] * (1 + a.performance["Total Return"])
-        cards = [
-            ("Portfolio value", f"${ending_value:,.0f}"),
-            ("Total return", pct(a.performance["Total Return"])),
-            ("CAGR", pct(a.performance["CAGR"])),
-            ("Arithmetic return", pct(a.performance["Historical Arithmetic Annualized Return"])),
-            ("Volatility", pct(a.performance["Annualized Volatility"])),
+        primary_cards = [
+            ("Portfolio value", compact_money(ending_value)),
+            ("Total return", compact_pct(a.performance["Total Return"])),
+            ("CAGR", compact_pct(a.performance["CAGR"])),
+            ("Volatility", compact_pct(a.performance["Annualized Volatility"])),
             ("Sharpe ratio", ratio(a.performance["Sharpe Ratio"])),
-            ("Max drawdown", pct(a.performance["Maximum Drawdown"])),
-            ("Beta", ratio(a.benchmark["Beta"])),
-            ("Tracking error", pct(a.benchmark["Tracking Error"])),
-            ("Information ratio", ratio(a.benchmark["Information Ratio"])),
-            ("Strongest risk contributor", str(a.volatility_contributions.idxmax())),
-            ("Active return", pct(a.benchmark["Annualized Active Return"])),
+            ("Max drawdown", compact_pct(a.performance["Maximum Drawdown"])),
         ]
-        for start_index in range(0, len(cards), 4):
-            card_columns = st.columns(4)
-            for column, (label, value) in zip(card_columns, cards[start_index:start_index + 4]):
-                column.metric(label, value, border=True)
+        relative_cards = [
+            ("Beta", ratio(a.benchmark["Beta"])),
+            ("Tracking error", compact_pct(a.benchmark["Tracking Error"])),
+            ("Information ratio", ratio(a.benchmark["Information Ratio"])),
+            ("Largest risk contributor", str(a.volatility_contributions.idxmax())),
+            ("Vs. benchmark", compact_pct(a.benchmark["Annualized Active Return"])),
+        ]
+        for cards, card_width in ((primary_cards, 140), (relative_cards, 170)):
+            with st.container(horizontal=True, gap="xsmall"):
+                for label, value in cards:
+                    st.metric(label, value, border=True, width=card_width)
         st.caption(
             f"Health score: {health_score:.0f}/100 with {health_coverage:.0%} metric coverage · "
             f"benchmark: {r['benchmark_ticker']}"
@@ -411,7 +436,11 @@ if active_section == "Dashboard":
             (1 + a.portfolio_returns).cumprod().rename("Portfolio"),
             (1 + a.benchmark_returns).cumprod().rename(r["benchmark_ticker"]),
         ], axis=1)
-        line_chart(growth * r["initial_value"], "Growth of the initial portfolio value", "Value ($)")
+        line_chart(
+            growth * r["initial_value"],
+            f"Portfolio vs {r['benchmark_ticker']}",
+            "Portfolio value ($)",
+        )
         line_chart(
             pd.concat([
                 drawdown_series(a.portfolio_returns).rename("Portfolio"),
@@ -428,7 +457,9 @@ if active_section == "Dashboard":
                 title="Current allocation",
                 hole=0.55,
             )
-            allocation_figure.update_layout(margin=dict(l=10, r=10, t=50, b=10), legend_title_text="")
+            allocation_figure.update_layout(
+                height=CHART_HEIGHT, margin=dict(l=10, r=10, t=50, b=10), legend_title_text="",
+            )
             st.plotly_chart(allocation_figure, width="stretch", theme="streamlit")
         with risk_column:
             risk_figure = px.bar(
@@ -438,7 +469,9 @@ if active_section == "Dashboard":
                 title="Risk contribution",
                 labels={"index": "Security", "Contribution": "Annualized volatility contribution"},
             )
-            risk_figure.update_layout(margin=dict(l=10, r=10, t=50, b=10), showlegend=False)
+            risk_figure.update_layout(
+                height=CHART_HEIGHT, margin=dict(l=10, r=10, t=50, b=10), showlegend=False,
+            )
             risk_figure.update_yaxes(tickformat=".1%")
             st.plotly_chart(risk_figure, width="stretch", theme="streamlit")
         if not r["frontier"].empty:
@@ -452,7 +485,7 @@ if active_section == "Dashboard":
                     "Optimizer Expected Return": "Expected annual return",
                 },
             )
-            frontier_preview.update_layout(margin=dict(l=10, r=10, t=50, b=10))
+            frontier_preview.update_layout(height=CHART_HEIGHT, margin=dict(l=10, r=10, t=50, b=10))
             frontier_preview.update_xaxes(tickformat=".1%")
             frontier_preview.update_yaxes(tickformat=".1%")
             st.plotly_chart(frontier_preview, width="stretch", theme="streamlit")
@@ -746,7 +779,7 @@ if active_section == "Security Analysis":
         characteristic.update_layout(
             title=f"Security Characteristic Line — {selected_security} vs {r['benchmark_ticker']}",
             xaxis_title="Benchmark excess return (daily)", yaxis_title="Security excess return (daily)",
-            legend_title_text="", margin=dict(l=10, r=10, t=50, b=10),
+            height=CHART_HEIGHT, legend_title_text="", margin=dict(l=10, r=10, t=50, b=10),
         )
         st.plotly_chart(characteristic, width="stretch", theme="streamlit")
 
@@ -756,7 +789,7 @@ if active_section == "Security Analysis":
             labels={"x": "Date", "Residual": "Residual excess return (daily)"},
         )
         residual_chart.add_hline(y=0, line_dash="dash", line_color="gray")
-        residual_chart.update_layout(margin=dict(l=10, r=10, t=50, b=10))
+        residual_chart.update_layout(height=CHART_HEIGHT, margin=dict(l=10, r=10, t=50, b=10))
         st.plotly_chart(residual_chart, width="stretch", theme="streamlit")
 
         regression_details = st.expander("Regression Diagnostics", on_change="rerun")
@@ -842,7 +875,7 @@ if active_section == "Asset Pricing":
         sml_chart.update_layout(
             title="Security Market Line — historical CAPM comparison",
             xaxis_title="Beta", yaxis_title="Annualized return",
-            legend_title_text="", margin=dict(l=10, r=10, t=50, b=10),
+            height=CHART_HEIGHT, legend_title_text="", margin=dict(l=10, r=10, t=50, b=10),
         )
         st.plotly_chart(sml_chart, width="stretch", theme="streamlit")
         st.dataframe(
@@ -1034,7 +1067,12 @@ if active_section == "Portfolio Optimization & Rebalancing":
                     ),
                     marker=dict(color="#76B7B2", size=12, symbol="triangle-up"),
                 )
-            frontier_chart.update_layout(hovermode="closest", legend_title_text="", margin=dict(l=10, r=10, t=50, b=10))
+            frontier_chart.update_layout(
+                height=CHART_HEIGHT,
+                hovermode="closest",
+                legend_title_text="",
+                margin=dict(l=10, r=10, t=50, b=10),
+            )
             st.plotly_chart(frontier_chart, width="stretch", theme="streamlit")
             st.caption(
                 "The curve contains only feasible minimum-variance portfolios on the efficient upper branch, beginning at the global minimum-variance portfolio. "
