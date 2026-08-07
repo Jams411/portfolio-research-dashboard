@@ -2,6 +2,14 @@
 
 This journal explains the project’s evolution in plain language. It complements, rather than replaces, the evidence-focused [project history](PROJECT_HISTORY.md), formal [decision log](DECISIONS.md), user-facing [changelog](../CHANGELOG.md), and forward-looking [roadmap](ROADMAP.md).
 
+## 2026-08-07 — Mobile analytical-canvas pass
+
+- **Goal:** Make the full research workflow usable on a phone without introducing client-side scripting or changing calculations.
+- **Observed friction:** Chart containers reached the viewport edges, but legends on the right reduced the data region to roughly half the screen. Full toolbars overlapped titles, fixed heights created tall narrow plots, frontier labels collided, and wide tables visually pushed beyond their parent surface.
+- **Implementation:** Added a shared responsive Plotly configuration and layout helper, horizontal below-chart legends, reduced chart heights, compact axes, a simplified modebar, marker-only frontier/SML points with complete hover labels, and a 700-pixel CSS breakpoint for page/chart/table containment.
+- **Tradeoff:** The reliable Streamlit implementation uses the same below-chart legend on desktop because the server does not know the live viewport width. The result is slightly more vertical legend space on desktop in exchange for consistent behavior without fragile JavaScript.
+- **Verification:** Used fresh local screenshots and DOM geometry at 390×844, 430×932, 768×1024, and 1366×768, plus deterministic AppTest assertions for chart configuration, CSS overflow, and marker-label behavior.
+
 ## 2026-08-07 — Responsive card and financial-color pass
 
 - **Goal:** Remove Dashboard dead space and add useful financial emphasis without turning the interface into a color-coded scorecard.

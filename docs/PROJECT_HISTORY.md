@@ -1,5 +1,12 @@
 # Project history
 
+## 2026-08-07 — Mobile chart and table responsiveness
+
+- **What changed:** Centralized all Plotly rendering into a full-width responsive contract, moved legends below plots, reduced modebar actions, separated simple and complex heights, tightened mobile margins and typography, contained wide tables, and removed overlapping point labels from the frontier and SML.
+- **Root cause:** Streamlit stretched the outer chart element, but right-side Plotly legends reserved a large part of the inner plotting region. Independent desktop layout settings also kept full toolbars, fixed heights, and label-heavy traces at phone widths.
+- **Responsive evidence:** Reviewed Dashboard, Performance, Risk, Portfolio Optimization, Asset Pricing, Fixed Income, and Reports at 390×844; additionally checked 430×932, 768×1024, and 1366×768. The document width remained equal to the viewport, legends stayed below charts, charts used their content width, and tables scrolled inside their containers.
+- **Boundaries:** Financial calculations, analysis state, report contents, downloads, navigation destinations, and the six-workspace hierarchy are unchanged.
+
 ## 2026-08-07 — Responsive financial dashboard cards
 
 - **What changed:** Replaced the Dashboard's fixed 140/170-pixel card widths with two scoped flex grids. Added consistent card height, contextual subtitles, focus treatment, and restrained blue/green/red/neutral semantic accents. The Portfolio-versus-benchmark chart now explicitly uses blue and green series colors.

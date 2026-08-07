@@ -52,7 +52,78 @@ from portfolio_dashboard.stress import custom_shock, historical_stress
 
 st.set_page_config(page_title="PortfolioLens", page_icon=":material/analytics:", layout="wide")
 
-CHART_HEIGHT = 400
+SIMPLE_CHART_HEIGHT = 360
+COMPLEX_CHART_HEIGHT = 440
+
+PLOTLY_CONFIG = {
+    "responsive": True,
+    "displaylogo": False,
+    "displayModeBar": True,
+    "modeBarButtonsToRemove": [
+        "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d",
+        "autoScale2d", "toggleSpikelines",
+    ],
+    "toImageButtonOptions": {"format": "png", "filename": "portfoliolens_chart", "scale": 2},
+}
+
+RESPONSIVE_LAYOUT_CSS = """
+<style>
+[data-testid="stMainBlockContainer"],
+[data-testid="stMain"] {
+    max-width: 100%;
+}
+[data-testid="stPlotlyChart"],
+[data-testid="stPlotlyChart"] > div,
+[data-testid="stPlotlyChart"] .js-plotly-plot,
+[data-testid="stPlotlyChart"] .plot-container {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+[data-testid="stDataFrame"],
+[data-testid="stDataEditor"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+}
+@media (max-width: 700px) {
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"] {
+        max-width: 100vw;
+        overflow-x: clip;
+    }
+    [data-testid="stMainBlockContainer"] {
+        width: 100%;
+        max-width: 100%;
+        padding: 3.75rem 0.75rem 3rem !important;
+    }
+    [data-testid="stVerticalBlock"] {
+        gap: 0.75rem;
+    }
+    [data-testid="stPlotlyChart"] {
+        margin-inline: 0 !important;
+        overflow: hidden;
+    }
+    [data-testid="stPlotlyChart"] .modebar {
+        top: 2.7rem !important;
+        right: 0.2rem !important;
+    }
+    [data-testid="stDataFrame"],
+    [data-testid="stDataEditor"] {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    h1 { font-size: 2.15rem !important; }
+    h2 { font-size: 1.65rem !important; }
+    h3 { font-size: 1.35rem !important; }
+}
+@media (max-width: 430px) {
+    [data-testid="stMainBlockContainer"] {
+        padding-inline: 0.625rem !important;
+    }
+}
+</style>
+"""
 
 DASHBOARD_METRIC_GRID_CSS = """
 <style>
@@ -119,7 +190,10 @@ DASHBOARD_METRIC_GRID_CSS = """
         min-width: min(100%, 8.25rem);
     }
 }
-@media (min-width: 701px) and (max-width: 1200px) {
+@media (min-width: 701px) and (max-width: 900px) {
+    .financial-metric-card { flex-basis: calc(33.333% - 0.5rem); }
+}
+@media (min-width: 901px) and (max-width: 1200px) {
     .financial-metric-grid--secondary .financial-metric-card { flex-basis: 12rem; }
 }
 @media (max-width: 420px) {
@@ -216,6 +290,50 @@ def dashboard_metric_grid(cards: list[dict[str, object]], group_label: str, vari
     )
 
 
+def render_plotly_chart(
+    figure: go.Figure,
+    *,
+    complex_chart: bool = False,
+    show_legend: bool = True,
+) -> None:
+    """Apply one responsive chart contract before rendering a Plotly figure."""
+    height = COMPLEX_CHART_HEIGHT if complex_chart else SIMPLE_CHART_HEIGHT
+    bottom_margin = 112 if show_legend and complex_chart else 88 if show_legend else 56
+    figure.update_layout(
+        autosize=True,
+        height=height,
+        showlegend=show_legend,
+        legend_title_text="",
+        margin=dict(l=44, r=10, t=78, b=bottom_margin),
+        title=dict(font=dict(size=17), x=0, xanchor="left", y=0.98, yanchor="top"),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.18,
+            xanchor="left",
+            x=0,
+            font=dict(size=10),
+        ),
+        font=dict(size=11),
+    )
+    figure.update_xaxes(
+        automargin=True,
+        title_font=dict(size=12),
+        tickfont=dict(size=10),
+    )
+    figure.update_yaxes(
+        automargin=True,
+        title_font=dict(size=12),
+        tickfont=dict(size=10),
+    )
+    st.plotly_chart(
+        figure,
+        width="stretch",
+        theme="streamlit",
+        config=PLOTLY_CONFIG,
+    )
+
+
 def line_chart(
     frame: pd.DataFrame,
     title: str,
@@ -228,13 +346,8 @@ def line_chart(
         labels={"value": y_title, "index": "Date", "variable": "Series"},
         color_discrete_sequence=colors,
     )
-    fig.update_layout(
-        height=CHART_HEIGHT,
-        legend_title_text="",
-        hovermode="x unified",
-        margin=dict(l=10, r=10, t=50, b=10),
-    )
-    st.plotly_chart(fig, width="stretch", theme="streamlit")
+    fig.update_layout(hovermode="x unified")
+    render_plotly_chart(fig)
 
 
 @st.cache_data(show_spinner=False)
@@ -293,6 +406,8 @@ def clear_analysis_state() -> None:
     for key in ANALYSIS_STATE_KEYS:
         st.session_state.pop(key, None)
 
+
+st.html(RESPONSIVE_LAYOUT_CSS)
 
 with st.container(gap="xxsmall"):
     st.title("PortfolioLens")
@@ -635,10 +750,7 @@ if active_section == "Dashboard":
                 title="Current allocation",
                 hole=0.55,
             )
-            allocation_figure.update_layout(
-                height=CHART_HEIGHT, margin=dict(l=10, r=10, t=50, b=10), legend_title_text="",
-            )
-            st.plotly_chart(allocation_figure, width="stretch", theme="streamlit")
+            render_plotly_chart(allocation_figure)
         with risk_column:
             risk_figure = px.bar(
                 a.volatility_contributions.rename("Contribution").reset_index(),
@@ -647,11 +759,8 @@ if active_section == "Dashboard":
                 title="Risk contribution",
                 labels={"index": "Security", "Contribution": "Annualized volatility contribution"},
             )
-            risk_figure.update_layout(
-                height=CHART_HEIGHT, margin=dict(l=10, r=10, t=50, b=10), showlegend=False,
-            )
             risk_figure.update_yaxes(tickformat=".1%")
-            st.plotly_chart(risk_figure, width="stretch", theme="streamlit")
+            render_plotly_chart(risk_figure, show_legend=False)
         if not r["frontier"].empty:
             frontier_preview = px.line(
                 r["frontier"],
@@ -663,10 +772,9 @@ if active_section == "Dashboard":
                     "Optimizer Expected Return": "Expected annual return",
                 },
             )
-            frontier_preview.update_layout(height=CHART_HEIGHT, margin=dict(l=10, r=10, t=50, b=10))
             frontier_preview.update_xaxes(tickformat=".1%")
             frontier_preview.update_yaxes(tickformat=".1%")
-            st.plotly_chart(frontier_preview, width="stretch", theme="streamlit")
+            render_plotly_chart(frontier_preview, show_legend=False)
         st.markdown("### Key insights")
         for observation in insights["Observation"]:
             st.write(f"- {observation}")
@@ -824,7 +932,7 @@ if active_section == "Risk":
         )
         corr = a.asset_returns.corr(); cov = a.asset_returns.cov() * TRADING_DAYS
         fig = px.imshow(corr, text_auto=".2f", zmin=-1, zmax=1, color_continuous_scale="RdBu_r", title="Daily return correlations")
-        st.plotly_chart(fig, width="stretch", theme="streamlit")
+        render_plotly_chart(fig, complex_chart=True, show_legend=False)
         covariance = st.expander("Annualized covariance matrix", on_change="rerun")
         if covariance.open:
             with covariance:
@@ -957,9 +1065,8 @@ if active_section == "Security Analysis":
         characteristic.update_layout(
             title=f"Security Characteristic Line — {selected_security} vs {r['benchmark_ticker']}",
             xaxis_title="Benchmark excess return (daily)", yaxis_title="Security excess return (daily)",
-            height=CHART_HEIGHT, legend_title_text="", margin=dict(l=10, r=10, t=50, b=10),
         )
-        st.plotly_chart(characteristic, width="stretch", theme="streamlit")
+        render_plotly_chart(characteristic, complex_chart=True)
 
         residual_chart = px.scatter(
             security_observations, x=security_observations.index, y="Residual",
@@ -967,8 +1074,7 @@ if active_section == "Security Analysis":
             labels={"x": "Date", "Residual": "Residual excess return (daily)"},
         )
         residual_chart.add_hline(y=0, line_dash="dash", line_color="gray")
-        residual_chart.update_layout(height=CHART_HEIGHT, margin=dict(l=10, r=10, t=50, b=10))
-        st.plotly_chart(residual_chart, width="stretch", theme="streamlit")
+        render_plotly_chart(residual_chart, show_legend=False)
 
         regression_details = st.expander("Regression Diagnostics", on_change="rerun")
         if regression_details.open:
@@ -1037,7 +1143,7 @@ if active_section == "Asset Pricing":
         ))
         sml_chart.add_trace(go.Scatter(
             x=capm_table["Beta"], y=capm_table["Historical Arithmetic Return"],
-            mode="markers+text", text=capm_table.index, textposition="top center",
+            mode="markers", text=capm_table.index,
             name="Historical security return",
             customdata=capm_table[["CAPM Required Return", "Jensen's Alpha"]].to_numpy(),
             hovertemplate=(
@@ -1051,11 +1157,10 @@ if active_section == "Asset Pricing":
             hovertemplate=f"{r['benchmark_ticker']}<br>Beta: 1.000<br>Historical arithmetic return: %{{y:.2%}}<extra></extra>",
         ))
         sml_chart.update_layout(
-            title="Security Market Line — historical CAPM comparison",
+            title="Security Market Line — CAPM comparison",
             xaxis_title="Beta", yaxis_title="Annualized return",
-            height=CHART_HEIGHT, legend_title_text="", margin=dict(l=10, r=10, t=50, b=10),
         )
-        st.plotly_chart(sml_chart, width="stretch", theme="streamlit")
+        render_plotly_chart(sml_chart, complex_chart=True)
         st.dataframe(
             capm_table, width="stretch",
             column_config={
@@ -1202,29 +1307,29 @@ if active_section == "Portfolio Optimization & Rebalancing":
                     "Sharpe ratio: %{customdata[1]:.3f}<extra></extra>"
                 ),
                 line=dict(color="#F28E2B", width=3, dash="dash"),
-                name="Capital Allocation Line",
+                name="CAL",
             )
             marker_styles = {
-                "Current": ("Current Portfolio", "#7F7F7F", "circle"),
-                "Minimum Variance": ("Global Minimum Variance", "#59A14F", "diamond"),
-                "Maximum Sharpe": ("Tangency Portfolio", "#E15759", "star"),
+                "Current": ("Current", "Current Portfolio", "#7F7F7F", "circle"),
+                "Minimum Variance": ("GMV", "Global Minimum Variance Portfolio", "#59A14F", "diamond"),
+                "Maximum Sharpe": ("Tangency", "Tangency Portfolio", "#E15759", "star"),
             }
-            for name, (display_name, color, symbol) in marker_styles.items():
+            for name, (legend_name, full_name, color, symbol) in marker_styles.items():
                 if name in r["construction_stats"].index:
                     point = r["construction_stats"].loc[name]
                     frontier_chart.add_scatter(
                         x=[point["Optimizer Volatility"]], y=[point["Optimizer Expected Return"]],
-                        mode="markers+text", text=[display_name], textposition="top center", name=display_name,
+                        mode="markers", name=legend_name,
                         customdata=[[point["Optimizer Sharpe"]]],
                         hovertemplate=(
-                            f"{display_name}<br>Annualized volatility: %{{x:.2%}}<br>"
+                            f"{full_name}<br>Annualized volatility: %{{x:.2%}}<br>"
                             "Annualized expected return: %{y:.2%}<br>Sharpe ratio: %{customdata[0]:.3f}<extra></extra>"
                         ),
                         marker=dict(color=color, size=12, symbol=symbol),
                     )
             frontier_chart.add_scatter(
                 x=[complete_stats["Optimizer Volatility"]], y=[complete_stats["Optimizer Expected Return"]],
-                mode="markers+text", text=["Complete"], textposition="bottom center", name="Complete Portfolio",
+                mode="markers", name="Complete",
                 customdata=[[complete_stats["Optimizer Sharpe"]]],
                 hovertemplate=(
                     "Complete Portfolio<br>Annualized volatility: %{x:.2%}<br>Annualized expected return: %{y:.2%}<br>"
@@ -1237,7 +1342,7 @@ if active_section == "Portfolio Optimization & Rebalancing":
                 frontier_chart.add_scatter(
                     x=[saved_target_stats["Optimizer Volatility"]],
                     y=[saved_target_stats["Optimizer Expected Return"]],
-                    mode="markers+text", text=["Target"], textposition="top center", name="Target Return Portfolio",
+                    mode="markers", name="Target",
                     customdata=[[saved_target_stats["Optimizer Sharpe"]]],
                     hovertemplate=(
                         "Target Return Portfolio<br>Annualized volatility: %{x:.2%}<br>"
@@ -1246,12 +1351,9 @@ if active_section == "Portfolio Optimization & Rebalancing":
                     marker=dict(color="#76B7B2", size=12, symbol="triangle-up"),
                 )
             frontier_chart.update_layout(
-                height=CHART_HEIGHT,
                 hovermode="closest",
-                legend_title_text="",
-                margin=dict(l=10, r=10, t=50, b=10),
             )
-            st.plotly_chart(frontier_chart, width="stretch", theme="streamlit")
+            render_plotly_chart(frontier_chart, complex_chart=True)
             st.caption(
                 "The curve contains only feasible minimum-variance portfolios on the efficient upper branch, beginning at the global minimum-variance portfolio. "
                 "The Capital Allocation Line uses the same long-only tangency portfolio and annual risk-free rate as the optimizer and stops at 100% risky exposure. "

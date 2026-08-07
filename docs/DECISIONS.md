@@ -2,6 +2,16 @@
 
 Significant product, financial-methodology, architecture, and scope decisions are recorded here. Add new entries rather than rewriting prior decisions; mark superseded entries explicitly.
 
+## D036 — Use one mobile-safe Plotly and table rendering contract
+
+- **Date:** 2026-08-07
+- **Status:** Accepted; supersedes the fixed 400-pixel chart-height portion of D034 and D035.
+- **Decision:** Route every Plotly figure through one Streamlit renderer using `width="stretch"`, Plotly autosizing and responsive configuration. Use 360-pixel simple charts and 440-pixel complex charts, horizontal legends below the plot, compact axis typography, small right margins, and a toolbar limited to download, zoom, reset, and Streamlit fullscreen controls. Apply a CSS-only breakpoint at 700 pixels for 10–12 pixel page padding, chart containment, modebar clearance, and controlled dataframe/editor overflow.
+- **Label policy:** Efficient-frontier portfolios use GMV, Tangency, Current, Complete, and Target in the compact legend and marker-only plot traces; full portfolio names remain in hover templates. The Security Market Line likewise keeps security identities in hover detail instead of overlapping marker text.
+- **Rationale:** The prior chart containers stretched, but Plotly still reserved desktop legend space inside them. Right-side legends narrowed the plotting region, fixed 400-pixel heights produced tall narrow charts, and the full modebar collided with titles on phones.
+- **Tradeoff:** Because Streamlit does not expose viewport width to Python without client scripting, the below-chart legend and compact chart heights are shared across desktop and mobile. This is consistent and robust, but less dense than a viewport-specific Plotly layout callback.
+- **Scope boundary:** No analytical input, financial formula, state key, report payload, or export changed.
+
 ## D035 — Use a scoped responsive Dashboard card grid with financial color semantics
 
 - **Date:** 2026-08-07
@@ -10,7 +20,7 @@ Significant product, financial-methodology, architecture, and scope decisions ar
 - **Color semantics:** Blue identifies the primary portfolio value and active product controls. Green/red apply only to signed return, CAGR, Sharpe, drawdown, Information Ratio, and active-return results. Volatility, beta, tracking error, and risk-contributor identity remain neutral. Existing warnings inherit the amber theme color. Signs, labels, and context text preserve meaning without color.
 - **Responsive contract:** Six primary cards and five benchmark/risk cards fill their group at wide desktop widths; laptop rows wrap and redistribute remaining width; screens at or below 700 pixels use two cards per row, and screens at or below 420 pixels use one. Card heights, padding, borders, hover treatment, and keyboard focus outlines remain consistent.
 - **Rationale:** Native horizontal containers can wrap, but fixed child widths leave substantial unused space on wide displays and uneven last rows at narrower breakpoints. A scoped flex layout provides content-aware redistribution without placeholder cards or viewport-reading JavaScript.
-- **Consequences:** Dashboard cards are custom presentational HTML and therefore do not appear as `st.metric` elements in AppTest. Tests inspect the sanitized HTML contract directly. Streamlit still controls outer page padding and chart responsiveness; the chart height remains a stable 400 pixels.
+- **Consequences:** Dashboard cards are custom presentational HTML and therefore do not appear as `st.metric` elements in AppTest. Tests inspect the sanitized HTML contract directly. D036 now governs chart responsiveness and height.
 - **Scope boundary:** No metric, financial formula, state key, report, export, data source, or workspace changed.
 
 ## D034 — Keep the primary analysis action in the opening sidebar viewport

@@ -306,17 +306,20 @@ def test_frontier_chart_reconciles_professional_traces_offline(offline_app):
     assert specification["layout"]["title"]["text"] == "Efficient Frontier and Capital Allocation Line"
     names = {trace.get("name") for trace in specification["data"]}
     assert {
-        "Efficient Frontier", "Capital Allocation Line", "Current Portfolio",
-        "Global Minimum Variance", "Tangency Portfolio", "Complete Portfolio",
+        "Efficient Frontier", "CAL", "Current", "GMV", "Tangency", "Complete",
     } <= names
-    line = next(trace for trace in specification["data"] if trace.get("name") == "Capital Allocation Line")
+    line = next(trace for trace in specification["data"] if trace.get("name") == "CAL")
     line_x, line_y = plotly_values(line["x"]), plotly_values(line["y"])
     assert line_x[0] == pytest.approx(0.0)
     assert line_y[0] == pytest.approx(.04)
-    tangency = next(trace for trace in specification["data"] if trace.get("name") == "Tangency Portfolio")
+    tangency = next(trace for trace in specification["data"] if trace.get("name") == "Tangency")
     tangency_x, tangency_y = plotly_values(tangency["x"]), plotly_values(tangency["y"])
     assert line_x[-1] == pytest.approx(tangency_x[0])
     assert line_y[-1] == pytest.approx(tangency_y[0])
+    for name in ("Current", "GMV", "Tangency", "Complete"):
+        trace = next(item for item in specification["data"] if item.get("name") == name)
+        assert trace["mode"] == "markers"
+        assert "Portfolio" in trace["hovertemplate"]
     assert any(item.label == "Optimization Diagnostics" for item in offline_app.expander)
 
 
@@ -439,6 +442,52 @@ def test_dashboard_uses_responsive_semantic_metric_grid_without_placeholders(off
     assert "@media (max-width: 700px)" in combined
     assert "financial-metric-grid--secondary" in combined
     assert "placeholder" not in combined.lower()
+
+
+def test_mobile_plotly_and_table_contract_is_shared_across_dashboard(offline_app):
+    run_analysis(offline_app)
+    source = APP_PATH.read_text()
+    html = "".join(item.proto.body for item in offline_app.get("html"))
+    assert "@media (max-width: 700px)" in html
+    assert 'padding: 3.75rem 0.75rem 3rem' in html
+    assert '[data-testid="stPlotlyChart"]' in html
+    assert '[data-testid="stDataFrame"]' in html
+    assert "overflow-x: auto" in html
+    assert "calc(33.333% - 0.5rem)" in html
+    assert source.count("st.plotly_chart(") == 1
+    assert 'width="stretch"' in source
+
+    charts = offline_app.get("plotly_chart")
+    assert charts
+    for chart in charts:
+        specification = json.loads(chart.proto.spec)
+        configuration = json.loads(chart.proto.config)
+        layout = specification["layout"]
+        assert configuration["responsive"] is True
+        assert configuration["displaylogo"] is False
+        assert configuration["displayModeBar"] is True
+        assert {"pan2d", "select2d", "lasso2d", "autoScale2d"} <= set(
+            configuration["modeBarButtonsToRemove"]
+        )
+        assert layout["autosize"] is True
+        assert "width" not in layout
+        assert layout["height"] <= 440
+        if layout.get("showlegend"):
+            assert layout["legend"]["orientation"] == "h"
+            assert layout["legend"]["y"] < 0
+            assert layout["margin"]["r"] == 10
+
+
+def test_asset_pricing_uses_marker_only_mobile_labels(offline_app):
+    run_analysis(offline_app)
+    offline_app.session_state["analysis_tab"] = "Asset Pricing"
+    offline_app.run(timeout=30)
+    specification = json.loads(offline_app.get("plotly_chart")[0].proto.spec)
+    securities = next(
+        trace for trace in specification["data"] if trace.get("name") == "Historical security return"
+    )
+    assert securities["mode"] == "markers"
+    assert "Security: %{text}" in securities["hovertemplate"]
 
 
 def test_dashboard_color_classes_only_mark_directional_metrics(offline_app):

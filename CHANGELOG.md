@@ -4,6 +4,9 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Standardized every Plotly figure on one responsive full-width rendering contract with autosizing, 360-pixel simple charts, 440-pixel complex charts, horizontal below-chart legends, compact margins, and a reduced mobile-safe toolbar.
+- Added a 700-pixel mobile layout breakpoint with 10–12 pixel content padding, page-overflow containment, full-width chart surfaces, and controlled horizontal scrolling for dataframes and editors.
+- Removed efficient-frontier and Security Market Line text labels from the plot surface; abbreviated marker names remain in the legend while complete portfolio/security names remain in hover detail.
 - Replaced fixed-width Dashboard metrics with an accessible flex-wrapping card grid that fills each real row at wide, laptop, and narrow widths without placeholder cells.
 - Added restrained financial color semantics: blue for the primary portfolio value, green/red only for directionally meaningful results, neutral gray for risk descriptors, and amber for existing warnings.
 - Added verified metric context lines, consistent card heights, visible focus treatment, and explicit blue/green Portfolio-versus-benchmark chart colors.
