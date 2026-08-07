@@ -125,6 +125,49 @@ RESPONSIVE_LAYOUT_CSS = """
 </style>
 """
 
+FOOTER_HTML = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+.portfolio-footer {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 14px 8px;
+    border-top: 1px solid rgba(148, 163, 184, 0.24);
+    color: rgba(226, 232, 240, 0.68);
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(12px, 1vw, 13px);
+    font-weight: 400;
+    line-height: 1.35;
+    text-align: center;
+    box-sizing: border-box;
+}
+.portfolio-footer a {
+    color: inherit;
+    text-decoration: none;
+}
+.portfolio-footer a:hover,
+.portfolio-footer a:focus-visible {
+    color: rgba(226, 232, 240, 0.92);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.portfolio-footer a:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 3px;
+}
+.portfolio-footer__developer { font-weight: 400; }
+.portfolio-footer__partner { font-weight: 600; }
+</style>
+<footer class="portfolio-footer" aria-label="PortfolioLens credits">
+    <span class="portfolio-footer__developer">Developed by
+        <a href="https://github.com/Jams411" target="_blank" rel="noopener noreferrer">Jameel Shaikh</a>
+    </span>
+    <span aria-hidden="true"> • </span>
+    <a class="portfolio-footer__partner" href="https://outpartners.org/"
+       target="_blank" rel="noopener noreferrer">OUT PARTNERS</a>
+</footer>
+"""
+
 DASHBOARD_METRIC_GRID_CSS = """
 <style>
 .financial-metric-grid {
@@ -288,6 +331,11 @@ def dashboard_metric_grid(cards: list[dict[str, object]], group_label: str, vari
         + "</section>",
         width="stretch",
     )
+
+
+def render_footer() -> None:
+    """Render the shared lightweight product footer."""
+    st.html(FOOTER_HTML)
 
 
 def render_plotly_chart(
@@ -614,6 +662,7 @@ section_container = st.container(gap="small")
 if active_section == "Fixed Income":
     with section_container:
         render_fixed_income_workspace()
+    render_footer()
     st.stop()
 
 if "result" not in st.session_state:
@@ -632,6 +681,7 @@ if "result" not in st.session_state:
                         "Portfolio growth, benchmark-relative performance, allocation, drawdown, risk contribution, "
                         "portfolio construction, and deterministic insights appear here after analysis."
                     )
+    render_footer()
     st.stop()
 
 r = st.session_state["result"]
@@ -2177,3 +2227,5 @@ if active_section == "Methodology & Limitations":
 
 **Limitations.** yfinance can be delayed, revised, incomplete, or unavailable. Results exclude taxes, liquidity constraints, market impact, and slippage beyond the configured cost. Historical stress results appear only when full configured windows are covered. This application is for historical investment research only and is not personalized financial advice.
 """)
+
+render_footer()

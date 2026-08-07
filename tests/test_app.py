@@ -77,6 +77,33 @@ def test_app_renders_helpful_initial_state():
     assert not app.metric
 
 
+def test_professional_footer_renders_on_initial_analysis_and_fixed_income_paths(offline_app):
+    def assert_footer(app):
+        matching = [
+            item.proto.body for item in app.get("html")
+            if 'class="portfolio-footer"' in item.proto.body
+        ]
+        assert len(matching) == 1
+        footer = matching[0]
+        assert "Developed by" in footer
+        assert "Jameel Shaikh" in footer
+        assert "OUT PARTNERS" in footer
+        assert 'href="https://github.com/Jams411"' in footer
+        assert 'href="https://outpartners.org/"' in footer
+        assert footer.count('target="_blank"') == 2
+        assert "font-family: 'Poppins', sans-serif" in footer
+        assert ".portfolio-footer__developer { font-weight: 400; }" in footer
+        assert ".portfolio-footer__partner { font-weight: 600; }" in footer
+
+    assert_footer(offline_app)
+    run_analysis(offline_app)
+    assert_footer(offline_app)
+    offline_app.session_state["analysis_tab"] = "Fixed Income"
+    offline_app.run(timeout=20)
+    assert not offline_app.exception
+    assert_footer(offline_app)
+
+
 def test_performance_evaluation_tab_exposes_scorecard_and_fama_diagnostics(offline_app):
     run_analysis(offline_app)
     offline_app.session_state["analysis_tab"] = "Performance Evaluation"

@@ -7,6 +7,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .DS_Store
+docs/.Rhistory
 *.egg-info/
 .streamlit/secrets.toml
 .ruff_cache/
