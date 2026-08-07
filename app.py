@@ -134,13 +134,14 @@ def clear_analysis_state() -> None:
         st.session_state.pop(key, None)
 
 
-st.title("PortfolioLens")
-st.caption("Multi-asset portfolio analytics and investment research")
+with st.container(gap="xxsmall"):
+    st.title("PortfolioLens")
+    st.caption("Multi-asset portfolio analytics and investment research")
 
 with st.sidebar:
     st.subheader("Analysis setup")
-    st.caption("Equity and ETF market-history inputs")
-    with st.expander("Portfolio", expanded=True, icon=":material/pie_chart:"):
+    with st.container(gap="xsmall"):
+        st.markdown("**Portfolio**")
         preset = st.selectbox("Portfolio preset", ["Custom"] + list(PRESETS), on_change=clear_analysis_state)
         default_tickers, default_weights = PRESETS.get(preset, ("SPY, AGG, GLD", "50, 35, 15"))
         ticker_text = st.text_input(
@@ -153,17 +154,29 @@ with st.sidebar:
             help="Same order as tickers. Approximate totals within 0.1% are normalized with notice.",
             on_change=clear_analysis_state,
         )
-        initial_value = st.number_input(
-            "Initial portfolio value", min_value=1.0, value=100000.0, step=5000.0,
-            on_change=clear_analysis_state,
+    with st.container(gap="xsmall"):
+        st.markdown("**Analysis period**")
+        period_columns = st.columns(2, gap="small")
+        start_input = period_columns[0].date_input(
+            "Start date", date(2018, 1, 1), on_change=clear_analysis_state,
         )
-    with st.expander("Analysis period", expanded=True, icon=":material/date_range:"):
-        start_input = st.date_input("Start date", date(2018, 1, 1), on_change=clear_analysis_state)
-        end_input = st.date_input("End date", date.today(), on_change=clear_analysis_state)
-    with st.expander("Benchmark & assumptions", expanded=True, icon=":material/query_stats:"):
+        end_input = period_columns[1].date_input(
+            "End date", date.today(), on_change=clear_analysis_state,
+        )
+    with st.container(gap="xsmall"):
         benchmark_ticker = st.text_input(
             "Benchmark", "SPX",
             help="Enter one ticker or supported index alias, such as SPX, DJIA, NASDAQ, VIX, or RUT.",
+            on_change=clear_analysis_state,
+        )
+    action_columns = st.columns([2, 1], gap="small")
+    run = action_columns[0].button("Run analysis", type="primary", width="stretch")
+    if action_columns[1].button("Reset", width="stretch"):
+        st.session_state.clear()
+        st.rerun()
+    with st.expander("Advanced assumptions", icon=":material/tune:"):
+        initial_value = st.number_input(
+            "Initial portfolio value", min_value=1.0, value=100000.0, step=5000.0,
             on_change=clear_analysis_state,
         )
         risk_free = st.number_input(
@@ -184,10 +197,6 @@ with st.sidebar:
     with st.expander("Strategy settings", icon=":material/show_chart:"):
         short_window = st.number_input("Short moving average", 2, 500, 50, on_change=clear_analysis_state)
         long_window = st.number_input("Long moving average", 3, 1000, 200, on_change=clear_analysis_state)
-    run = st.button("Run analysis", type="primary", width="stretch")
-    if st.button("Reset", width="stretch"):
-        st.session_state.clear()
-        st.rerun()
     with st.expander("About", icon=":material/info:"):
         st.caption("Historical investment research · not personalized financial advice")
         st.caption(f"Build `{build_identifier()}`")

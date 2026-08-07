@@ -389,11 +389,9 @@ def test_grouped_navigation_keeps_every_major_section_reachable():
 
 def test_sidebar_groups_and_compact_header_contract():
     source = APP_PATH.read_text()
-    for label in (
-        "Portfolio", "Analysis period", "Benchmark & assumptions", "Implementation",
-        "Strategy settings", "About",
-    ):
+    for label in ("Advanced assumptions", "Implementation", "Strategy settings", "About"):
         assert f'st.expander("{label}"' in source
+    assert source.index('.button("Run analysis"') < source.index('st.expander("Advanced assumptions"')
     app = AppTest.from_file(APP_PATH).run(timeout=20)
     assert app.title[0].value == "PortfolioLens"
     assert any(button.label == "Run analysis" for button in app.button)
