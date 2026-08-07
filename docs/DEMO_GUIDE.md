@@ -2,6 +2,14 @@
 
 Verified demo URL: [portfolio-lens.streamlit.app](https://portfolio-lens.streamlit.app/)
 
+## Visual preflight
+
+1. Use browser zoom at 100% and a window at least 1,100 pixels wide.
+2. Confirm **Run analysis** and **Reset** are visible immediately below Benchmark without scrolling the sidebar.
+3. Keep Advanced assumptions, Implementation, and Strategy settings collapsed until their values need explanation.
+4. At 1366×768, confirm all six workspaces remain on one line and the Dashboard cards show complete values.
+5. Treat horizontal movement inside a wide dataframe as intentional table scrolling; the page itself should not scroll horizontally.
+
 ## Fixed-income walkthrough (three minutes)
 
 1. Open **Research → Fixed Income** before running market-history analysis. Bond terms are explicit and independent of equity/ETF tickers.
@@ -36,7 +44,7 @@ Results are historical and can change when yfinance revises adjusted data.
 
 ## Two-minute demo
 
-1. **Dashboard — 25 seconds.** Run the four-ETF portfolio and show value, return, CAGR, arithmetic return, volatility, Sharpe, drawdown, beta, tracking error, information ratio, strongest risk contributor, active return, growth, and allocation.
+1. **Dashboard — 25 seconds.** Run the four-ETF portfolio and show value, total return, CAGR, volatility, Sharpe, drawdown, beta, tracking error, information ratio, largest risk contributor, benchmark-relative result, growth, and allocation. Arithmetic return remains available in Analytics → Performance.
 2. **Analytics → Risk — 20 seconds.** Show VaR/CVaR, effective holdings, correlation, and Euler volatility contributions that reconcile to portfolio volatility.
 3. **Analytics → Benchmark & Attribution — 15 seconds.** Compare cumulative wealth, active return, tracking error, information ratio, beta, and contributions.
 4. **Research → Security Analysis — 20 seconds.** Use the obvious security selector, then show alpha/beta, risk decomposition, characteristic line, and residuals.

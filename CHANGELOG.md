@@ -4,6 +4,11 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Moved **Run analysis** and the secondary Reset action directly below the visible portfolio, period, and benchmark inputs so both remain in the opening 768-pixel-high sidebar viewport.
+- Reduced the default sidebar height by moving initial value and risk-free rate into **Advanced assumptions** while keeping implementation and strategy controls collapsed.
+- Reordered Dashboard metrics into primary portfolio and benchmark-relative groups, added responsive fixed-width metric cards, and standardized analytical chart height at 400 pixels.
+- Standardized fixed-income metric cards, charts, editors, and tables to use the same responsive sizing and full-width data layout as the other workspaces.
+
 - Added a self-contained **Fixed Income** view under Research without increasing the six primary workspaces or mixing bond terms with equity/ETF ticker inputs.
 - Added pure explicit-cash-flow bond analytics for clean/dirty price, accrued interest, current yield, YTM, Macaulay and modified duration, dollar duration, DV01/PVBP, convexity, duration approximations, and full yield-shock repricing.
 - Added editable multi-bond portfolio aggregation, market-value weights, duration/DV01/convexity contributions, parallel-rate scenarios, transparent filters/rankings, and long-only constrained bond portfolio construction.

@@ -1,5 +1,13 @@
 # Project history
 
+## 2026-08-07 — Internship-demo visual refinement
+
+- **What changed:** Moved Run analysis into the opening sidebar viewport, reduced the expanded input stack, compacted header spacing, rebuilt the Dashboard metric grid, standardized chart height, and aligned fixed-income cards and tables with the shared analytical canvas.
+- **Why it changed:** Current 1366×768 evidence showed the primary action below the fold and a 1,360-pixel sidebar scroll surface. Dashboard cards also used an inconsistent four-column sequence that did not match the intended portfolio-first reading order.
+- **Responsive constraints:** The six-workspace navigation stays on one line at 1,100, 1,366, and 1,440 pixels. Metric cards remain fixed and wrap without value clipping at narrower widths. Wide tables scroll inside Streamlit's dataframe container rather than expanding the page.
+- **Boundaries:** This was presentation-only. Financial methodology, data handling, reports, and the fixed-income calculation engine were unchanged.
+- **Remaining limitations:** Streamlit controls the outer page padding and dataframe toolbar behavior. The app avoids fragile CSS overrides, and screenshot review cannot establish full keyboard or screen-reader compliance.
+
 ## 2026-08-06 — Cohesive workspace and executive-dashboard redesign
 
 - **What changed:** Replaced 15 top-level tabs with six task-oriented workspaces, grouped global sidebar controls, compacted the header, moved build metadata to low-priority locations, and expanded Dashboard into an executive research view.

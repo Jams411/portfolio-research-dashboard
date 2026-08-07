@@ -2,6 +2,17 @@
 
 Significant product, financial-methodology, architecture, and scope decisions are recorded here. Add new entries rather than rewriting prior decisions; mark superseded entries explicitly.
 
+## D034 — Keep the primary analysis action in the opening sidebar viewport
+
+- **Date:** 2026-08-07
+- **Status:** Accepted
+- **Decision:** Render portfolio, paired date inputs, benchmark, Run analysis, and Reset before any collapsed assumption or implementation section. Use only native Streamlit containers, columns, expanders, and buttons; do not use sticky-position CSS.
+- **Context:** At 1366×768 the prior expanded sidebar was 1,360 pixels tall and Run analysis began below 1,127 pixels, so a first-time user could not see the primary action without scrolling.
+- **Rationale:** The analysis action is the entry point to every market-history workspace. Moving it ahead of secondary assumptions is simpler, more robust, and more accessible than pinning it with fragile selectors.
+- **Layout grid:** Dashboard metrics use two ordered groups with fixed card widths that fill a 1366-pixel research canvas and wrap at narrower widths. Plotly and fixed-income native charts use a shared 400-pixel height; tables and editors stretch to their parent containers.
+- **Consequences:** Initial value and risk-free rate remain discoverable in Advanced assumptions. Implementation and strategy controls remain collapsed. At approximately 1,100 pixels, metric groups wrap to additional rows rather than clipping values; wide dataframes retain their internal horizontal scroll.
+- **Scope boundary:** No financial inputs, formulas, calculations, exports, or navigation destinations changed.
+
 ## D033 — Add fixed income through explicit instruments, not ticker inference
 
 - **Date:** 2026-08-07

@@ -21,6 +21,15 @@ The UI has six primary workspaces. `PRIMARY_WORKSPACES`, `WORKSPACE_SECTIONS`, a
 
 Global analysis inputs stay in the sidebar across workspace changes. Calculation results live in `st.session_state["result"]`; changing workspace does not recompute or discard them. Input changes call `clear_analysis_state`, and a failed run clears old outputs before validation so stale results cannot survive an error.
 
+### Visual layout contract
+
+- The opening sidebar order is portfolio inputs, paired analysis dates, benchmark, Run analysis, Reset, then collapsed Advanced assumptions, Implementation, Strategy settings, and About sections.
+- Run analysis must remain visible without sidebar scrolling at 1366×768 and 1440×900. The layout uses native Streamlit containers and columns instead of sticky CSS.
+- The analytical canvas uses one shared left edge and `width="stretch"` for charts, tables, editors, and secondary navigation.
+- Dashboard metrics are ordered as portfolio outcomes first and benchmark-relative diagnostics second. Fixed-width cards fill the common laptop canvas and wrap at narrower widths without truncating values.
+- Plotly figures and fixed-income native charts use a 400-pixel standard height. Two-up charts share equal Streamlit columns; wide tables retain internal scrolling and must not create page-level horizontal overflow.
+- Streamlit owns outer page padding, responsive breakpoints, and dataframe toolbars. These are accepted framework constraints and are not overridden with fragile CSS selectors.
+
 ```mermaid
 flowchart LR
     User["User browser"] --> App["Streamlit app.py"]

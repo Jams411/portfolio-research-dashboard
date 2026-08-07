@@ -2,6 +2,14 @@
 
 This journal explains the project’s evolution in plain language. It complements, rather than replaces, the evidence-focused [project history](PROJECT_HISTORY.md), formal [decision log](DECISIONS.md), user-facing [changelog](../CHANGELOG.md), and forward-looking [roadmap](ROADMAP.md).
 
+## 2026-08-07 — Primary-action and layout refinement
+
+- **Goal:** Make the product immediately operable at internship-demo laptop sizes without changing its finance scope.
+- **Observed friction:** Run analysis was fully below the initial 768-pixel viewport; the sidebar scroll height was 1,360 pixels; Dashboard metrics were grouped in generic rows of four; chart heights and fixed-income data surfaces were not explicitly standardized.
+- **Implementation:** Kept portfolio, dates, and benchmark visible; placed Run analysis and Reset immediately after them; moved initial value and risk-free rate into Advanced assumptions; used responsive native metric containers; and set a shared 400-pixel analytical chart height.
+- **Result:** The opening sidebar action is visible at 768 pixels, the default sidebar scroll height is approximately 925 pixels, six primary workspaces remain visible at 1,100 pixels, and dashboard values no longer clip when the metric groups wrap.
+- **Tradeoff:** Some metric groups use an additional row at narrower widths. This preserves readable values and stable native Streamlit behavior without custom CSS or browser-width detection.
+
 ## 2026-08-06 — UX, information architecture, and demo-readiness pass
 
 - **Goal:** Make PortfolioLens feel like one investment-research product without changing its finance capabilities.
