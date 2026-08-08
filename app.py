@@ -119,12 +119,13 @@ RESPONSIVE_LAYOUT_CSS = """
     text-align: center;
     width: 100%;
     height: auto !important;
-    min-height: 0 !important;
+    min-height: 28px !important;
+    max-height: 32px !important;
     margin: 0 !important;
-    padding: 0.22rem 0.55rem !important;
-    border-radius: 0.4rem;
-    font-size: 0.86rem;
-    line-height: 1.25;
+    padding: 4px 9px !important;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.2;
     overflow: hidden;
 }
 [data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"]::before,

@@ -504,6 +504,12 @@ def test_sidebar_groups_and_compact_header_contract():
     assert "Total allocation ·" in source
     assert "Allocation details" not in source
     assert "height: auto !important" in source
+    assert "min-height: 28px !important" in source
+    assert "max-height: 32px !important" in source
+    assert "padding: 4px 9px !important" in source
+    assert "border-radius: 6px" in source
+    assert "font-size: 13px" in source
+    assert "line-height: 1.2" in source
     assert "overflow: hidden" in source
     assert "::before" in source and "::after" in source
     assert "padding-top: 2.25rem !important" in source
