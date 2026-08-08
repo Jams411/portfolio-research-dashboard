@@ -503,6 +503,10 @@ def test_sidebar_groups_and_compact_header_contract():
     assert ".st-key-allocation-status [data-testid=\"stAlert\"] p" in source
     assert "Total allocation ·" in source
     assert "Allocation details" not in source
+    assert "height: auto !important" in source
+    assert "overflow: hidden" in source
+    assert "::before" in source and "::after" in source
+    assert "padding-top: 2.25rem !important" in source
     app = AppTest.from_file(APP_PATH).run(timeout=20)
     assert app.title[0].value == "PortfolioLens"
     assert any(button.label == "Run analysis" for button in app.button)
@@ -575,7 +579,8 @@ def test_mobile_plotly_and_table_contract_is_shared_across_dashboard(offline_app
     source = APP_PATH.read_text()
     html = "".join(item.proto.body for item in offline_app.get("html"))
     assert "@media (max-width: 700px)" in html
-    assert 'padding: 3.75rem 0.75rem 3rem' in html
+    assert 'padding: 2.75rem 0.75rem 3rem' in html
+    assert 'padding-top: 2.25rem !important' in html
     assert '[data-testid="stPlotlyChart"]' in html
     assert '[data-testid="stDataFrame"]' in html
     assert "overflow-x: auto" in html

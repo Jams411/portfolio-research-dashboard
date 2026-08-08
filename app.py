@@ -74,6 +74,9 @@ RESPONSIVE_LAYOUT_CSS = """
 [data-testid="stMain"] {
     max-width: 100%;
 }
+[data-testid="stMainBlockContainer"] {
+    padding-top: 2.25rem !important;
+}
 [data-testid="stPlotlyChart"],
 [data-testid="stPlotlyChart"] > div,
 [data-testid="stPlotlyChart"] .js-plotly-plot,
@@ -102,24 +105,39 @@ RESPONSIVE_LAYOUT_CSS = """
 [data-testid="stSidebar"] .st-key-primary-actions [data-testid="stHorizontalBlock"] {
     gap: 0.45rem;
 }
+[data-testid="stSidebar"] .st-key-allocation-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
 [data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"] {
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     width: 100%;
+    height: auto !important;
     min-height: 0 !important;
     margin: 0 !important;
     padding: 0.22rem 0.55rem !important;
     border-radius: 0.4rem;
     font-size: 0.86rem;
     line-height: 1.25;
+    overflow: hidden;
 }
-[data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"] > div {
+[data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"]::before,
+[data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"]::after {
+    display: none !important;
+    content: none !important;
+}
+[data-testid="stSidebar"] .st-key-allocation-status [data-testid="stMarkdownContainer"] {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
+    margin: 0 !important;
     padding: 0 !important;
 }
 [data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"] p {
@@ -135,7 +153,7 @@ RESPONSIVE_LAYOUT_CSS = """
     [data-testid="stMainBlockContainer"] {
         width: 100%;
         max-width: 100%;
-        padding: 3.75rem 0.75rem 3rem !important;
+        padding: 2.75rem 0.75rem 3rem !important;
     }
     [data-testid="stVerticalBlock"] {
         gap: 0.75rem;
