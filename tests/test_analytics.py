@@ -19,8 +19,10 @@ from portfolio_dashboard.construction import (
     parse_group_caps, quadratic_utility, utility_optimal_complete_portfolio,
 )
 from portfolio_dashboard.data import (
-    InputError, MarketDataError, align_prices, extract_adjusted_prices, parse_tickers,
-    parse_weight_input, resolve_benchmark_ticker, validate_weights,
+    InputError, MarketDataError, align_prices, allocation_percentages, allocation_preview,
+    extract_adjusted_prices, normalize_allocation, parse_allocation_values, parse_tickers,
+    parse_weight_input, reconciled_allocation_percentages, resolve_benchmark_ticker,
+    validate_weights,
 )
 from portfolio_dashboard.evaluation import (
     allocation_selection_attribution, fama_selectivity_decomposition,
@@ -126,6 +128,34 @@ def test_equal_weight_input_ignores_stale_manual_value():
     assert weights.tolist() == pytest.approx([1 / 3, 1 / 3, 1 / 3])
     assert weights.sum() == pytest.approx(1.0)
     assert not changed
+
+
+def test_retail_allocation_validation_and_summary_helpers():
+    tickers = ["SPY", "AGG", "GLD"]
+    assert parse_allocation_values("50, 35, 15") == [50.0, 35.0, 15.0]
+    assert allocation_percentages([0.50, 0.35, 0.15]).tolist() == pytest.approx([50, 35, 15])
+    with pytest.raises(InputError, match="2 allocation values for 3 investments"):
+        normalize_allocation(tickers, [50, 35])
+    with pytest.raises(InputError, match="4 allocation values for 3 investments"):
+        normalize_allocation(tickers, [25, 25, 25, 25])
+    with pytest.raises(InputError, match="numeric"):
+        parse_allocation_values("50, no-number, 50")
+    with pytest.raises(InputError, match="positive allocation"):
+        normalize_allocation(tickers, [50, -35, 85])
+    with pytest.raises(InputError, match="positive allocation"):
+        normalize_allocation(tickers, [0, 0, 0])
+
+
+def test_proportional_normalization_and_equal_allocation_reconcile_exactly():
+    normalized = normalize_allocation(["SPY", "AGG", "GLD"], [50, 35, 20])
+    assert normalized.tolist() == pytest.approx([50 / 105, 35 / 105, 20 / 105])
+    assert normalized.sum() == pytest.approx(1.0)
+    assert reconciled_allocation_percentages(normalized.to_numpy() * 100).tolist() == [47.62, 33.33, 19.05]
+
+    equal = reconciled_allocation_percentages([100 / 3] * 3)
+    assert equal.tolist() == [33.33, 33.33, 33.34]
+    preview = allocation_preview(["SPY", "AGG", "GLD"], equal)
+    assert preview.iloc[-1].to_dict() == {"Investment": "Total", "Allocation": 100.0}
 
 def test_simple_and_portfolio_returns():
     prices = pd.DataFrame({"A": [100, 110, 99], "B": [100, 100, 110]})

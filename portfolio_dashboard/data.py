@@ -80,7 +80,10 @@ def validate_weights(
     supplied as percentages (for example 60, 40) or decimals (0.6, 0.4).
     """
     if len(weights) != len(tickers):
-        raise InputError(f"Enter exactly {len(tickers)} weights, one for each ticker.")
+        raise InputError(
+            f"You entered {len(weights)} allocation values for {len(tickers)} investments. "
+            "Add one percentage for each ticker."
+        )
     try:
         series = pd.Series(weights, index=list(tickers), dtype=float)
     except (TypeError, ValueError) as exc:
@@ -100,6 +103,79 @@ def validate_weights(
     if normalize:
         return series / total, True
     raise InputError(f"Weights sum to {total:.2%}; they must sum to approximately 100%.")
+
+
+def parse_allocation_values(value: str) -> list[float]:
+    """Parse one comma-separated percentage or decimal value per investment."""
+    if not isinstance(value, str) or not value.strip():
+        raise InputError("Enter one allocation percentage for each ticker.")
+    tokens = value.split(",")
+    if any(not token.strip() for token in tokens):
+        raise InputError("Enter one allocation percentage for each ticker; do not leave values blank.")
+    try:
+        return [float(token.strip()) for token in tokens]
+    except (TypeError, ValueError) as exc:
+        raise InputError("Allocation values must be numeric percentages.") from exc
+
+
+def allocation_percentages(values: Sequence[float]) -> np.ndarray:
+    """Return finite allocation inputs in percentage points for display."""
+    try:
+        numbers = np.asarray(list(values), dtype=float)
+    except (TypeError, ValueError) as exc:
+        raise InputError("Allocation values must be numeric percentages.") from exc
+    if numbers.size == 0 or not np.isfinite(numbers).all():
+        raise InputError("Allocation values must be finite numeric percentages.")
+    if numbers.sum() <= 1.5 and numbers.max(initial=0.0) <= 1.0:
+        numbers = numbers * 100.0
+    return numbers
+
+
+def reconciled_allocation_percentages(values: Sequence[float]) -> np.ndarray:
+    """Round percentages for display while making the final value reconcile to 100%."""
+    percentages = allocation_percentages(values)
+    if percentages.size == 0:
+        return percentages
+    rounded = np.round(percentages, 2)
+    if rounded.size > 1 and np.isclose(percentages.sum(), 100.0, atol=1e-8):
+        rounded[-1] = np.round(100.0 - rounded[:-1].sum(), 2)
+    return rounded
+
+
+def normalize_allocation(tickers: Sequence[str], values: Sequence[float]) -> pd.Series:
+    """Proportionally normalize strictly positive allocations to exact long-only weights."""
+    if len(values) != len(tickers):
+        raise InputError(
+            f"You entered {len(values)} allocation values for {len(tickers)} investments. "
+            "Add one percentage for each ticker."
+        )
+    percentages = allocation_percentages(values)
+    if (percentages <= 0).any():
+        raise InputError("Normalize to 100% requires a positive allocation for every ticker.")
+    weights = pd.Series(percentages / percentages.sum(), index=list(tickers), dtype=float)
+    if len(weights) > 1:
+        weights.iloc[-1] = 1.0 - weights.iloc[:-1].sum()
+    return weights
+
+
+def allocation_preview(tickers: Sequence[str], percentages: Sequence[float]) -> pd.DataFrame:
+    """Create the compact investment/allocation preview shown before analysis."""
+    labels = list(tickers)
+    display = np.round(np.asarray(list(percentages), dtype=float), 2)
+    rows = [
+        {"Investment": ticker, "Allocation": display[index] if index < display.size else np.nan}
+        for index, ticker in enumerate(labels)
+    ]
+    rows.extend(
+        {"Investment": f"Unmatched allocation {index + 1}", "Allocation": value}
+        for index, value in enumerate(display[len(labels):], start=len(labels))
+    )
+    frame = pd.DataFrame(rows, columns=["Investment", "Allocation"])
+    total = float(display.sum()) if display.size else 0.0
+    return pd.concat(
+        [frame, pd.DataFrame({"Investment": ["Total"], "Allocation": [round(total, 2)]})],
+        ignore_index=True,
+    )
 
 
 def parse_weight_input(

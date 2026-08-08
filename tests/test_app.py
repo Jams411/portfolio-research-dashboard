@@ -55,7 +55,7 @@ def test_app_renders_helpful_initial_state():
     assert any("Multi-asset portfolio analytics and investment research" in item.value for item in app.caption)
     assert any(item.value == "Analysis setup" for item in app.subheader)
     expected_controls = {
-        "Portfolio tickers", "Weights (%)", "Benchmark", "Initial portfolio value",
+        "Portfolio tickers", "Portfolio allocation (%)", "Benchmark", "Initial portfolio value",
         "Annual risk-free rate (%)", "Transaction cost rate (%)",
         "Rebalancing drift threshold (%)",
     }
@@ -63,7 +63,7 @@ def test_app_renders_helpful_initial_state():
         item.label for collection in (app.text_input, app.number_input) for item in collection
     }
     assert any(item.label == "Portfolio preset" for item in app.selectbox)
-    assert any(item.label == "Use equal weights" for item in app.checkbox)
+    assert any(item.label == "Split equally across investments" for item in app.checkbox)
     assert any(item.label == "Run analysis" for item in app.button)
     assert widget(app.text_input, "Benchmark").value == "SPX"
     assert any("Market data are requested only" in item.value for item in app.info)
@@ -75,6 +75,39 @@ def test_app_renders_helpful_initial_state():
     ]
     assert not any("Application build:" in item.value for item in app.caption)
     assert not app.metric
+
+
+def test_allocation_preview_and_live_summary_are_retail_friendly():
+    app = AppTest.from_file(APP_PATH).run(timeout=20)
+    assert any(item.label == "Portfolio allocation (%)" for item in app.text_input)
+    assert any(item.label == "Split equally across investments" for item in app.checkbox)
+    assert any("Allocation preview" in item.value for item in app.markdown)
+    preview = next(
+        item.value for item in app.dataframe
+        if {"Investment", "Allocation"} <= set(item.value.columns)
+    )
+    assert preview.iloc[-1].to_dict() == {"Investment": "Total", "Allocation": 100.0}
+    assert any("Total allocation: 100.00%" in item.value for item in app.success)
+
+    allocation = widget(app.text_input, "Portfolio allocation (%)")
+    allocation.set_value("50, 35")
+    app.run(timeout=20)
+    assert any("You entered 2 allocation values for 3 investments" in item.value for item in app.error)
+    assert widget(app.button, "Run analysis").disabled
+    assert any("Allocation" in str(item.value.columns) for item in app.dataframe)
+
+
+def test_normalize_to_100_is_explicit_and_proportional():
+    app = AppTest.from_file(APP_PATH).run(timeout=20)
+    widget(app.text_input, "Portfolio allocation (%)").set_value("50, 35, 20")
+    app.run(timeout=20)
+    normalize_button = widget(app.button, "Normalize to 100%")
+    assert not normalize_button.disabled
+    normalize_button.click()
+    app.run(timeout=20)
+    assert widget(app.text_input, "Portfolio allocation (%)").value == "47.62, 33.33, 19.05"
+    assert any("Total allocation: 100.00%" in item.value for item in app.success)
+    assert not widget(app.button, "Run analysis").disabled
 
 
 def test_professional_footer_renders_on_initial_analysis_and_fixed_income_paths(offline_app):
@@ -302,18 +335,18 @@ def test_nondefault_benchmark_alias_shows_mapping_banner(offline_app):
 
 def test_equal_weight_mode_ignores_invalid_manual_weights(offline_app):
     widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, AGG, GLD")
-    widget(offline_app.text_input, "Weights (%)").set_value("invalid, stale, weights")
-    widget(offline_app.checkbox, "Use equal weights").set_value(True)
+    widget(offline_app.text_input, "Portfolio allocation (%)").set_value("invalid, stale, weights")
+    widget(offline_app.checkbox, "Split equally across investments").set_value(True)
     run_analysis(offline_app)
     assert not offline_app.exception and not offline_app.error
     weights = offline_app.session_state["result"]["weights"]
     assert weights.tolist() == pytest.approx([1 / 3, 1 / 3, 1 / 3])
-    assert widget(offline_app.text_input, "Weights (%)").disabled
+    assert widget(offline_app.text_input, "Portfolio allocation (%)").disabled
 
 
 def test_research_workspace_is_initialized_from_computed_analysis(offline_app):
     widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, AGG, GLD")
-    widget(offline_app.text_input, "Weights (%)").set_value("50,35,15")
+    widget(offline_app.text_input, "Portfolio allocation (%)").set_value("50,35,15")
     run_analysis(offline_app)
     assert not offline_app.exception
     assert "what_if_weights" in offline_app.session_state
@@ -328,7 +361,7 @@ def test_research_workspace_is_initialized_from_computed_analysis(offline_app):
 
 def test_portfolio_optimization_view_exposes_workbook_two_tools_offline(offline_app):
     widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, QQQ, TLT, GLD")
-    widget(offline_app.text_input, "Weights (%)").set_value("40,30,20,10")
+    widget(offline_app.text_input, "Portfolio allocation (%)").set_value("40,30,20,10")
     run_analysis(offline_app)
     offline_app.session_state["analysis_tab"] = "Portfolio Optimization"
     offline_app.run(timeout=30)
@@ -351,7 +384,7 @@ def test_portfolio_optimization_view_exposes_workbook_two_tools_offline(offline_
 
 def test_frontier_chart_reconciles_professional_traces_offline(offline_app):
     widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, AGG, GLD")
-    widget(offline_app.text_input, "Weights (%)").set_value("50,35,15")
+    widget(offline_app.text_input, "Portfolio allocation (%)").set_value("50,35,15")
     widget(offline_app.number_input, "Annual risk-free rate (%)").set_value(4.0)
     run_analysis(offline_app)
     offline_app.session_state["analysis_tab"] = "Portfolio Optimization"
@@ -380,7 +413,7 @@ def test_frontier_chart_reconciles_professional_traces_offline(offline_app):
 
 def test_workbook_one_risk_foundations_render_and_export_offline(offline_app):
     widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, QQQ, TLT, GLD")
-    widget(offline_app.text_input, "Weights (%)").set_value("40,30,20,10")
+    widget(offline_app.text_input, "Portfolio allocation (%)").set_value("40,30,20,10")
     run_analysis(offline_app)
     offline_app.session_state["analysis_tab"] = "Risk"
     offline_app.run(timeout=30)
@@ -400,7 +433,7 @@ def test_workbook_one_risk_foundations_render_and_export_offline(offline_app):
 
 def test_failed_run_clears_prior_results_and_successful_rerun_recovers(offline_app):
     widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, AGG, GLD")
-    widget(offline_app.text_input, "Weights (%)").set_value("50,35,15")
+    widget(offline_app.text_input, "Portfolio allocation (%)").set_value("50,35,15")
     run_analysis(offline_app)
     assert "result" in offline_app.session_state
     assert widget(offline_app.get("button_group"), "Primary workspace")
@@ -459,7 +492,7 @@ def test_sidebar_groups_and_compact_header_contract():
 
 def test_dashboard_key_metrics_and_state_survive_navigation(offline_app):
     widget(offline_app.text_input, "Portfolio tickers").set_value("SPY, QQQ, TLT, GLD")
-    widget(offline_app.text_input, "Weights (%)").set_value("40,25,20,15")
+    widget(offline_app.text_input, "Portfolio allocation (%)").set_value("40,25,20,15")
     run_analysis(offline_app)
     expected_order = [
         "Portfolio value", "Total return", "CAGR", "Volatility", "Sharpe ratio", "Maximum drawdown",

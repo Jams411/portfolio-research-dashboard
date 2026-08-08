@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -21,8 +22,9 @@ from portfolio_dashboard.construction import (
     utility_optimal_complete_portfolio,
 )
 from portfolio_dashboard.data import (
-    MarketDataError, download_prices, parse_tickers, parse_weight_input,
-    resolve_benchmark_ticker, validate_dates,
+    InputError, MarketDataError, allocation_percentages, allocation_preview,
+    download_prices, normalize_allocation, parse_allocation_values, parse_tickers,
+    reconciled_allocation_percentages, resolve_benchmark_ticker, validate_dates,
 )
 from portfolio_dashboard.formatting import metric_value, money, pct, ratio
 from portfolio_dashboard.fixed_income_ui import render_fixed_income_workspace
@@ -531,6 +533,16 @@ def clear_analysis_state() -> None:
         st.session_state.pop(key, None)
 
 
+def apply_normalized_allocation(tickers: list[str], values: list[float]) -> None:
+    """Store an explicit proportional normalization for the next UI rerun."""
+    weights = normalize_allocation(tickers, values)
+    percentages = reconciled_allocation_percentages(weights.to_numpy() * 100.0)
+    st.session_state["normalized_allocation_text"] = ", ".join(
+        f"{value:.2f}" for value in percentages
+    )
+    clear_analysis_state()
+
+
 st.html(RESPONSIVE_LAYOUT_CSS)
 
 with st.container(gap="xxsmall"):
@@ -547,12 +559,99 @@ with st.sidebar:
             "Portfolio tickers", value=default_tickers, help="Comma-separated; duplicates are removed.",
             on_change=clear_analysis_state,
         )
-        equal = st.checkbox("Use equal weights", value=False, on_change=clear_analysis_state)
+        equal = st.checkbox("Split equally across investments", value=False, on_change=clear_analysis_state)
+        allocation_value = st.session_state.pop("normalized_allocation_text", default_weights)
         weight_text = st.text_input(
-            "Weights (%)", value=default_weights, disabled=equal,
-            help="Same order as tickers. Approximate totals within 0.1% are normalized with notice.",
+            "Portfolio allocation (%)", value=allocation_value, disabled=equal,
+            help="Enter one percentage for each ticker. The total must equal 100%.",
             on_change=clear_analysis_state,
         )
+        try:
+            preview_tickers = parse_tickers(ticker_text)
+        except (InputError, ValueError):
+            preview_tickers = []
+
+        allocation_values: list[float] = []
+        allocation_percent_values = np.array([], dtype=float)
+        allocation_error: str | None = None
+        if equal and preview_tickers:
+            equal_values = np.repeat(1.0 / len(preview_tickers), len(preview_tickers))
+            allocation_percent_values = reconciled_allocation_percentages(
+                equal_values * 100.0
+            )
+            allocation_values = equal_values.tolist()
+        elif not equal:
+            try:
+                allocation_values = parse_allocation_values(weight_text)
+                allocation_percent_values = allocation_percentages(allocation_values)
+            except InputError as exc:
+                allocation_error = str(exc)
+
+        allocation_ready = bool(preview_tickers) and not allocation_error
+        normalize_candidate = False
+        if allocation_ready:
+            if len(allocation_values) != len(preview_tickers):
+                allocation_error = (
+                    f"You entered {len(allocation_values)} allocation values for "
+                    f"{len(preview_tickers)} investments. Add one percentage for each ticker."
+                )
+                allocation_ready = False
+            elif (allocation_percent_values < 0).any():
+                allocation_error = "Allocation values cannot be negative. Enter zero or a positive percentage for each ticker."
+                allocation_ready = False
+            elif not np.isfinite(allocation_percent_values).all():
+                allocation_error = "Allocation values must be numeric and finite."
+                allocation_ready = False
+            elif allocation_percent_values.sum() <= 0:
+                allocation_error = "At least one allocation must be positive; all-zero allocations cannot be analyzed."
+                allocation_ready = False
+            else:
+                total_allocation = float(allocation_percent_values.sum())
+                normalize_candidate = (
+                    not equal
+                    and (allocation_percent_values > 0).all()
+                    and not np.isclose(total_allocation, 100.0, atol=1e-8)
+                )
+                if np.isclose(total_allocation, 100.0, atol=1e-8):
+                    st.success(f"Total allocation: {total_allocation:.2f}%")
+                elif total_allocation < 100.0:
+                    allocation_ready = False
+                    st.warning(
+                        f"Total allocation: {total_allocation:.2f}% · "
+                        f"Remaining: {100.0 - total_allocation:.2f}%"
+                    )
+                else:
+                    allocation_ready = False
+                    st.error(
+                        f"Total allocation: {total_allocation:.2f}% · "
+                        f"Overallocated by: {total_allocation - 100.0:.2f}%"
+                    )
+        if allocation_error:
+            st.error(allocation_error)
+        if equal and preview_tickers:
+            equal_display = ", ".join(
+                f"{ticker} {value:.2f}%"
+                for ticker, value in zip(preview_tickers, allocation_percent_values)
+            )
+            st.caption(f"Calculated allocation: {equal_display}")
+        if normalize_candidate:
+            st.button(
+                "Normalize to 100%",
+                help="Adjust positive allocations proportionally while preserving their relative proportions.",
+                on_click=apply_normalized_allocation,
+                args=(preview_tickers, allocation_values),
+                width="stretch",
+            )
+        if preview_tickers:
+            st.markdown("**Allocation preview**")
+            st.dataframe(
+                allocation_preview(preview_tickers, allocation_percent_values),
+                width="stretch",
+                hide_index=True,
+                column_config={
+                    "Allocation": st.column_config.NumberColumn(format="%.2f%%"),
+                },
+            )
     with st.container(gap="xsmall"):
         st.markdown("**Analysis period**")
         period_columns = st.columns(2, gap="small")
@@ -569,7 +668,7 @@ with st.sidebar:
             on_change=clear_analysis_state,
         )
     action_columns = st.columns([2, 1], gap="small")
-    run = action_columns[0].button("Run analysis", type="primary", width="stretch")
+    run = action_columns[0].button("Run analysis", type="primary", width="stretch", disabled=not allocation_ready)
     if action_columns[1].button("Reset", width="stretch"):
         st.session_state.clear()
         st.rerun()
@@ -611,7 +710,13 @@ if run:
         benchmark = benchmark_resolution.display_symbol
         benchmark_provider = benchmark_resolution.provider_symbol
         start, end = validate_dates(start_input, end_input)
-        weights, normalized = parse_weight_input(tickers, weight_text, equal_weight=equal)
+        if not allocation_ready or len(allocation_values) != len(tickers):
+            raise InputError(
+                f"You entered {len(allocation_values)} allocation values for {len(tickers)} investments. "
+                "Add one percentage for each ticker."
+            )
+        weights = normalize_allocation(tickers, allocation_values)
+        normalized = False
         if short_window >= long_window:
             raise ValueError("Short moving-average window must be below the long window.")
         with st.spinner("Downloading adjusted market history and running analytics…"):
@@ -772,8 +877,6 @@ health_score, health_coverage, health_components = portfolio_health_score(
 insights = deterministic_insights(
     a.performance, a.benchmark, r["weights"], a.volatility_contributions, cvar95,
 )
-if st.session_state.get("normalized"):
-    st.warning("Weights were within the allowed 0.1% tolerance and were normalized to exactly 100%.")
 for warning in a.allocation_warnings:
     st.warning(warning)
 st.caption(
