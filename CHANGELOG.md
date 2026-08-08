@@ -5,6 +5,7 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 ## Unreleased
 
 - Improved the portfolio setup sidebar for retail users: **Portfolio allocation (%)** now explains the one-value-per-ticker requirement, shows live total/remaining/over-allocation feedback, previews every investment and total, supports explicit proportional **Normalize to 100%**, and displays exact-reconciling equal allocations.
+- Restored the primary sidebar hierarchy: **Run analysis** and **Reset** now appear immediately after the compact allocation status, while the full allocation table is available in a collapsed **Allocation details** expander below Benchmark.
 - Added **Normalized performance by holding** to Analytics → Performance. The interactive adjusted-price comparison starts every selected holding at 1.00 after common-date alignment, supports optional benchmark inclusion and linear/log scale, and exports normalized series to CSV.
 - Added deterministic handling for missing, non-finite, non-positive, duplicate, and empty holding price series; excluded series are explained instead of being plotted as invalid values.
 - Standardized every Plotly figure on one responsive full-width rendering contract with autosizing, 360-pixel simple charts, 440-pixel complex charts, horizontal below-chart legends, compact margins, and a reduced mobile-safe toolbar.

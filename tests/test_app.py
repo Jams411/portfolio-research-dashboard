@@ -81,9 +81,10 @@ def test_allocation_preview_and_live_summary_are_retail_friendly():
     app = AppTest.from_file(APP_PATH).run(timeout=20)
     assert any(item.label == "Portfolio allocation (%)" for item in app.text_input)
     assert any(item.label == "Split equally across investments" for item in app.checkbox)
-    assert any("Allocation preview" in item.value for item in app.markdown)
+    allocation_details = next(item for item in app.expander if item.label == "Allocation details")
+    assert allocation_details.proto.expanded is False
     preview = next(
-        item.value for item in app.dataframe
+        item.value for item in allocation_details.dataframe
         if {"Investment", "Allocation"} <= set(item.value.columns)
     )
     assert preview.iloc[-1].to_dict() == {"Investment": "Total", "Allocation": 100.0}
@@ -94,7 +95,8 @@ def test_allocation_preview_and_live_summary_are_retail_friendly():
     app.run(timeout=20)
     assert any("You entered 2 allocation values for 3 investments" in item.value for item in app.error)
     assert widget(app.button, "Run analysis").disabled
-    assert any("Allocation" in str(item.value.columns) for item in app.dataframe)
+    allocation_details = next(item for item in app.expander if item.label == "Allocation details")
+    assert any("Allocation" in str(item.value.columns) for item in allocation_details.dataframe)
 
 
 def test_normalize_to_100_is_explicit_and_proportional():
@@ -484,9 +486,12 @@ def test_sidebar_groups_and_compact_header_contract():
     for label in ("Advanced assumptions", "Implementation", "Strategy settings", "About"):
         assert f'st.expander("{label}"' in source
     assert source.index('.button("Run analysis"') < source.index('st.expander("Advanced assumptions"')
+    assert source.index('.button("Run analysis"') < source.index('st.expander("Allocation details"')
     app = AppTest.from_file(APP_PATH).run(timeout=20)
     assert app.title[0].value == "PortfolioLens"
     assert any(button.label == "Run analysis" for button in app.button)
+    assert any(button.label == "Reset" for button in app.button)
+    assert any(item.value.startswith("Total allocation:") for item in app.success)
     assert not any("Application build:" in caption.value for caption in app.caption)
 
 

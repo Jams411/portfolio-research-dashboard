@@ -618,13 +618,13 @@ with st.sidebar:
                     allocation_ready = False
                     st.warning(
                         f"Total allocation: {total_allocation:.2f}% · "
-                        f"Remaining: {100.0 - total_allocation:.2f}%"
+                        f"{100.0 - total_allocation:.2f}% remaining"
                     )
                 else:
                     allocation_ready = False
                     st.error(
                         f"Total allocation: {total_allocation:.2f}% · "
-                        f"Overallocated by: {total_allocation - 100.0:.2f}%"
+                        f"Reduce by {total_allocation - 100.0:.2f}%"
                     )
         if allocation_error:
             st.error(allocation_error)
@@ -642,16 +642,13 @@ with st.sidebar:
                 args=(preview_tickers, allocation_values),
                 width="stretch",
             )
-        if preview_tickers:
-            st.markdown("**Allocation preview**")
-            st.dataframe(
-                allocation_preview(preview_tickers, allocation_percent_values),
-                width="stretch",
-                hide_index=True,
-                column_config={
-                    "Allocation": st.column_config.NumberColumn(format="%.2f%%"),
-                },
-            )
+    # Keep the primary action in the opening sidebar viewport. Detailed
+    # allocation data is available below the benchmark in a collapsed expander.
+    action_columns = st.columns([2, 1], gap="small")
+    run = action_columns[0].button("Run analysis", type="primary", width="stretch", disabled=not allocation_ready)
+    if action_columns[1].button("Reset", width="stretch"):
+        st.session_state.clear()
+        st.rerun()
     with st.container(gap="xsmall"):
         st.markdown("**Analysis period**")
         period_columns = st.columns(2, gap="small")
@@ -667,11 +664,16 @@ with st.sidebar:
             help="Enter one ticker or supported index alias, such as SPX, DJIA, NASDAQ, VIX, or RUT.",
             on_change=clear_analysis_state,
         )
-    action_columns = st.columns([2, 1], gap="small")
-    run = action_columns[0].button("Run analysis", type="primary", width="stretch", disabled=not allocation_ready)
-    if action_columns[1].button("Reset", width="stretch"):
-        st.session_state.clear()
-        st.rerun()
+    if preview_tickers:
+        with st.expander("Allocation details", expanded=False):
+            st.dataframe(
+                allocation_preview(preview_tickers, allocation_percent_values),
+                width="stretch",
+                hide_index=True,
+                column_config={
+                    "Allocation": st.column_config.NumberColumn(format="%.2f%%"),
+                },
+            )
     with st.expander("Advanced assumptions", icon=":material/tune:"):
         initial_value = st.number_input(
             "Initial portfolio value", min_value=1.0, value=100000.0, step=5000.0,
