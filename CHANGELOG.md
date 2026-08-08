@@ -4,6 +4,8 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Added **Normalized performance by holding** to Analytics → Performance. The interactive adjusted-price comparison starts every selected holding at 1.00 after common-date alignment, supports optional benchmark inclusion and linear/log scale, and exports normalized series to CSV.
+- Added deterministic handling for missing, non-finite, non-positive, duplicate, and empty holding price series; excluded series are explained instead of being plotted as invalid values.
 - Standardized every Plotly figure on one responsive full-width rendering contract with autosizing, 360-pixel simple charts, 440-pixel complex charts, horizontal below-chart legends, compact margins, and a reduced mobile-safe toolbar.
 - Added a 700-pixel mobile layout breakpoint with 10–12 pixel content padding, page-overflow containment, full-width chart surfaces, and controlled horizontal scrolling for dataframes and editors.
 - Removed efficient-frontier and Security Market Line text labels from the plot surface; abbreviated marker names remain in the legend while complete portfolio/security names remain in hover detail.

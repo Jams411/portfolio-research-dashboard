@@ -14,13 +14,24 @@ Verified demo URL: [portfolio-lens.streamlit.app](https://portfolio-lens.streaml
 8. At a narrow width, collapse the sidebar and confirm the cards use two columns, then one below 420 pixels. The page itself must not scroll horizontally.
 9. Confirm Plotly legends sit below each chart, the toolbar shows only download, zoom, reset, and fullscreen, and titles remain clear of those controls.
 10. On Performance, Asset Pricing, and Reports, confirm wide tables scroll inside their own surface without widening the page; downloadable exports retain the full columns.
-11. On Portfolio Optimization, confirm GMV, Tangency, Current, and Complete use marker-only display with complete names available on hover.
+11. On Analytics → Performance, confirm **Normalized performance by holding** begins every selected line at 1.00, displays the optional benchmark with a dashed neutral line, and offers the normalized CSV download.
+12. On Portfolio Optimization, confirm GMV, Tangency, Current, and Complete use marker-only display with complete names available on hover.
 
 The 700-pixel mobile breakpoint reduces content padding to 10–12 pixels. Streamlit does not expose viewport width to server-side chart code, so the robust shared contract also keeps legends below charts on desktop. Simple charts use a 360-pixel height; correlation, CAPM, regression, and efficient-frontier views use 440 pixels.
 
 Fresh responsive-review evidence: [390px dashboard charts](images/mobile-review/dashboard-charts-390.jpg), [430px dashboard cards](images/mobile-review/dashboard-cards-430.jpg), [768px dashboard](images/mobile-review/dashboard-768.jpg), [390px efficient frontier](images/mobile-review/efficient-frontier-390.jpg), [390px Asset Pricing](images/mobile-review/asset-pricing-390.jpg), [390px Fixed Income](images/mobile-review/fixed-income-390.jpg), [390px Reports](images/mobile-review/reports-390.jpg), and [1366px dashboard](images/mobile-review/dashboard-1366.jpg).
 
 Dashboard color semantics are intentionally restrained: blue marks the primary portfolio value and active controls; green/red identify directionally meaningful results; gray identifies neutral risk information; amber remains reserved for warnings. Labels, signs, and context text carry the same meaning when color is unavailable.
+
+## Normalized holding-performance walkthrough
+
+1. Run an analysis with at least two holdings and the default SPX benchmark.
+2. Open **Analytics → Performance** and review the portfolio-versus-benchmark growth chart first.
+3. In **Normalized performance by holding**, leave all holdings selected. Confirm every line starts at 1.00 on the common first date.
+4. Enable the optional benchmark toggle to compare the benchmark on the same normalized scale, then switch between Linear and Log presentation.
+5. Hover a line to show the date, holding, Growth of $1, and cumulative change. Download `portfoliolens_normalized_holding_performance.csv` and confirm its first row contains 1.00 for every included series.
+
+The normalized chart uses adjusted prices and is not a weighted portfolio-return calculation. Distributions are reflected according to the data provider’s adjusted-price series; provider revisions and incomplete histories can change the displayed path.
 
 ## Fixed-income walkthrough (three minutes)
 

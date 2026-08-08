@@ -2,6 +2,13 @@
 
 This journal explains the project’s evolution in plain language. It complements, rather than replaces, the evidence-focused [project history](PROJECT_HISTORY.md), formal [decision log](DECISIONS.md), user-facing [changelog](../CHANGELOG.md), and forward-looking [roadmap](ROADMAP.md).
 
+## 2026-08-08 — Common-start holding comparison
+
+- **Goal:** Answer how each selected holding would have grown from the same starting date without confusing security growth with weighted portfolio performance.
+- **Implementation:** Added a pure normalized-price function and an Analytics → Performance Plotly chart with compact holding selection, optional benchmark inclusion, linear/log presentation, hover cumulative change, a 1.00 reference line, and CSV export.
+- **Data contract:** The function consumes the already aligned adjusted-price frame, removes incomplete common-date rows before normalization, never forward-fills, and excludes unsafe series with a visible reason. Weights are intentionally absent from the function signature.
+- **Responsive tradeoff:** Desktop uses a right-side legend when the browser identifies as non-mobile; mobile uses a horizontal legend below the plot and the existing reduced modebar. The server-side fallback remains safe for AppTest and non-browser execution.
+
 ## 2026-08-07 — Mobile analytical-canvas pass
 
 - **Goal:** Make the full research workflow usable on a phone without introducing client-side scripting or changing calculations.

@@ -35,6 +35,7 @@ This application demonstrates:
 
 - Comma-separated ticker validation, equal/custom weights, presets, date range, benchmark, capital, risk-free rate and transaction-cost controls
 - Adjusted yfinance history with caching, safe single/MultiIndex handling, strict failed-ticker reporting and complete-common-date alignment
+- Analytics → Performance includes normalized performance by holding: each selected adjusted-price series starts at 1.00 on the common date range, with optional benchmark comparison and CSV export
 - Transparent benchmark aliases for common index names such as SPX, DJIA, NASDAQ, VIX and RUT, with provider-symbol disclosure and friendly report labels
 - Explicit holding-period-return logic; asset-level periodic arithmetic/geometric returns, annualized arithmetic return/CAGR, sample variance/volatility, coefficient of variation, and downloadable foundation tables
 - Total return, consistently defined Sharpe, Sortino, drawdown, Calmar, tail risk, monthly returns and wealth charts

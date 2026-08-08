@@ -1,5 +1,11 @@
 # Project history
 
+## 2026-08-08 — Normalized holding-performance comparison
+
+- **What changed:** Added a common-start adjusted-price comparison to Analytics → Performance. Users can select holdings, optionally include the benchmark, choose linear or log presentation, and export the normalized series.
+- **Methodology:** Common-date alignment happens before normalization; each valid series is `adjusted_price / first_common_adjusted_price`, starts at exactly 1.00, and does not use portfolio weights. Missing, non-finite, non-positive, and unusable series are explained and excluded.
+- **Boundaries:** This is a security comparison, not a portfolio return, forecast, recommendation, or replacement for the existing portfolio-versus-benchmark growth chart.
+
 ## 2026-08-07 — Mobile chart and table responsiveness
 
 - **What changed:** Centralized all Plotly rendering into a full-width responsive contract, moved legends below plots, reduced modebar actions, separated simple and complex heights, tightened mobile margins and typography, contained wide tables, and removed overlapping point labels from the frontier and SML.

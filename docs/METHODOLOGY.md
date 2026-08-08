@@ -78,6 +78,16 @@ Daily return is the simple return `r_t = P_t / P_(t-1) - 1`. Portfolio return as
 
 ## Performance
 
+### Normalized performance by holding
+
+Analytics → Performance includes a security-comparison chart titled **Normalized performance by holding**. For each selected holding, the plotted value is:
+
+`normalized_price_i,t = adjusted_price_i,t / adjusted_price_i,0`
+
+The calculation uses the same adjusted-price data and complete common-date alignment as the main analysis. Alignment occurs before normalization; missing prices are not forward-filled. Each valid series therefore starts at exactly `1.00` on the first common observation date. Portfolio weights are deliberately not used: this chart compares hypothetical growth paths for individual holdings rather than portfolio performance. A normalized price is not itself a return; cumulative change shown in hover is `(normalized value − 1) × 100`.
+
+An optional benchmark is normalized on the same displayed common range and styled separately. Non-numeric, non-finite, non-positive, or otherwise unusable series are excluded with an explanation. Adjusted prices generally incorporate provider treatment of distributions, but provider revisions, corporate actions, and incomplete histories can change the result. Linear and logarithmic y-axis views change presentation only, not calculations.
+
 - Total return: `Π(1+r_t)-1`
 - Historical arithmetic annualized return: `252 × mean(r_t)`; this is the historical expected-return estimate used by Sharpe, Sortino, and maximum-Sharpe optimization
 - CAGR: `(Π(1+r_t))^(252/n)-1`
