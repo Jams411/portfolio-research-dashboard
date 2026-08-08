@@ -82,7 +82,7 @@ def test_allocation_preview_and_live_summary_are_retail_friendly():
     assert any(item.label == "Portfolio allocation (%)" for item in app.text_input)
     assert any(item.label == "Split equally across investments" for item in app.checkbox)
     assert not any(item.label == "Allocation details" for item in app.expander)
-    assert any("Total allocation · 100% ✓" in item.value for item in app.success)
+    assert any("Total allocation: 100% ✓" in item.value for item in app.success)
 
     allocation = widget(app.text_input, "Portfolio allocation (%)")
     allocation.set_value("50, 35")
@@ -97,12 +97,12 @@ def test_compact_allocation_status_for_under_and_overallocation():
     under = AppTest.from_file(APP_PATH).run(timeout=20)
     widget(under.text_input, "Portfolio allocation (%)").set_value("40, 30, 15")
     under.run(timeout=20)
-    assert any("Total allocation · 85% · 15% remaining" in item.value for item in under.warning)
+    assert any("Total allocation: 85% · 15% remaining" in item.value for item in under.warning)
 
     over = AppTest.from_file(APP_PATH).run(timeout=20)
     widget(over.text_input, "Portfolio allocation (%)").set_value("50, 35, 20")
     over.run(timeout=20)
-    assert any("Total allocation · 105% · Reduce by 5%" in item.value for item in over.error)
+    assert any("Total allocation: 105% · Reduce by 5%" in item.value for item in over.error)
 
 
 def test_normalize_to_100_is_explicit_and_proportional():
@@ -114,7 +114,7 @@ def test_normalize_to_100_is_explicit_and_proportional():
     normalize_button.click()
     app.run(timeout=20)
     assert widget(app.text_input, "Portfolio allocation (%)").value == "47.62, 33.33, 19.05"
-    assert any("Total allocation · 100% ✓" in item.value for item in app.success)
+    assert any("Total allocation: 100% ✓" in item.value for item in app.success)
     assert not widget(app.button, "Run analysis").disabled
 
 
@@ -498,16 +498,16 @@ def test_sidebar_groups_and_compact_header_contract():
     assert "border: 0" in source
     assert 'key="allocation-status"' in source
     assert "align-items: center" in source
-    assert "justify-content: center" in source
-    assert "text-align: center" in source
+    assert "justify-content: flex-start" in source
+    assert "text-align: left" in source
     assert ".st-key-allocation-status [data-testid=\"stAlert\"] p" in source
-    assert "Total allocation ·" in source
+    assert "Total allocation:" in source
     assert "Allocation details" not in source
     assert "height: auto !important" in source
     assert "min-height: 28px !important" in source
     assert "max-height: 32px !important" in source
-    assert "padding: 4px 9px !important" in source
-    assert "border-radius: 6px" in source
+    assert "padding: 4px 8px !important" in source
+    assert "border-radius: 4px" in source
     assert "font-size: 13px" in source
     assert "line-height: 1.2" in source
     assert "overflow: hidden" in source
@@ -517,7 +517,7 @@ def test_sidebar_groups_and_compact_header_contract():
     assert app.title[0].value == "PortfolioLens"
     assert any(button.label == "Run analysis" for button in app.button)
     assert any(button.label == "Reset" for button in app.button)
-    assert any(item.value.startswith("Total allocation ·") for item in app.success)
+    assert any(item.value.startswith("Total allocation:") for item in app.success)
     assert not any("Application build:" in caption.value for caption in app.caption)
 
 

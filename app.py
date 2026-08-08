@@ -108,22 +108,23 @@ RESPONSIVE_LAYOUT_CSS = """
 [data-testid="stSidebar"] .st-key-allocation-status {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    text-align: left;
     width: 100%;
 }
 [data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"] {
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    justify-content: center;
-    text-align: center;
+    justify-content: flex-start;
+    text-align: left;
     width: 100%;
     height: auto !important;
     min-height: 28px !important;
     max-height: 32px !important;
     margin: 0 !important;
-    padding: 4px 9px !important;
-    border-radius: 6px;
+    padding: 4px 8px !important;
+    border-radius: 4px;
     font-size: 13px;
     line-height: 1.2;
     overflow: hidden;
@@ -136,14 +137,14 @@ RESPONSIVE_LAYOUT_CSS = """
 [data-testid="stSidebar"] .st-key-allocation-status [data-testid="stMarkdownContainer"] {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     width: 100%;
     margin: 0 !important;
     padding: 0 !important;
 }
 [data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"] p {
     margin: 0 !important;
-    text-align: center;
+    text-align: left;
 }
 @media (max-width: 700px) {
     [data-testid="stAppViewContainer"],
@@ -674,17 +675,17 @@ with st.sidebar:
 
                 with st.container(key="allocation-status", gap=None):
                     if np.isclose(total_allocation, 100.0, atol=1e-8):
-                        st.success(f"Total allocation · {status_percent(total_allocation)}% ✓")
+                        st.success(f"Total allocation: {status_percent(total_allocation)}% ✓")
                     elif total_allocation < 100.0:
                         allocation_ready = False
                         st.warning(
-                            f"Total allocation · {status_percent(total_allocation)}% · "
+                            f"Total allocation: {status_percent(total_allocation)}% · "
                             f"{status_percent(100.0 - total_allocation)}% remaining"
                         )
                     else:
                         allocation_ready = False
                         st.error(
-                            f"Total allocation · {status_percent(total_allocation)}% · "
+                            f"Total allocation: {status_percent(total_allocation)}% · "
                             f"Reduce by {status_percent(total_allocation - 100.0)}%"
                         )
         if allocation_error:
