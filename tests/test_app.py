@@ -498,6 +498,8 @@ def test_sidebar_groups_and_compact_header_contract():
     assert "gap=\"xxsmall\"" in source
     assert "margin-top: -0.1rem" in source
     assert "margin-bottom: -0.1rem" in source
+    assert 'key="analysis-period"' in source
+    assert '[data-testid="stDateInput"] [data-baseweb="input"]' in source
     assert "background: transparent" in source
     assert "border: 0" in source
     assert 'key="allocation-status"' in source
@@ -581,6 +583,10 @@ def test_dashboard_uses_responsive_semantic_metric_grid_without_placeholders(off
     assert "display: flex" in combined
     assert "flex-wrap: wrap" in combined
     assert "flex: 1 1 8.625rem" in combined
+    assert "height: 7.75rem" in combined
+    assert "padding: 0.65rem 0.85rem 0.6rem" in combined
+    assert "gap: 0.55rem" in combined
+    assert "margin: 0 0 0.45rem" in combined
     assert "@media (max-width: 700px)" in combined
     assert "financial-metric-grid--secondary" in combined
     assert "placeholder" not in combined.lower()

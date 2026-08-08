@@ -105,6 +105,18 @@ RESPONSIVE_LAYOUT_CSS = """
 [data-testid="stSidebar"] .st-key-primary-actions [data-testid="stHorizontalBlock"] {
     gap: 0.4rem;
 }
+/* Keep the date pair aligned with the other compact sidebar controls. */
+[data-testid="stSidebar"] .st-key-analysis-period [data-testid="stDateInput"] {
+    margin: 0 !important;
+}
+[data-testid="stSidebar"] .st-key-analysis-period [data-testid="stDateInput"] [data-baseweb="input"] {
+    min-height: 2.25rem !important;
+    height: 2.25rem !important;
+}
+[data-testid="stSidebar"] .st-key-analysis-period [data-testid="stDateInput"] input {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+}
 /* Reclaim modest vertical space in the sidebar while keeping controls at
    their normal size and preserving regular scrolling on narrow screens. */
 [data-testid="stSidebar"] [data-testid="stExpander"] {
@@ -242,16 +254,16 @@ DASHBOARD_METRIC_GRID_CSS = """
 .financial-metric-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.7rem;
+    gap: 0.55rem;
     width: 100%;
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.45rem;
 }
 .financial-metric-card {
     --metric-accent: #64748b;
     flex: 1 1 8.625rem;
     min-width: min(100%, 8.625rem);
-    height: 8.875rem;
-    padding: 0.9rem 1rem 0.85rem;
+    height: 7.75rem;
+    padding: 0.65rem 0.85rem 0.6rem;
     border: 1px solid #334155;
     border-top: 3px solid var(--metric-accent);
     border-radius: 0.55rem;
@@ -279,7 +291,7 @@ DASHBOARD_METRIC_GRID_CSS = """
     line-height: 1.08rem;
 }
 .financial-metric-card__value {
-    margin-top: 0.25rem;
+    margin-top: 0.15rem;
     color: #f8fafc;
     font-size: clamp(1.55rem, 2.35vw, 2.2rem);
     font-weight: 600;
@@ -289,7 +301,7 @@ DASHBOARD_METRIC_GRID_CSS = """
 .financial-metric-card--positive .financial-metric-card__value { color: #6ee7b7; }
 .financial-metric-card--negative .financial-metric-card__value { color: #fca5a5; }
 .financial-metric-card__context {
-    margin-top: 0.45rem;
+    margin-top: 0.25rem;
     color: #94a3b8;
     font-size: 0.72rem;
     line-height: 1.05rem;
@@ -719,7 +731,7 @@ with st.sidebar:
         if action_columns[1].button("Reset", width="stretch"):
             st.session_state.clear()
             st.rerun()
-    with st.container(gap="xxsmall"):
+    with st.container(key="analysis-period", gap="xxsmall"):
         st.markdown("**Analysis period**")
         period_columns = st.columns(2, gap="small")
         start_input = period_columns[0].date_input(
