@@ -577,6 +577,8 @@ def test_dashboard_uses_responsive_semantic_metric_grid_without_placeholders(off
     run_analysis(offline_app)
     html_bodies = [item.proto.body for item in offline_app.get("html")]
     combined = "".join(html_bodies)
+    dashboard_chart = json.loads(offline_app.get("plotly_chart")[0].proto.spec)
+    assert dashboard_chart["layout"]["height"] == 400
     assert sum('<section class="financial-metric-grid' in body for body in html_bodies) == 2
     assert combined.count('financial-metric-grid financial-metric-grid--') == 2
     assert combined.count('role="listitem"') == 11

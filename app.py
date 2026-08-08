@@ -54,7 +54,7 @@ from portfolio_dashboard.stress import custom_shock, historical_stress
 
 st.set_page_config(page_title="PortfolioLens", page_icon=":material/analytics:", layout="wide")
 
-SIMPLE_CHART_HEIGHT = 360
+SIMPLE_CHART_HEIGHT = 400
 COMPLEX_CHART_HEIGHT = 440
 
 PLOTLY_CONFIG = {
