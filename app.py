@@ -103,6 +103,11 @@ RESPONSIVE_LAYOUT_CSS = """
     gap: 0.45rem;
 }
 [data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
     min-height: 0 !important;
     margin: 0 !important;
     padding: 0.22rem 0.55rem !important;
@@ -111,7 +116,15 @@ RESPONSIVE_LAYOUT_CSS = """
     line-height: 1.25;
 }
 [data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"] > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
     padding: 0 !important;
+}
+[data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"] p {
+    margin: 0 !important;
+    text-align: center;
 }
 @media (max-width: 700px) {
     [data-testid="stAppViewContainer"],

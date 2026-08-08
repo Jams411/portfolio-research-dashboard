@@ -497,6 +497,10 @@ def test_sidebar_groups_and_compact_header_contract():
     assert "background: transparent" in source
     assert "border: 0" in source
     assert 'key="allocation-status"' in source
+    assert "align-items: center" in source
+    assert "justify-content: center" in source
+    assert "text-align: center" in source
+    assert ".st-key-allocation-status [data-testid=\"stAlert\"] p" in source
     assert "Total allocation ·" in source
     assert "Allocation details" not in source
     app = AppTest.from_file(APP_PATH).run(timeout=20)
