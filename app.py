@@ -22,7 +22,7 @@ from portfolio_dashboard.construction import (
     utility_optimal_complete_portfolio,
 )
 from portfolio_dashboard.data import (
-    InputError, MarketDataError, allocation_percentages, allocation_preview,
+    InputError, MarketDataError, allocation_percentages,
     download_prices, normalize_allocation, parse_allocation_values, parse_tickers,
     reconciled_allocation_percentages, resolve_benchmark_ticker, validate_dates,
 )
@@ -87,6 +87,20 @@ RESPONSIVE_LAYOUT_CSS = """
     max-width: 100% !important;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
+}
+/* Keep the two primary actions in view while the sidebar scrolls. The
+   container remains in normal flow, so it never obscures another control. */
+[data-testid="stSidebar"] .st-key-primary-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    margin: 0 -0.25rem;
+    padding: 0.4rem 0.25rem 0.5rem;
+    background: var(--secondary-background-color, #262730);
+    border-top: 1px solid rgba(148, 163, 184, 0.28);
+}
+[data-testid="stSidebar"] .st-key-primary-actions [data-testid="stHorizontalBlock"] {
+    gap: 0.45rem;
 }
 @media (max-width: 700px) {
     [data-testid="stAppViewContainer"],
@@ -642,13 +656,12 @@ with st.sidebar:
                 args=(preview_tickers, allocation_values),
                 width="stretch",
             )
-    # Keep the primary action in the opening sidebar viewport. Detailed
-    # allocation data is available below the benchmark in a collapsed expander.
-    action_columns = st.columns([2, 1], gap="small")
-    run = action_columns[0].button("Run analysis", type="primary", width="stretch", disabled=not allocation_ready)
-    if action_columns[1].button("Reset", width="stretch"):
-        st.session_state.clear()
-        st.rerun()
+    with st.container(key="primary-actions", gap="small"):
+        action_columns = st.columns([2, 1], gap="small")
+        run = action_columns[0].button("Run analysis", type="primary", width="stretch", disabled=not allocation_ready)
+        if action_columns[1].button("Reset", width="stretch"):
+            st.session_state.clear()
+            st.rerun()
     with st.container(gap="xsmall"):
         st.markdown("**Analysis period**")
         period_columns = st.columns(2, gap="small")
@@ -664,16 +677,6 @@ with st.sidebar:
             help="Enter one ticker or supported index alias, such as SPX, DJIA, NASDAQ, VIX, or RUT.",
             on_change=clear_analysis_state,
         )
-    if preview_tickers:
-        with st.expander("Allocation details", expanded=False):
-            st.dataframe(
-                allocation_preview(preview_tickers, allocation_percent_values),
-                width="stretch",
-                hide_index=True,
-                column_config={
-                    "Allocation": st.column_config.NumberColumn(format="%.2f%%"),
-                },
-            )
     with st.expander("Advanced assumptions", icon=":material/tune:"):
         initial_value = st.number_input(
             "Initial portfolio value", min_value=1.0, value=100000.0, step=5000.0,

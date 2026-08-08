@@ -81,13 +81,7 @@ def test_allocation_preview_and_live_summary_are_retail_friendly():
     app = AppTest.from_file(APP_PATH).run(timeout=20)
     assert any(item.label == "Portfolio allocation (%)" for item in app.text_input)
     assert any(item.label == "Split equally across investments" for item in app.checkbox)
-    allocation_details = next(item for item in app.expander if item.label == "Allocation details")
-    assert allocation_details.proto.expanded is False
-    preview = next(
-        item.value for item in allocation_details.dataframe
-        if {"Investment", "Allocation"} <= set(item.value.columns)
-    )
-    assert preview.iloc[-1].to_dict() == {"Investment": "Total", "Allocation": 100.0}
+    assert not any(item.label == "Allocation details" for item in app.expander)
     assert any("Total allocation: 100.00%" in item.value for item in app.success)
 
     allocation = widget(app.text_input, "Portfolio allocation (%)")
@@ -95,8 +89,7 @@ def test_allocation_preview_and_live_summary_are_retail_friendly():
     app.run(timeout=20)
     assert any("You entered 2 allocation values for 3 investments" in item.value for item in app.error)
     assert widget(app.button, "Run analysis").disabled
-    allocation_details = next(item for item in app.expander if item.label == "Allocation details")
-    assert any("Allocation" in str(item.value.columns) for item in allocation_details.dataframe)
+    assert not any(item.label == "Allocation details" for item in app.expander)
 
 
 def test_normalize_to_100_is_explicit_and_proportional():
@@ -486,13 +479,30 @@ def test_sidebar_groups_and_compact_header_contract():
     for label in ("Advanced assumptions", "Implementation", "Strategy settings", "About"):
         assert f'st.expander("{label}"' in source
     assert source.index('.button("Run analysis"') < source.index('st.expander("Advanced assumptions"')
-    assert source.index('.button("Run analysis"') < source.index('st.expander("Allocation details"')
+    assert source.index('key="primary-actions"') < source.index('**Analysis period**')
     app = AppTest.from_file(APP_PATH).run(timeout=20)
     assert app.title[0].value == "PortfolioLens"
     assert any(button.label == "Run analysis" for button in app.button)
     assert any(button.label == "Reset" for button in app.button)
     assert any(item.value.startswith("Total allocation:") for item in app.success)
     assert not any("Application build:" in caption.value for caption in app.caption)
+
+
+def test_portfolio_construction_retains_allocation_and_rebalancing_details(offline_app):
+    run_analysis(offline_app)
+    offline_app.session_state["analysis_tab"] = "Portfolio Optimization"
+    offline_app.run(timeout=30)
+    assert not offline_app.exception
+    assert any(item.value == "Portfolio Optimization & Rebalancing" for item in offline_app.subheader)
+    assert any(
+        {"Current Portfolio", "Global Minimum Variance", "Tangency (Maximum Sharpe)"}
+        <= set(item.value.columns)
+        for item in offline_app.dataframe
+    )
+    assert any(
+        {"Current Weight", "Target Weight", "Weight Change"} <= set(item.value.columns)
+        for item in offline_app.dataframe
+    )
 
 
 def test_dashboard_key_metrics_and_state_survive_navigation(offline_app):
