@@ -497,20 +497,22 @@ def test_sidebar_groups_and_compact_header_contract():
     assert "background: transparent" in source
     assert "border: 0" in source
     assert 'key="allocation-status"' in source
-    assert "align-items: center" in source
-    assert "justify-content: flex-start" in source
+    assert "display: block" in source
     assert "text-align: left" in source
     assert ".st-key-allocation-status [data-testid=\"stAlert\"] p" in source
     assert "Total allocation:" in source
     assert "Allocation details" not in source
     assert "height: auto !important" in source
-    assert "min-height: 28px !important" in source
-    assert "max-height: 32px !important" in source
-    assert "padding: 4px 8px !important" in source
-    assert "border-radius: 4px" in source
+    assert "min-height: 0 !important" in source
+    assert "max-height: none !important" in source
+    assert "padding: 0 !important" in source
+    assert "background: transparent !important" in source
+    assert "border: 0 !important" in source
+    assert "border-radius: 0 !important" in source
+    assert "box-shadow: none !important" in source
     assert "font-size: 13px" in source
     assert "line-height: 1.2" in source
-    assert "overflow: hidden" in source
+    assert "overflow: visible" in source
     assert "::before" in source and "::after" in source
     assert "padding-top: 2.25rem !important" in source
     app = AppTest.from_file(APP_PATH).run(timeout=20)

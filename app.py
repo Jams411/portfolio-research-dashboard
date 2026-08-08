@@ -106,28 +106,30 @@ RESPONSIVE_LAYOUT_CSS = """
     gap: 0.45rem;
 }
 [data-testid="stSidebar"] .st-key-allocation-status {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
+    display: block;
     text-align: left;
     width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
 }
-[data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"] {
+[data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"],
+[data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"] > div {
     box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
+    display: block;
     text-align: left;
     width: 100%;
     height: auto !important;
-    min-height: 28px !important;
-    max-height: 32px !important;
+    min-height: 0 !important;
+    max-height: none !important;
     margin: 0 !important;
-    padding: 4px 8px !important;
-    border-radius: 4px;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
     font-size: 13px;
     line-height: 1.2;
-    overflow: hidden;
+    overflow: visible;
 }
 [data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"]::before,
 [data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"]::after {
@@ -135,9 +137,7 @@ RESPONSIVE_LAYOUT_CSS = """
     content: none !important;
 }
 [data-testid="stSidebar"] .st-key-allocation-status [data-testid="stMarkdownContainer"] {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
+    display: block;
     width: 100%;
     margin: 0 !important;
     padding: 0 !important;
@@ -145,6 +145,9 @@ RESPONSIVE_LAYOUT_CSS = """
 [data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"] p {
     margin: 0 !important;
     text-align: left;
+}
+[data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"] svg {
+    display: none !important;
 }
 @media (max-width: 700px) {
     [data-testid="stAppViewContainer"],
