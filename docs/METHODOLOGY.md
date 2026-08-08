@@ -76,6 +76,12 @@ The data source is yfinance adjusted close, falling back to its close field only
 
 Daily return is the simple return `r_t = P_t / P_(t-1) - 1`. Portfolio return assumes constant target weights: `r_p,t = Σ w_i r_i,t`. This describes a daily rebalanced analytical portfolio and does not claim to reproduce an un-rebalanced brokerage account.
 
+### Portfolio allocation input
+
+The public setup uses the retail label **Portfolio allocation (%)**, while this document retains the formal term portfolio weights. Users enter one percentage per ticker; the count must match the parsed investment list and the total must equal 100%. Negative, nonnumeric, and all-zero allocations are blocked before analysis. The live summary and preview are presentation aids and do not alter calculations.
+
+The explicit **Normalize to 100%** action is available only when every investment has a strictly positive numeric allocation. It applies `w_i = a_i / Σa_i`, preserving relative proportions, and corrects the final stored value to make `Σw_i = 1` within floating-point tolerance. It never fills missing entries or silently changes input. Equal allocation uses exact internal weights `w_i = 1/n`; display percentages round to two decimals and assign the rounding remainder to the final investment (for three investments, 33.33%, 33.33%, 33.34%).
+
 ## Performance
 
 ### Normalized performance by holding

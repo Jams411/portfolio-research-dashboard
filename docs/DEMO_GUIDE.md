@@ -6,16 +6,18 @@ Verified demo URL: [portfolio-lens.streamlit.app](https://portfolio-lens.streaml
 
 1. Use browser zoom at 100%. The primary demo remains best at 1,100 pixels or wider, but the app is also verified at 390×844 and 430×932.
 2. Confirm **Run analysis** and **Reset** are visible immediately below Benchmark without scrolling the sidebar.
-3. Keep Advanced assumptions, Implementation, and Strategy settings collapsed until their values need explanation.
-4. At 1366×768, confirm all six workspaces remain on one line and the Dashboard cards show complete values.
-5. Treat horizontal movement inside a wide dataframe as intentional table scrolling; the page itself should not scroll horizontally.
-6. At 1,920 pixels, confirm both metric groups and the growth chart share the same full-width content edges with no empty metric column.
-7. At approximately 1,100 pixels, confirm the six primary metrics wrap 4+2 and the five benchmark/risk metrics wrap 3+2; every wrapped row should fill its available width.
-8. At a narrow width, collapse the sidebar and confirm the cards use two columns, then one below 420 pixels. The page itself must not scroll horizontally.
-9. Confirm Plotly legends sit below each chart, the toolbar shows only download, zoom, reset, and fullscreen, and titles remain clear of those controls.
-10. On Performance, Asset Pricing, and Reports, confirm wide tables scroll inside their own surface without widening the page; downloadable exports retain the full columns.
-11. On Analytics → Performance, confirm **Normalized performance by holding** begins every selected line at 1.00, displays the optional benchmark with a dashed neutral line, and offers the normalized CSV download.
-12. On Portfolio Optimization, confirm GMV, Tangency, Current, and Complete use marker-only display with complete names available on hover.
+3. Confirm **Portfolio allocation (%)** explains that one percentage is required per ticker, the live total is shown, and the allocation preview includes a Total row.
+4. Enter a non-100% positive allocation and confirm **Normalize to 100%** appears; click it and verify the adjusted values are shown before analysis.
+5. Keep Advanced assumptions, Implementation, and Strategy settings collapsed until their values need explanation.
+6. At 1366×768, confirm all six workspaces remain on one line and the Dashboard cards show complete values.
+7. Treat horizontal movement inside a wide dataframe as intentional table scrolling; the page itself should not scroll horizontally.
+8. At 1,920 pixels, confirm both metric groups and the growth chart share the same full-width content edges with no empty metric column.
+9. At approximately 1,100 pixels, confirm the six primary metrics wrap 4+2 and the five benchmark/risk metrics wrap 3+2; every wrapped row should fill its available width.
+10. At a narrow width, collapse the sidebar and confirm the cards use two columns, then one below 420 pixels. The page itself must not scroll horizontally.
+11. Confirm Plotly legends sit below each chart, the toolbar shows only download, zoom, reset, and fullscreen, and titles remain clear of those controls.
+12. On Performance, Asset Pricing, and Reports, confirm wide tables scroll inside their own surface without widening the page; downloadable exports retain the full columns.
+13. On Analytics → Performance, confirm **Normalized performance by holding** begins every selected line at 1.00, displays the optional benchmark with a dashed neutral line, and offers the normalized CSV download.
+14. On Portfolio Optimization, confirm GMV, Tangency, Current, and Complete use marker-only display with complete names available on hover.
 
 The 700-pixel mobile breakpoint reduces content padding to 10–12 pixels. Streamlit does not expose viewport width to server-side chart code, so the robust shared contract also keeps legends below charts on desktop. Simple charts use a 360-pixel height; correlation, CAPM, regression, and efficient-frontier views use 440 pixels.
 
