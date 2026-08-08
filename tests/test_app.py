@@ -494,6 +494,10 @@ def test_sidebar_groups_and_compact_header_contract():
     assert source.index('.button("Run analysis"') < source.index('st.expander("Advanced assumptions"')
     assert source.index('key="primary-actions"') < source.index('**Analysis period**')
     assert "position: sticky" in source
+    assert "padding: 0.05rem 0 0.1rem" in source
+    assert "gap=\"xxsmall\"" in source
+    assert "margin-top: -0.1rem" in source
+    assert "margin-bottom: -0.1rem" in source
     assert "background: transparent" in source
     assert "border: 0" in source
     assert 'key="allocation-status"' in source

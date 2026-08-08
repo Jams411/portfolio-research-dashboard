@@ -98,12 +98,18 @@ RESPONSIVE_LAYOUT_CSS = """
     bottom: 0;
     z-index: 20;
     margin: 0;
-    padding: 0.15rem 0 0.25rem;
+    padding: 0.05rem 0 0.1rem;
     background: transparent;
     border: 0;
 }
 [data-testid="stSidebar"] .st-key-primary-actions [data-testid="stHorizontalBlock"] {
-    gap: 0.45rem;
+    gap: 0.4rem;
+}
+/* Reclaim modest vertical space in the sidebar while keeping controls at
+   their normal size and preserving regular scrolling on narrow screens. */
+[data-testid="stSidebar"] [data-testid="stExpander"] {
+    margin-top: -0.1rem;
+    margin-bottom: -0.1rem;
 }
 [data-testid="stSidebar"] .st-key-allocation-status {
     display: block;
@@ -612,7 +618,7 @@ with st.container(gap="xxsmall"):
 
 with st.sidebar:
     st.subheader("Analysis setup")
-    with st.container(gap="xsmall"):
+    with st.container(gap="xxsmall"):
         st.markdown("**Portfolio**")
         preset = st.selectbox("Portfolio preset", ["Custom"] + list(PRESETS), on_change=clear_analysis_state)
         default_tickers, default_weights = PRESETS.get(preset, ("SPY, AGG, GLD", "50, 35, 15"))
@@ -707,13 +713,13 @@ with st.sidebar:
                 args=(preview_tickers, allocation_values),
                 width="stretch",
             )
-    with st.container(key="primary-actions", gap="small"):
+    with st.container(key="primary-actions", gap="xxsmall"):
         action_columns = st.columns([2, 1], gap="small")
         run = action_columns[0].button("Run analysis", type="primary", width="stretch", disabled=not allocation_ready)
         if action_columns[1].button("Reset", width="stretch"):
             st.session_state.clear()
             st.rerun()
-    with st.container(gap="xsmall"):
+    with st.container(gap="xxsmall"):
         st.markdown("**Analysis period**")
         period_columns = st.columns(2, gap="small")
         start_input = period_columns[0].date_input(
@@ -722,7 +728,7 @@ with st.sidebar:
         end_input = period_columns[1].date_input(
             "End date", date.today(), on_change=clear_analysis_state,
         )
-    with st.container(gap="xsmall"):
+    with st.container(gap="xxsmall"):
         benchmark_ticker = st.text_input(
             "Benchmark", "SPX",
             help="Enter one ticker or supported index alias, such as SPX, DJIA, NASDAQ, VIX, or RUT.",
