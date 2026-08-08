@@ -129,6 +129,50 @@ def asset_risk_return_table(
     return pd.DataFrame.from_dict(rows, orient="index")
 
 
+def normalized_holding_performance(
+    prices: pd.DataFrame,
+) -> tuple[pd.DataFrame, dict[str, str]]:
+    """Normalize aligned adjusted prices to a common ``1.00`` starting value.
+
+    The common-date intersection is formed before normalization. Rows with any
+    missing holding price are removed; prices are never forward-filled. A
+    holding with non-positive or unusable prices is excluded with a reason so
+    callers can explain the omission instead of plotting an invalid series.
+    """
+    if prices is None or prices.empty:
+        return pd.DataFrame(index=getattr(prices, "index", None)), {}
+    if prices.columns.has_duplicates:
+        raise ValueError("Holding labels must be unique for normalized performance.")
+
+    numeric = prices.apply(pd.to_numeric, errors="coerce")
+    excluded: dict[str, str] = {}
+    valid: list[str] = []
+    for label in numeric.columns:
+        series = numeric[label]
+        if series.dropna().empty:
+            excluded[str(label)] = "no numeric adjusted-price observations"
+        elif not np.isfinite(series.dropna().to_numpy(dtype=float)).all():
+            excluded[str(label)] = "non-finite adjusted-price observations"
+        elif (series.dropna() <= 0).any():
+            excluded[str(label)] = "non-positive adjusted-price observations"
+        else:
+            valid.append(label)
+
+    if not valid:
+        return pd.DataFrame(index=pd.Index([], name=prices.index.name)), excluded
+
+    aligned = numeric.loc[:, valid].dropna(how="any")
+    if aligned.empty:
+        for label in valid:
+            excluded[str(label)] = "no common date with the other valid holdings"
+        return pd.DataFrame(index=pd.Index([], name=prices.index.name)), excluded
+
+    normalized = aligned.divide(aligned.iloc[0], axis="columns")
+    # Avoid floating-point noise at the explicitly defined common start.
+    normalized.iloc[0, :] = 1.0
+    return normalized, excluded
+
+
 def diversification_effect(
     asset_returns: pd.DataFrame, weights: pd.Series, periods_per_year: int = TRADING_DAYS
 ) -> dict[str, float]:

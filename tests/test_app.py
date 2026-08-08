@@ -123,6 +123,34 @@ def test_performance_evaluation_tab_exposes_scorecard_and_fama_diagnostics(offli
     assert {"Download performance evaluation CSV", "Download rolling evaluation CSV"} <= labels
 
 
+def test_performance_tab_exposes_normalized_holding_chart_and_export(offline_app):
+    run_analysis(offline_app)
+    offline_app.session_state["analysis_tab"] = "Performance"
+    offline_app.run(timeout=30)
+    assert not offline_app.exception
+    assert any(item.value == "Performance" for item in offline_app.subheader)
+    assert any(item.label == "Holdings to display" for item in offline_app.multiselect)
+    assert any(item.label == "Include benchmark (SPX)" for item in offline_app.checkbox)
+    assert any(item.label == "Chart scale" for item in offline_app.get("button_group"))
+    titles = [
+        json.loads(item.proto.spec).get("layout", {}).get("title", {}).get("text", "")
+        for item in offline_app.get("plotly_chart")
+    ]
+    assert "Normalized performance by holding" in titles
+    labels = {item.label for item in offline_app.get("download_button")}
+    assert "Download normalized holding performance CSV" in labels
+
+    normalized_spec = json.loads(
+        next(item.proto.spec for item in offline_app.get("plotly_chart")
+             if json.loads(item.proto.spec).get("layout", {}).get("title", {}).get("text", "")
+             == "Normalized performance by holding")
+    )
+    assert normalized_spec["layout"]["yaxis"]["title"]["text"] == "Growth of $1"
+    assert normalized_spec["layout"]["legend"]["title"]["text"] == "Holding"
+    assert all(float(np.asarray(plotly_values(trace["y"]))[0]) == pytest.approx(1.0)
+               for trace in normalized_spec["data"] if trace.get("name") != "Benchmark (SPX)")
+
+
 def test_portfolio_optimization_is_visible_before_analysis():
     app = AppTest.from_file(APP_PATH).run(timeout=20)
     app.session_state["analysis_tab"] = "Portfolio Optimization"
@@ -481,6 +509,8 @@ def test_mobile_plotly_and_table_contract_is_shared_across_dashboard(offline_app
     assert '[data-testid="stDataFrame"]' in html
     assert "overflow-x: auto" in html
     assert "calc(33.333% - 0.5rem)" in html
+    assert 'r=12 if mobile else 152 if responsive_legend else 10' in source
+    assert 'orientation="h" if mobile or not responsive_legend else "v"' in source
     assert source.count("st.plotly_chart(") == 1
     assert 'width="stretch"' in source
 

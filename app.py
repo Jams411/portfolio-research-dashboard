@@ -35,7 +35,7 @@ from portfolio_dashboard.etf_research import (
 )
 from portfolio_dashboard.performance import (
     annualized_volatility, asset_risk_return_table, diversification_effect,
-    drawdown_series, monthly_returns,
+    drawdown_series, monthly_returns, normalized_holding_performance,
 )
 from portfolio_dashboard.pipeline import run_analysis
 from portfolio_dashboard.rebalancing import compare_rebalancing_policies, rebalancing_plan
@@ -343,23 +343,31 @@ def render_plotly_chart(
     *,
     complex_chart: bool = False,
     show_legend: bool = True,
+    responsive_legend: bool = False,
 ) -> None:
     """Apply one responsive chart contract before rendering a Plotly figure."""
     height = COMPLEX_CHART_HEIGHT if complex_chart else SIMPLE_CHART_HEIGHT
-    bottom_margin = 112 if show_legend and complex_chart else 88 if show_legend else 56
+    mobile = _mobile_client() if responsive_legend else False
+    bottom_margin = (
+        96 if show_legend and responsive_legend and mobile
+        else 40 if show_legend and responsive_legend
+        else 112 if show_legend and complex_chart
+        else 88 if show_legend
+        else 56
+    )
     figure.update_layout(
         autosize=True,
         height=height,
         showlegend=show_legend,
-        legend_title_text="",
-        margin=dict(l=44, r=10, t=78, b=bottom_margin),
+        legend_title_text="Holding" if responsive_legend else "",
+        margin=dict(l=44, r=12 if mobile else 152 if responsive_legend else 10, t=78, b=bottom_margin),
         title=dict(font=dict(size=17), x=0, xanchor="left", y=0.98, yanchor="top"),
         legend=dict(
-            orientation="h",
-            yanchor="top",
-            y=-0.18,
+            orientation="h" if mobile or not responsive_legend else "v",
+            yanchor="top" if mobile or responsive_legend else "top",
+            y=-0.18 if mobile or not responsive_legend else 1,
             xanchor="left",
-            x=0,
+            x=0 if mobile or not responsive_legend else 1.02,
             font=dict(size=10),
         ),
         font=dict(size=11),
@@ -396,6 +404,74 @@ def line_chart(
     )
     fig.update_layout(hovermode="x unified")
     render_plotly_chart(fig)
+
+
+def _mobile_client() -> bool:
+    """Use a compact Plotly legend when the browser identifies as mobile."""
+    try:
+        user_agent = st.context.headers.get("User-Agent", "")
+    except Exception:
+        user_agent = ""
+    return any(token in user_agent for token in ("Android", "iPhone", "iPad", "Mobile"))
+
+
+def normalized_holding_chart(
+    normalized: pd.DataFrame,
+    benchmark_label: str | None = None,
+    *,
+    log_scale: bool = False,
+) -> None:
+    """Render the common-start holding comparison with a responsive legend."""
+    fig = go.Figure()
+    palette = px.colors.qualitative.Safe
+    holding_columns = [column for column in normalized.columns if column != benchmark_label]
+    for position, column in enumerate(holding_columns):
+        values = normalized[column]
+        fig.add_trace(go.Scatter(
+            x=normalized.index,
+            y=values,
+            mode="lines",
+            name=str(column),
+            line=dict(color=palette[position % len(palette)], width=2),
+            customdata=(values - 1.0).to_numpy()[:, None],
+            hovertemplate=(
+                "Date: %{x|%Y-%m-%d}<br>Holding: " + str(column)
+                + "<br>Growth of $1: %{y:.4f}<br>Cumulative change: %{customdata[0]:.2%}<extra></extra>"
+            ),
+        ))
+    if benchmark_label and benchmark_label in normalized:
+        values = normalized[benchmark_label]
+        fig.add_trace(go.Scatter(
+            x=normalized.index,
+            y=values,
+            mode="lines",
+            name=str(benchmark_label),
+            line=dict(color="#CBD5E1", width=2, dash="dash"),
+            customdata=(values - 1.0).to_numpy()[:, None],
+            hovertemplate=(
+                "Date: %{x|%Y-%m-%d}<br>Benchmark: " + str(benchmark_label)
+                + "<br>Growth of $1: %{y:.4f}<br>Cumulative change: %{customdata[0]:.2%}<extra></extra>"
+            ),
+        ))
+    fig.add_hline(y=1.0, line_dash="dot", line_color="#94A3B8", annotation_text="Start = 1.00")
+    mobile = _mobile_client()
+    fig.update_layout(
+        title="Normalized performance by holding",
+        autosize=True,
+        height=420,
+        hovermode="x unified",
+        legend_title_text="Holding",
+        legend=(
+            dict(orientation="h", yanchor="top", y=-0.18, xanchor="left", x=0, font=dict(size=10))
+            if mobile else
+            dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02, font=dict(size=10))
+        ),
+        margin=dict(l=52, r=12 if mobile else 152, t=78, b=96 if mobile else 40),
+        font=dict(size=11),
+    )
+    fig.update_xaxes(title="Date", automargin=True)
+    fig.update_yaxes(title="Growth of $1", type="log" if log_scale else "linear", automargin=True)
+    render_plotly_chart(fig, complex_chart=True, responsive_legend=True)
 
 
 @st.cache_data(show_spinner=False)
@@ -839,7 +915,60 @@ if active_section == "Performance":
             "CAGR is realized compound growth. Performance Sharpe and optimizer Sharpe use the same arithmetic convention."
         )
         st.dataframe(display_metric_frame(a.performance), width="stretch")
-        line_chart((1 + a.portfolio_returns).cumprod().to_frame("Portfolio"), "Cumulative portfolio growth", "Growth of $1")
+        growth = pd.concat([
+            (1 + a.portfolio_returns).cumprod().rename("Portfolio"),
+            (1 + a.benchmark_returns).cumprod().rename(r["benchmark_ticker"]),
+        ], axis=1)
+        line_chart(growth, "Portfolio versus benchmark growth", "Growth of $1", colors=["#60A5FA", "#CBD5E1"])
+
+        st.markdown("#### Normalized performance by holding")
+        st.caption(
+            "Each series begins at 1.00 on the first common observation date. "
+            "This is a security comparison using adjusted prices, not a portfolio return or a weighted result."
+        )
+        holding_options = list(a.prices.columns)
+        selected_holdings = st.multiselect(
+            "Holdings to display", holding_options, default=holding_options,
+            key="normalized_holding_selection",
+        )
+        include_benchmark = st.checkbox(
+            f"Include benchmark ({r['benchmark_ticker']})", value=False,
+            key="normalized_include_benchmark",
+        )
+        scale = st.segmented_control(
+            "Chart scale", ["Linear", "Log"], default="Linear", key="normalized_chart_scale"
+        )
+        if not selected_holdings:
+            st.info("Select at least one holding to display normalized performance.")
+        else:
+            normalized_inputs = a.prices.loc[:, selected_holdings].copy()
+            benchmark_label = None
+            if include_benchmark:
+                benchmark_label = f"Benchmark ({r['benchmark_ticker']})"
+                normalized_inputs[benchmark_label] = a.benchmark_prices
+            normalized, excluded = normalized_holding_performance(normalized_inputs)
+            if excluded:
+                details = "; ".join(f"{label}: {reason}" for label, reason in excluded.items())
+                st.warning(f"Some series were excluded from normalized performance: {details}")
+            if normalized.empty:
+                st.error("No selected series can be normalized safely on a common date range.")
+            else:
+                if benchmark_label and benchmark_label not in normalized:
+                    benchmark_label = None
+                normalized_holding_chart(
+                    normalized,
+                    benchmark_label,
+                    log_scale=scale == "Log",
+                )
+                export = normalized.copy()
+                export.index.name = "Date"
+                st.download_button(
+                    "Download normalized holding performance CSV",
+                    export.to_csv().encode("utf-8"),
+                    "portfoliolens_normalized_holding_performance.csv",
+                    "text/csv",
+                    icon=":material/download:",
+                )
         line_chart(drawdown_series(a.portfolio_returns).to_frame("Drawdown"), "Portfolio drawdown", "Drawdown")
         rolling_vol = a.portfolio_returns.rolling(63).std() * TRADING_DAYS ** 0.5
         line_chart(rolling_vol.to_frame("63-day volatility"), "Rolling annualized volatility", "Volatility")

@@ -1,4 +1,5 @@
 """Deterministic unit and integration tests for financial calculations."""
+from io import StringIO
 import inspect
 import numpy as np
 import pandas as pd
@@ -31,7 +32,7 @@ from portfolio_dashboard.performance import (
     diversification_effect, geometric_mean_return, holding_period_return,
     drawdown_series, max_drawdown, performance_metrics, portfolio_expected_return,
     portfolio_returns, portfolio_variance, sharpe_from_statistics, sharpe_ratio,
-    simple_returns, sortino_ratio,
+    simple_returns, sortino_ratio, normalized_holding_performance,
 )
 from portfolio_dashboard.pipeline import run_analysis
 from portfolio_dashboard.rebalancing import (
@@ -132,6 +133,60 @@ def test_simple_and_portfolio_returns():
     assert result.iloc[0].tolist() == pytest.approx([.1, 0])
     p = portfolio_returns(result, pd.Series({"A": .6, "B": .4}))
     assert p.iloc[0] == pytest.approx(.06)
+
+
+def test_normalized_holding_performance_aligns_before_normalizing_and_ignores_weights():
+    prices = pd.DataFrame({
+        "A": [np.nan, 10.0, 12.0, 15.0],
+        "B": [20.0, 25.0, np.nan, 30.0],
+    }, index=pd.date_range("2024-01-01", periods=4))
+    normalized, excluded = normalized_holding_performance(prices)
+    assert excluded == {}
+    assert normalized.index.tolist() == [pd.Timestamp("2024-01-02"), pd.Timestamp("2024-01-04")]
+    assert normalized.loc["2024-01-02", "A"] == pytest.approx(1.0)
+    assert normalized.loc["2024-01-02", "B"] == pytest.approx(1.0)
+    assert normalized.loc["2024-01-04", "A"] == pytest.approx(1.5)
+    assert normalized.loc["2024-01-04", "B"] == pytest.approx(1.2)
+
+    complete = pd.DataFrame({
+        "A": [10.0, 12.0, 15.0],
+        "B": [20.0, 25.0, 30.0],
+    }, index=pd.date_range("2024-01-02", periods=3))
+    expected, _ = normalized_holding_performance(complete)
+    assert expected.loc["2024-01-03", "A"] == pytest.approx(1.2)
+    assert expected.loc["2024-01-03", "B"] == pytest.approx(1.25)
+    exported = pd.read_csv(
+        StringIO(expected.rename_axis("Date").to_csv()),
+        index_col="Date",
+        parse_dates=["Date"],
+    )
+    pd.testing.assert_frame_equal(
+        exported, expected.rename_axis("Date"), check_freq=False
+    )
+    # No portfolio weights are accepted or used by this security-comparison calculation.
+    assert expected.iloc[0].tolist() == pytest.approx([1.0, 1.0])
+
+
+def test_normalized_holding_performance_excludes_invalid_and_handles_single_series():
+    prices = pd.DataFrame({
+        "Good": [100.0, 110.0],
+        "Bad": [100.0, 0.0],
+        "Empty": [np.nan, np.nan],
+    }, index=pd.date_range("2024-01-01", periods=2))
+    normalized, excluded = normalized_holding_performance(prices)
+    assert list(normalized.columns) == ["Good"]
+    assert normalized.iloc[0, 0] == pytest.approx(1.0)
+    assert normalized.iloc[1, 0] == pytest.approx(1.1)
+    assert "non-positive" in excluded["Bad"]
+    assert "numeric" in excluded["Empty"]
+
+    one, excluded_one = normalized_holding_performance(
+        pd.DataFrame({"Only": [5.0]}, index=pd.date_range("2024-01-01", periods=1))
+    )
+    assert excluded_one == {}
+    assert one.iloc[0, 0] == pytest.approx(1.0)
+    with pytest.raises(ValueError, match="unique"):
+        normalized_holding_performance(pd.DataFrame([[1.0, 2.0]], columns=["A", "A"]))
 
 def test_missing_data_policy():
     prices = pd.DataFrame({"A": [1, 2, np.nan, 4], "B": [1, np.nan, 3, 4]})
