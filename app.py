@@ -262,8 +262,8 @@ DASHBOARD_METRIC_GRID_CSS = """
     --metric-accent: #64748b;
     flex: 1 1 8.625rem;
     min-width: min(100%, 8.625rem);
-    height: 7.75rem;
-    padding: 0.65rem 0.85rem 0.6rem;
+    height: 7rem;
+    padding: 0.45rem 0.8rem 0.4rem;
     border: 1px solid #334155;
     border-top: 3px solid var(--metric-accent);
     border-radius: 0.55rem;
@@ -293,7 +293,7 @@ DASHBOARD_METRIC_GRID_CSS = """
 .financial-metric-card__value {
     margin-top: 0.15rem;
     color: #f8fafc;
-    font-size: clamp(1.55rem, 2.35vw, 2.2rem);
+    font-size: clamp(1.45rem, 2.15vw, 2rem);
     font-weight: 600;
     line-height: 1.1;
     white-space: nowrap;

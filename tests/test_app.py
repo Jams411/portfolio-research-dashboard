@@ -585,8 +585,8 @@ def test_dashboard_uses_responsive_semantic_metric_grid_without_placeholders(off
     assert "display: flex" in combined
     assert "flex-wrap: wrap" in combined
     assert "flex: 1 1 8.625rem" in combined
-    assert "height: 7.75rem" in combined
-    assert "padding: 0.65rem 0.85rem 0.6rem" in combined
+    assert "height: 7rem" in combined
+    assert "padding: 0.45rem 0.8rem 0.4rem" in combined
     assert "gap: 0.55rem" in combined
     assert "margin: 0 0 0.45rem" in combined
     assert "@media (max-width: 700px)" in combined
