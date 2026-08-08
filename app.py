@@ -94,13 +94,24 @@ RESPONSIVE_LAYOUT_CSS = """
     position: sticky;
     bottom: 0;
     z-index: 20;
-    margin: 0 -0.25rem;
-    padding: 0.4rem 0.25rem 0.5rem;
-    background: var(--secondary-background-color, #262730);
-    border-top: 1px solid rgba(148, 163, 184, 0.28);
+    margin: 0;
+    padding: 0.15rem 0 0.25rem;
+    background: transparent;
+    border: 0;
 }
 [data-testid="stSidebar"] .st-key-primary-actions [data-testid="stHorizontalBlock"] {
     gap: 0.45rem;
+}
+[data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"] {
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0.22rem 0.55rem !important;
+    border-radius: 0.4rem;
+    font-size: 0.86rem;
+    line-height: 1.25;
+}
+[data-testid="stSidebar"] .st-key-allocation-status [data-testid="stAlert"] > div {
+    padding: 0 !important;
 }
 @media (max-width: 700px) {
     [data-testid="stAppViewContainer"],
@@ -626,20 +637,24 @@ with st.sidebar:
                     and (allocation_percent_values > 0).all()
                     and not np.isclose(total_allocation, 100.0, atol=1e-8)
                 )
-                if np.isclose(total_allocation, 100.0, atol=1e-8):
-                    st.success(f"Total allocation: {total_allocation:.2f}%")
-                elif total_allocation < 100.0:
-                    allocation_ready = False
-                    st.warning(
-                        f"Total allocation: {total_allocation:.2f}% · "
-                        f"{100.0 - total_allocation:.2f}% remaining"
-                    )
-                else:
-                    allocation_ready = False
-                    st.error(
-                        f"Total allocation: {total_allocation:.2f}% · "
-                        f"Reduce by {total_allocation - 100.0:.2f}%"
-                    )
+                def status_percent(value: float) -> str:
+                    return f"{value:.2f}".rstrip("0").rstrip(".")
+
+                with st.container(key="allocation-status", gap=None):
+                    if np.isclose(total_allocation, 100.0, atol=1e-8):
+                        st.success(f"Total allocation · {status_percent(total_allocation)}% ✓")
+                    elif total_allocation < 100.0:
+                        allocation_ready = False
+                        st.warning(
+                            f"Total allocation · {status_percent(total_allocation)}% · "
+                            f"{status_percent(100.0 - total_allocation)}% remaining"
+                        )
+                    else:
+                        allocation_ready = False
+                        st.error(
+                            f"Total allocation · {status_percent(total_allocation)}% · "
+                            f"Reduce by {status_percent(total_allocation - 100.0)}%"
+                        )
         if allocation_error:
             st.error(allocation_error)
         if equal and preview_tickers:

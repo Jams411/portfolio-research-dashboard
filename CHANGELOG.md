@@ -4,6 +4,7 @@ User-facing and methodology changes are grouped by repository milestone. This pr
 
 ## Unreleased
 
+- Refined the sidebar allocation status into a compact, accessible validation indicator and made the sticky primary-action wrapper transparent while preserving button behavior and scrolling access.
 - Improved the portfolio setup sidebar for retail users: **Portfolio allocation (%)** now explains the one-value-per-ticker requirement, shows live total/remaining/over-allocation feedback, previews every investment and total, supports explicit proportional **Normalize to 100%**, and displays exact-reconciling equal allocations.
 - Restored the primary sidebar hierarchy: **Run analysis** and **Reset** now appear immediately after the compact allocation status, remain sticky while the sidebar scrolls, and leave allocation/rebalancing detail tables in Portfolio Construction rather than duplicating them in the sidebar.
 - Added **Normalized performance by holding** to Analytics → Performance. The interactive adjusted-price comparison starts every selected holding at 1.00 after common-date alignment, supports optional benchmark inclusion and linear/log scale, and exports normalized series to CSV.

@@ -6,7 +6,7 @@ Verified demo URL: [portfolio-lens.streamlit.app](https://portfolio-lens.streaml
 
 1. Use browser zoom at 100%. The primary demo remains best at 1,100 pixels or wider, but the app is also verified at 390×844 and 430×932.
 2. Confirm **Run analysis** and **Reset** are visible immediately below the compact allocation status, before the analysis-period and benchmark controls, without scrolling the sidebar.
-3. Confirm **Portfolio allocation (%)** explains that one percentage is required per ticker and the live total is shown. Open Portfolio Construction to review allocation and rebalancing detail tables.
+3. Confirm **Portfolio allocation (%)** explains that one percentage is required per ticker and the compact total status uses a check mark at 100%. Open Portfolio Construction to review allocation and rebalancing detail tables.
 4. Enter a non-100% positive allocation and confirm **Normalize to 100%** appears; click it and verify the adjusted values are shown before analysis.
 5. Keep Advanced assumptions, Implementation, and Strategy settings collapsed until their values need explanation.
 6. At 1366×768, confirm all six workspaces remain on one line and the Dashboard cards show complete values.
