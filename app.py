@@ -254,16 +254,16 @@ DASHBOARD_METRIC_GRID_CSS = """
 .financial-metric-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.55rem;
+    gap: 0.4rem;
     width: 100%;
-    margin: 0 0 0.45rem;
+    margin: 0 0 0.3rem;
 }
 .financial-metric-card {
     --metric-accent: #64748b;
     flex: 1 1 8.625rem;
     min-width: min(100%, 8.625rem);
-    height: 7rem;
-    padding: 0.45rem 0.8rem 0.4rem;
+    height: 6rem;
+    padding: 0.3rem 0.75rem 0.25rem;
     border: 1px solid #334155;
     border-top: 3px solid var(--metric-accent);
     border-radius: 0.55rem;
@@ -284,27 +284,27 @@ DASHBOARD_METRIC_GRID_CSS = """
 .financial-metric-card--negative { --metric-accent: #f87171; }
 .financial-metric-card--warning { --metric-accent: #fbbf24; }
 .financial-metric-card__label {
-    min-height: 2.15em;
+    min-height: 2em;
     color: #cbd5e1;
     font-size: 0.8rem;
     font-weight: 600;
-    line-height: 1.08rem;
+    line-height: 1rem;
 }
 .financial-metric-card__value {
-    margin-top: 0.15rem;
+    margin-top: 0.08rem;
     color: #f8fafc;
-    font-size: clamp(1.45rem, 2.15vw, 2rem);
+    font-size: clamp(1.35rem, 2vw, 1.85rem);
     font-weight: 600;
-    line-height: 1.1;
+    line-height: 1;
     white-space: nowrap;
 }
 .financial-metric-card--positive .financial-metric-card__value { color: #6ee7b7; }
 .financial-metric-card--negative .financial-metric-card__value { color: #fca5a5; }
 .financial-metric-card__context {
-    margin-top: 0.25rem;
+    margin-top: 0.15rem;
     color: #94a3b8;
     font-size: 0.72rem;
-    line-height: 1.05rem;
+    line-height: 0.95rem;
 }
 .financial-metric-card__context--positive { color: #6ee7b7; }
 .financial-metric-card__context--negative { color: #fca5a5; }

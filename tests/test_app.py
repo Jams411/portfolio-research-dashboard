@@ -585,10 +585,12 @@ def test_dashboard_uses_responsive_semantic_metric_grid_without_placeholders(off
     assert "display: flex" in combined
     assert "flex-wrap: wrap" in combined
     assert "flex: 1 1 8.625rem" in combined
-    assert "height: 7rem" in combined
-    assert "padding: 0.45rem 0.8rem 0.4rem" in combined
-    assert "gap: 0.55rem" in combined
-    assert "margin: 0 0 0.45rem" in combined
+    assert "height: 6rem" in combined
+    assert "padding: 0.3rem 0.75rem 0.25rem" in combined
+    assert "gap: 0.4rem" in combined
+    assert "margin: 0 0 0.3rem" in combined
+    assert "line-height: 1rem" in combined
+    assert "line-height: 0.95rem" in combined
     assert "@media (max-width: 700px)" in combined
     assert "financial-metric-grid--secondary" in combined
     assert "placeholder" not in combined.lower()
